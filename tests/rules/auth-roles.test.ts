@@ -15,6 +15,7 @@ const profile = (role: string) => ({
   role,
   status: "active",
   notificationPrefs: { email: true, push: false, weeklyDigest: false },
+  locale: "fr",
   claimsUpdatedAt: null,
   lastLoginAt: null,
   createdAt: new Date(),
@@ -90,6 +91,22 @@ describe("users/{uid}", () => {
   it("rejects malformed notification preferences", async () => {
     const db = dbAs(env, "alice", "user");
     await assertFails(updateDoc(doc(db, "users/alice"), { notificationPrefs: { email: "yes" } }));
+  });
+
+  it("a user can switch their language between supported locales only", async () => {
+    const db = dbAs(env, "alice", "user");
+    await assertSucceeds(updateDoc(doc(db, "users/alice"), { locale: "en" }));
+    await assertFails(updateDoc(doc(db, "users/alice"), { locale: "de" }));
+    await assertFails(updateDoc(doc(db, "users/alice"), { locale: 1 }));
+    await assertFails(updateDoc(doc(dbAs(env, "bob", "user"), "users/alice"), { locale: "fr" }));
+  });
+
+  it("profiles created before the locale field can still be updated", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const { locale: _omitted, ...legacy } = profile("user");
+      await setDoc(doc(ctx.firestore(), "users/alice"), legacy);
+    });
+    await assertSucceeds(updateDoc(doc(dbAs(env, "alice", "user"), "users/alice"), { displayName: "Alice L." }));
   });
 
   it("nobody creates or deletes profiles from the client, not even admins", async () => {

@@ -1,8 +1,9 @@
-import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
+import { onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import type { z } from "zod";
 import { hasRole, isRole, type RateLimitPolicy, type Role } from "@reservation/shared";
 import { ENFORCE_APP_CHECK, REGION } from "./config";
+import { appError } from "./errors";
 import { enforceRateLimit } from "./rateLimit";
 
 export interface CallContext<I> {
@@ -34,21 +35,21 @@ export function secureCall<S extends z.ZodType, R>(
 ) {
   return onCall({ region: REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request): Promise<R> => {
     const token = request.auth?.token;
-    if (!request.auth || !token) throw new HttpsError("unauthenticated", "Authentification requise.");
+    if (!request.auth || !token) throw appError("unauthenticated", "authRequired", "Authentication required.");
 
     const uid = request.auth.uid;
     const role = isRole(token.role) ? token.role : null;
 
     if (opts.role && (!role || !hasRole(role, opts.role))) {
       logger.warn("Permission denied", { fn: opts.name, uid, role, required: opts.role });
-      throw new HttpsError("permission-denied", "Vous n'avez pas les droits nécessaires.");
+      throw appError("permission-denied", "forbidden", "Missing required role.");
     }
 
     await enforceRateLimit(uid, opts.name, opts.rateLimit ?? DEFAULT_RATE_LIMIT);
 
     const parsed = opts.schema.safeParse(request.data ?? {});
     if (!parsed.success) {
-      throw new HttpsError("invalid-argument", "Données invalides.", { issues: parsed.error.issues });
+      throw appError("invalid-argument", "invalidInput", "Invalid input.", { issues: parsed.error.issues });
     }
 
     return handler({ uid, role, email: token.email ?? null, data: parsed.data, request });

@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { AppShell } from "@/components/layout/AppShell";
 import { Spinner } from "@/components/ui/Spinner";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -22,6 +23,8 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   if (status !== "signed-in" || !role) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
+        {/* Pages render their own title once signed in; this one is also the prerendered title. */}
+        <DocumentTitle />
         <Spinner />
       </div>
     );

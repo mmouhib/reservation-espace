@@ -15,9 +15,10 @@ import {
 import { clearIndexedDbPersistence, doc, onSnapshot, terminate, type Timestamp } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { COL, isRole, type Role, type UserProfile } from "@reservation/shared";
-import { api, errorMessage } from "@/lib/api/functions";
+import { COL, isMessageKey, isRole, type MessageKey, type Role, type UserProfile } from "@reservation/shared";
+import { api, errorKey } from "@/lib/api/functions";
 import { getFirebase, USE_EMULATORS } from "@/lib/firebase/client";
+import { getLocale } from "@/lib/i18n/I18nProvider";
 
 export type Profile = UserProfile<Timestamp> & { id: string };
 
@@ -29,7 +30,8 @@ interface AuthContextValue {
   /** Role from the ID token, or from the cached profile mirror when offline. */
   role: Role | null;
   profile: Profile | null;
-  error: string | null;
+  /** Translation key of the last sign-in error. */
+  error: MessageKey | null;
   signIn: () => Promise<void>;
   signInDemo: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -56,10 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [claimRole, setClaimRole] = useState<Role | null>(null);
   const [tokenIssuedAt, setTokenIssuedAt] = useState(0);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MessageKey | null>(null);
   const refreshedFor = useRef<number | null>(null);
 
-  const signOut = useCallback(async (reason?: string) => {
+  const signOut = useCallback(async (reason?: MessageKey) => {
     const { auth, db } = getFirebase();
     if (reason) sessionStorage.setItem(SIGN_OUT_REASON_KEY, reason);
     await firebaseSignOut(auth);
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onIdTokenChanged(auth, async (u) => {
       if (!u) {
         const reason = sessionStorage.getItem(SIGN_OUT_REASON_KEY);
-        if (reason) {
+        if (reason && isMessageKey(reason)) {
           sessionStorage.removeItem(SIGN_OUT_REASON_KEY);
           setError(reason);
         }
@@ -99,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (needsBootstrap) {
         try {
-          const res = await api.bootstrapProfile({});
+          const res = await api.bootstrapProfile({ locale: getLocale() });
           sessionStorage.setItem(BOOTSTRAP_KEY + u.uid, "1");
           if (res.claimsChanged) {
             token = await u.getIdTokenResult(true);
@@ -107,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (err) {
           if (!role) {
-            setError(errorMessage(err));
+            setError(errorKey(err));
             await firebaseSignOut(auth);
             return;
           }
@@ -143,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Accounts disabled by the directory sync are signed out.
   useEffect(() => {
-    if (profile?.status === "disabled") void signOut("Ce compte a été désactivé.");
+    if (profile?.status === "disabled") void signOut("errors.accountDisabled");
   }, [profile?.status, signOut]);
 
   const signIn = useCallback(async () => {
@@ -156,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signInWithRedirect(auth, ssoProvider());
         return;
       }
-      setError(errorMessage(err));
+      setError(errorKey(err));
     }
   }, []);
 
@@ -166,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithEmailAndPassword(getFirebase().auth, email, password);
     } catch (err) {
-      setError(errorMessage(err));
+      setError(errorKey(err));
     }
   }, []);
 

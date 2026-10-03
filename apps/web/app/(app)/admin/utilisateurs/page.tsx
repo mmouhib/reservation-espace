@@ -1,13 +1,16 @@
-import type { Metadata } from "next";
+"use client";
+
+import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { UsersAdmin } from "./UsersAdmin";
 
-export const metadata: Metadata = { title: "Utilisateurs" };
-
 export default function UtilisateursPage() {
+  const { t } = useI18n();
   return (
     <>
-      <PageHeader title="Utilisateurs" description="Gérez les rôles et les comptes des collaborateurs." />
+      <DocumentTitle titleKey="admin.users.title" />
+      <PageHeader title={t("admin.users.title")} description={t("admin.users.description")} />
       <UsersAdmin />
     </>
   );

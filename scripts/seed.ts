@@ -208,6 +208,7 @@ async function main() {
       role: u.role,
       status: "active",
       notificationPrefs: { email: true, push: false, weeklyDigest: false },
+      locale: "fr",
       claimsUpdatedAt: now,
       lastLoginAt: null,
       createdAt: now,

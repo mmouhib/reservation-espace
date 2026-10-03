@@ -1,15 +1,18 @@
 import type { MetadataRoute } from "next";
+import { DEFAULT_LOCALE, MESSAGES } from "@reservation/shared";
 import { APP } from "@/lib/app";
 
 export const dynamic = "force-static";
 
+// A static manifest has a single language: the default one.
 export default function manifest(): MetadataRoute.Manifest {
+  const { nav, reserve } = MESSAGES[DEFAULT_LOCALE];
   return {
     id: "/",
     name: APP.name,
     short_name: APP.shortName,
     description: APP.description,
-    lang: "fr",
+    lang: DEFAULT_LOCALE,
     dir: "ltr",
     start_url: "/",
     scope: "/",
@@ -24,8 +27,8 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Réserver un espace", short_name: "Réserver", url: "/reserver" },
-      { name: "Mes réservations", short_name: "Réservations", url: "/mes-reservations" },
+      { name: reserve.title, short_name: nav.reserve, url: "/reserver" },
+      { name: nav.myBookings, short_name: nav.myBookings, url: "/mes-reservations" },
     ],
   };
 }

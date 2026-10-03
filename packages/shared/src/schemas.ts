@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOCALES } from "./i18n";
 import { ROLES } from "./roles";
 
 /** Input schemas for callable Cloud Functions. Validated on the server, reused for client forms. */
@@ -9,7 +10,12 @@ export const setUserRoleInput = z.object({
 });
 export type SetUserRoleInput = z.infer<typeof setUserRoleInput>;
 
-export const bootstrapProfileInput = z.object({}).strict();
+export const bootstrapProfileInput = z
+  .object({
+    /** The client's current language, stored on profile creation. */
+    locale: z.enum(LOCALES).optional(),
+  })
+  .strict();
 export type BootstrapProfileInput = z.infer<typeof bootstrapProfileInput>;
 
 export interface BootstrapProfileResult {

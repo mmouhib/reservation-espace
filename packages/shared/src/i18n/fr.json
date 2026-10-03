@@ -1,0 +1,197 @@
+{
+  "app": {
+    "name": "Réservation d'Espace",
+    "shortName": "Réservation",
+    "description": "Réservez un poste, une salle de réunion ou un espace de coworking en quelques secondes."
+  },
+  "common": {
+    "loading": "Chargement…",
+    "later": "Plus tard",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "retry": "Réessayer",
+    "signOut": "Déconnexion",
+    "skipToContent": "Aller au contenu principal",
+    "comingSoon": "Cette fonctionnalité arrive bientôt <muted>(phase {phase})</muted>.",
+    "availableInPhase": "Bientôt disponible (phase {phase})"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "roles": {
+    "user": "Collaborateur",
+    "manager": "Manager",
+    "admin": "Administrateur"
+  },
+  "userStatus": {
+    "active": "Actif",
+    "disabled": "Désactivé",
+    "anonymized": "Anonymisé"
+  },
+  "spaceCategories": {
+    "desk": "Poste de travail",
+    "open_space": "Open space",
+    "meeting_room": "Salle de réunion",
+    "coworking": "Espace coworking",
+    "phone_booth": "Cabine téléphonique"
+  },
+  "nav": {
+    "label": "Navigation principale",
+    "home": "Accueil",
+    "reserve": "Réserver",
+    "myBookings": "Mes réservations",
+    "profile": "Profil",
+    "admin": "Administration"
+  },
+  "home": {
+    "greeting": "Bonjour",
+    "greetingName": "Bonjour {name}",
+    "subtitle": "Que souhaitez-vous faire aujourd'hui ?",
+    "shortcuts": {
+      "reserve": "Trouvez un poste, une salle ou un espace de coworking disponible.",
+      "myBookings": "Consultez, modifiez ou annulez vos réservations, même hors ligne.",
+      "profile": "Vos informations et vos préférences de notification.",
+      "admin": "Espaces, utilisateurs, modération et statistiques."
+    },
+    "upcoming": "Prochaines réservations",
+    "noUpcoming": "Aucune réservation à venir."
+  },
+  "reserve": {
+    "title": "Réserver un espace",
+    "description": "Recherchez par site, capacité, équipement et date."
+  },
+  "myBookings": {
+    "title": "Mes réservations",
+    "description": "Vos réservations à venir et votre historique."
+  },
+  "profile": {
+    "title": "Mon profil",
+    "description": "Vos informations et vos préférences.",
+    "identity": "Identité",
+    "email": "E-mail",
+    "role": "Rôle",
+    "department": "Département",
+    "installApp": "Installer l'application",
+    "preferences": "Préférences",
+    "displayName": "Nom affiché",
+    "notifications": "Notifications",
+    "prefs": {
+      "email": {
+        "label": "E-mails",
+        "hint": "Confirmations, annulations et rappels."
+      },
+      "push": {
+        "label": "Notifications push",
+        "hint": "Rappels 24 h avant et alertes sur vos espaces."
+      },
+      "weeklyDigest": {
+        "label": "Récapitulatif hebdomadaire",
+        "hint": "Chaque lundi, vos réservations de la semaine."
+      }
+    },
+    "saved": "Préférences enregistrées.",
+    "savedOffline": "Enregistré localement, synchronisation au retour du réseau.",
+    "privacy": "Données personnelles",
+    "privacyText": "L'export de vos données et la suppression de votre compte seront disponibles ici (phase 6)."
+  },
+  "admin": {
+    "title": "Administration",
+    "forbidden": "Accès réservé aux administrateurs.",
+    "sections": {
+      "users": {
+        "title": "Utilisateurs",
+        "text": "Rôles, comptes désactivés, synchronisation annuaire."
+      },
+      "spaces": {
+        "title": "Espaces",
+        "text": "Sites, étages, espaces, horaires et fermetures."
+      },
+      "bookings": {
+        "title": "Réservations",
+        "text": "Libération forcée, déplacement, absences."
+      },
+      "credits": {
+        "title": "Crédits et abonnements",
+        "text": "Tarifs, formules, recharges."
+      },
+      "reports": {
+        "title": "Signalements et matériel",
+        "text": "Incidents et demandes de matériel."
+      },
+      "dashboards": {
+        "title": "Tableaux de bord",
+        "text": "Occupation, utilisation, exports, journal d'audit."
+      }
+    },
+    "users": {
+      "title": "Utilisateurs",
+      "description": "Gérez les rôles et les comptes des collaborateurs.",
+      "filterByRole": "Filtrer par rôle",
+      "allRoles": "Tous",
+      "syncDirectory": "Synchroniser l'annuaire",
+      "tableCaption": "Liste des utilisateurs",
+      "name": "Nom",
+      "email": "E-mail",
+      "status": "Statut",
+      "role": "Rôle",
+      "roleOf": "Rôle pour {name}",
+      "empty": "Aucun utilisateur.",
+      "loadMore": "Charger plus",
+      "roleChanged": "Rôle mis à jour pour {name} : {role}.",
+      "syncDone_one": "Synchronisation terminée : {count} compte désactivé.",
+      "syncDone_other": "Synchronisation terminée : {count} comptes désactivés."
+    }
+  },
+  "login": {
+    "title": "Connexion",
+    "withGoogle": "Se connecter avec Google",
+    "withSso": "Se connecter avec le SSO de l'entreprise",
+    "demoAccounts": "Comptes de démonstration (émulateurs)"
+  },
+  "pwa": {
+    "updateAvailable": "Nouvelle version disponible.",
+    "reload": "Recharger",
+    "offlineBanner": "Vous êtes hors ligne. Les données affichées proviennent du cache ; les réservations sont indisponibles.",
+    "install": {
+      "title": "Installer l'application",
+      "text": "Accédez à vos réservations en un geste, même hors connexion, et recevez les rappels.",
+      "install": "Installer",
+      "howTo": "Comment faire ?",
+      "iosTitle": "Installer sur iPhone ou iPad",
+      "iosStep1": "Touchez le bouton <strong>Partager</strong> de Safari (carré avec une flèche vers le haut).",
+      "iosStep2": "Choisissez <strong>Sur l'écran d'accueil</strong>.",
+      "iosStep3": "Touchez <strong>Ajouter</strong>.",
+      "iosPushNote": "Les notifications push ne sont disponibles sur iOS qu'une fois l'application installée (iOS 16.4 ou ultérieur).",
+      "gotIt": "J'ai compris"
+    }
+  },
+  "offline": {
+    "title": "Hors ligne",
+    "heading": "Vous êtes hors ligne",
+    "text": "Cette page n'est pas disponible sans connexion. Vos réservations déjà consultées restent accessibles."
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "text": "La page demandée n'existe pas ou a été déplacée.",
+    "back": "Retour à l'accueil"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue.",
+    "authRequired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "forbidden": "Vous n'avez pas les droits nécessaires.",
+    "invalidInput": "Données invalides.",
+    "rateLimited": "Trop de requêtes, réessayez dans quelques instants.",
+    "unavailable": "Service indisponible. Vérifiez votre connexion.",
+    "internal": "Une erreur interne est survenue.",
+    "popupClosed": "La fenêtre de connexion a été fermée.",
+    "network": "Connexion réseau impossible.",
+    "invalidCredential": "Identifiants invalides.",
+    "accountDisabled": "Ce compte a été désactivé.",
+    "noEmail": "Aucune adresse e-mail associée au compte.",
+    "notInCompany": "Ce compte n'appartient pas à l'entreprise.",
+    "cannotDemoteSelf": "Vous ne pouvez pas retirer votre propre rôle d'administrateur.",
+    "userNotFound": "Utilisateur introuvable."
+  }
+}

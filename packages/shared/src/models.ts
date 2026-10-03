@@ -1,3 +1,4 @@
+import type { Locale } from "./i18n";
 import type { Role } from "./roles";
 
 /**
@@ -24,6 +25,8 @@ export interface UserProfile<T = unknown> {
   role: Role;
   status: UserStatus;
   notificationPrefs: NotificationPrefs;
+  /** Preferred UI language, also used for server-sent emails and notifications. */
+  locale: Locale;
   /** Bumped by Functions when custom claims change, so clients refresh their ID token. */
   claimsUpdatedAt: T | null;
   lastLoginAt: T | null;
@@ -68,14 +71,6 @@ export interface Site {
 
 export const SPACE_CATEGORIES = ["desk", "open_space", "meeting_room", "coworking", "phone_booth"] as const;
 export type SpaceCategory = (typeof SPACE_CATEGORIES)[number];
-
-export const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
-  desk: "Poste de travail",
-  open_space: "Open space",
-  meeting_room: "Salle de réunion",
-  coworking: "Espace coworking",
-  phone_booth: "Cabine téléphonique",
-};
 
 export interface Closure {
   from: string; // YYYY-MM-DD

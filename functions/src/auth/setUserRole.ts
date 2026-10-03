@@ -1,8 +1,8 @@
 import { FieldValue } from "firebase-admin/firestore";
-import { HttpsError } from "firebase-functions/v2/https";
 import { COL, setUserRoleInput } from "@reservation/shared";
 import { auth, db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
+import { appError } from "../lib/errors";
 import { secureCall } from "../lib/callable";
 
 /** Admin-only: changes a user's role claim and mirrors it on the profile document. */
@@ -10,11 +10,11 @@ export const setUserRole = secureCall(
   { name: "setUserRole", schema: setUserRoleInput, role: "admin" },
   async ({ uid: actorId, data }) => {
     if (data.uid === actorId && data.role !== "admin") {
-      throw new HttpsError("failed-precondition", "Vous ne pouvez pas retirer votre propre rôle d'administrateur.");
+      throw appError("failed-precondition", "cannotDemoteSelf", "Admins cannot remove their own admin role.");
     }
 
     const target = await auth.getUser(data.uid).catch(() => {
-      throw new HttpsError("not-found", "Utilisateur introuvable.");
+      throw appError("not-found", "userNotFound", "User not found.");
     });
     const previousRole = target.customClaims?.role ?? null;
     if (previousRole === data.role) return { changed: false };

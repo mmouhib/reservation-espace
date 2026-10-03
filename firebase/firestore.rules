@@ -45,17 +45,22 @@ service cloud.firestore {
         && p.email is bool && p.push is bool && p.weeklyDigest is bool;
     }
 
+    function validLocale(data) {
+      return !('locale' in data) || data.locale in ['fr', 'en'];
+    }
+
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
       // Profiles are created by bootstrapProfile; role/status/claims fields are server-owned.
       allow create, delete: if false;
       allow update: if isSelf(uid)
-        && changedKeys().hasOnly(['displayName', 'defaultSiteId', 'notificationPrefs'])
+        && changedKeys().hasOnly(['displayName', 'defaultSiteId', 'notificationPrefs', 'locale'])
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 80
         && isOptionalString(request.resource.data.defaultSiteId, 64)
-        && validNotificationPrefs(request.resource.data.notificationPrefs);
+        && validNotificationPrefs(request.resource.data.notificationPrefs)
+        && validLocale(request.resource.data);
 
       // FCM registration tokens, one document per device.
       match /devices/{deviceId} {

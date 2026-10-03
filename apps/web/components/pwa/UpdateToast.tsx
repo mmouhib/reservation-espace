@@ -1,10 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { usePwa } from "./PwaProvider";
 
 export function UpdateToast() {
   const { updateAvailable, applyUpdate, dismissUpdate } = usePwa();
+  const { t } = useI18n();
 
   return (
     <div
@@ -14,12 +16,12 @@ export function UpdateToast() {
     >
       {updateAvailable && (
         <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl bg-slate-900 px-4 py-3 text-white shadow-lg">
-          <p className="flex-1 text-sm">Nouvelle version disponible.</p>
+          <p className="flex-1 text-sm">{t("pwa.updateAvailable")}</p>
           <Button size="sm" variant="ghost-inverse" onClick={dismissUpdate}>
-            Plus tard
+            {t("common.later")}
           </Button>
           <Button size="sm" onClick={applyUpdate}>
-            Recharger
+            {t("pwa.reload")}
           </Button>
         </div>
       )}

@@ -20,9 +20,3 @@ export function roleFromClaims(claims: Record<string, unknown> | null | undefine
 export function hasRole(actual: Role, required: Role): boolean {
   return RANK[actual] >= RANK[required];
 }
-
-export const ROLE_LABELS: Record<Role, string> = {
-  user: "Collaborateur",
-  manager: "Manager",
-  admin: "Administrateur",
-};

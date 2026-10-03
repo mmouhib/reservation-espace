@@ -1,6 +1,12 @@
 import { FirebaseError } from "firebase/app";
-import { httpsCallable } from "firebase/functions";
-import type { BootstrapProfileResult, SetUserRoleInput } from "@reservation/shared";
+import { FunctionsError, httpsCallable } from "firebase/functions";
+import {
+  isErrorReason,
+  type BootstrapProfileInput,
+  type BootstrapProfileResult,
+  type MessageKey,
+  type SetUserRoleInput,
+} from "@reservation/shared";
 import { getFirebase } from "@/lib/firebase/client";
 
 /** Typed wrappers over callable Cloud Functions. */
@@ -14,28 +20,34 @@ function callable<I, O>(name: string) {
 }
 
 export const api = {
-  bootstrapProfile: callable<Record<string, never>, BootstrapProfileResult>("bootstrapProfile"),
+  bootstrapProfile: callable<BootstrapProfileInput, BootstrapProfileResult>("bootstrapProfile"),
   setUserRole: callable<SetUserRoleInput, { changed: boolean }>("setUserRole"),
   runDirectorySyncNow: callable<Record<string, never>, { checked: number; disabled: string[] }>("runDirectorySyncNow"),
 };
 
-const FALLBACK_MESSAGES: Record<string, string> = {
-  "functions/unauthenticated": "Votre session a expiré. Veuillez vous reconnecter.",
-  "functions/permission-denied": "Vous n'avez pas les droits nécessaires.",
-  "functions/resource-exhausted": "Trop de requêtes, réessayez dans quelques instants.",
-  "functions/unavailable": "Service indisponible. Vérifiez votre connexion.",
-  "functions/internal": "Une erreur interne est survenue.",
-  "auth/popup-closed-by-user": "La fenêtre de connexion a été fermée.",
-  "auth/network-request-failed": "Connexion réseau impossible.",
-  "auth/invalid-credential": "Identifiants invalides.",
-  "auth/user-disabled": "Ce compte a été désactivé.",
+const CODE_KEYS: Record<string, MessageKey> = {
+  "functions/unauthenticated": "errors.authRequired",
+  "functions/permission-denied": "errors.forbidden",
+  "functions/resource-exhausted": "errors.rateLimited",
+  "functions/unavailable": "errors.unavailable",
+  "functions/internal": "errors.internal",
+  "auth/popup-closed-by-user": "errors.popupClosed",
+  "auth/network-request-failed": "errors.network",
+  "auth/invalid-credential": "errors.invalidCredential",
+  "auth/user-disabled": "errors.accountDisabled",
 };
 
-/** Human-readable French message for Firebase errors. Server messages are already in French. */
-export function errorMessage(err: unknown): string {
-  if (err instanceof FirebaseError) {
-    if (err.code.startsWith("functions/") && err.message && err.code !== "functions/internal") return err.message;
-    return FALLBACK_MESSAGES[err.code] ?? "Une erreur est survenue.";
+/**
+ * Translation key for any error. Callable errors carry a `reason` set by the
+ * server (see functions/src/lib/errors.ts); other Firebase errors map by code.
+ */
+export function errorKey(err: unknown): MessageKey {
+  if (err instanceof FunctionsError) {
+    const reason = (err.details as { reason?: unknown } | undefined)?.reason;
+    if (isErrorReason(reason)) return `errors.${reason}`;
   }
-  return "Une erreur est survenue.";
+  if (err instanceof FirebaseError) {
+    return CODE_KEYS[err.code] ?? "errors.generic";
+  }
+  return "errors.generic";
 }

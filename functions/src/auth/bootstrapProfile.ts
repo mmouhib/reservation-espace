@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
-import { HttpsError } from "firebase-functions/v2/https";
 import {
   COL,
+  DEFAULT_LOCALE,
   bootstrapProfileInput,
   type BootstrapProfileResult,
   type Role,
@@ -9,6 +9,7 @@ import {
 } from "@reservation/shared";
 import { auth, db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
+import { appError } from "../lib/errors";
 import { secureCall } from "../lib/callable";
 import { ALLOWED_EMAIL_DOMAINS, BOOTSTRAP_ADMIN_EMAILS, csv } from "../lib/config";
 
@@ -26,17 +27,20 @@ export function isEmailAllowed(email: string, allowedDomains: string[]): boolean
  */
 export const bootstrapProfile = secureCall(
   { name: "bootstrapProfile", schema: bootstrapProfileInput, rateLimit: { limit: 10, windowSec: 60 } },
-  async ({ uid }): Promise<BootstrapProfileResult> => {
+  async ({ uid, data }): Promise<BootstrapProfileResult> => {
     const user = await auth.getUser(uid);
     const email = user.email?.toLowerCase();
-    if (!email) throw new HttpsError("failed-precondition", "Aucune adresse e-mail associée au compte.");
+    if (!email) throw appError("failed-precondition", "noEmail", "Account has no email address.");
     if (!isEmailAllowed(email, csv(ALLOWED_EMAIL_DOMAINS.value()))) {
-      throw new HttpsError("permission-denied", "Ce compte n'appartient pas à l'entreprise.");
+      throw appError("permission-denied", "notInCompany", "Email domain is not allowed.");
     }
 
     const ref = db.collection(COL.users).doc(uid);
     const snap = await ref.get();
     const existingRole = user.customClaims?.role as Role | undefined;
+
+    // The client's current language seeds the preference; afterwards the profile is the source of truth.
+    const locale = data.locale ?? DEFAULT_LOCALE;
 
     let claimsChanged = false;
     let role: Role = existingRole ?? "user";
@@ -49,6 +53,7 @@ export const bootstrapProfile = secureCall(
     if (snap.exists) {
       await ref.update({
         lastLoginAt: FieldValue.serverTimestamp(),
+        ...(snap.get("locale") ? {} : { locale }),
         ...(claimsChanged ? { role, claimsUpdatedAt: FieldValue.serverTimestamp() } : {}),
       });
     } else {
@@ -62,6 +67,7 @@ export const bootstrapProfile = secureCall(
         role,
         status: "active",
         notificationPrefs: { email: true, push: false, weeklyDigest: false },
+        locale,
         claimsUpdatedAt: FieldValue.serverTimestamp(),
         lastLoginAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),

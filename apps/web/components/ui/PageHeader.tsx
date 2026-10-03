@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
@@ -13,9 +16,10 @@ export function PageHeader({ title, description, actions }: { title: string; des
 }
 
 export function ComingSoon({ phase }: { phase: number }) {
+  const { rich } = useI18n();
   return (
     <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-      Cette fonctionnalité arrive bientôt <span className="text-slate-500">(phase {phase})</span>.
+      {rich("common.comingSoon", { muted: (text) => <span className="text-slate-500">{text}</span> }, { phase })}
     </div>
   );
 }

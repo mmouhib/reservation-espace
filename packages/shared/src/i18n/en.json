@@ -1,0 +1,197 @@
+{
+  "app": {
+    "name": "Space Booking",
+    "shortName": "Booking",
+    "description": "Book a desk, a meeting room or a coworking space in seconds."
+  },
+  "common": {
+    "loading": "Loading…",
+    "later": "Later",
+    "save": "Save",
+    "saving": "Saving…",
+    "retry": "Try again",
+    "signOut": "Sign out",
+    "skipToContent": "Skip to main content",
+    "comingSoon": "This feature is coming soon <muted>(phase {phase})</muted>.",
+    "availableInPhase": "Coming soon (phase {phase})"
+  },
+  "language": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English"
+  },
+  "roles": {
+    "user": "Employee",
+    "manager": "Manager",
+    "admin": "Administrator"
+  },
+  "userStatus": {
+    "active": "Active",
+    "disabled": "Disabled",
+    "anonymized": "Anonymized"
+  },
+  "spaceCategories": {
+    "desk": "Desk",
+    "open_space": "Open space",
+    "meeting_room": "Meeting room",
+    "coworking": "Coworking space",
+    "phone_booth": "Phone booth"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "reserve": "Book",
+    "myBookings": "My bookings",
+    "profile": "Profile",
+    "admin": "Administration"
+  },
+  "home": {
+    "greeting": "Hello",
+    "greetingName": "Hello {name}",
+    "subtitle": "What would you like to do today?",
+    "shortcuts": {
+      "reserve": "Find an available desk, room or coworking space.",
+      "myBookings": "View, change or cancel your bookings, even offline.",
+      "profile": "Your details and notification preferences.",
+      "admin": "Spaces, users, moderation and statistics."
+    },
+    "upcoming": "Upcoming bookings",
+    "noUpcoming": "No upcoming bookings."
+  },
+  "reserve": {
+    "title": "Book a space",
+    "description": "Search by site, capacity, equipment and date."
+  },
+  "myBookings": {
+    "title": "My bookings",
+    "description": "Your upcoming bookings and history."
+  },
+  "profile": {
+    "title": "My profile",
+    "description": "Your details and preferences.",
+    "identity": "Identity",
+    "email": "Email",
+    "role": "Role",
+    "department": "Department",
+    "installApp": "Install the app",
+    "preferences": "Preferences",
+    "displayName": "Display name",
+    "notifications": "Notifications",
+    "prefs": {
+      "email": {
+        "label": "Emails",
+        "hint": "Confirmations, cancellations and reminders."
+      },
+      "push": {
+        "label": "Push notifications",
+        "hint": "Reminders 24 hours ahead and alerts about your spaces."
+      },
+      "weeklyDigest": {
+        "label": "Weekly summary",
+        "hint": "Every Monday, your bookings for the week."
+      }
+    },
+    "saved": "Preferences saved.",
+    "savedOffline": "Saved on this device, will sync when you're back online.",
+    "privacy": "Personal data",
+    "privacyText": "Exporting your data and deleting your account will be available here (phase 6)."
+  },
+  "admin": {
+    "title": "Administration",
+    "forbidden": "Administrators only.",
+    "sections": {
+      "users": {
+        "title": "Users",
+        "text": "Roles, disabled accounts, directory sync."
+      },
+      "spaces": {
+        "title": "Spaces",
+        "text": "Sites, floors, spaces, opening hours and closures."
+      },
+      "bookings": {
+        "title": "Bookings",
+        "text": "Forced release, moves, absences."
+      },
+      "credits": {
+        "title": "Credits and subscriptions",
+        "text": "Prices, plans, top-ups."
+      },
+      "reports": {
+        "title": "Issues and equipment",
+        "text": "Incidents and equipment requests."
+      },
+      "dashboards": {
+        "title": "Dashboards",
+        "text": "Occupancy, usage, exports, audit log."
+      }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Manage employee roles and accounts.",
+      "filterByRole": "Filter by role",
+      "allRoles": "All",
+      "syncDirectory": "Sync directory",
+      "tableCaption": "User list",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "role": "Role",
+      "roleOf": "Role of {name}",
+      "empty": "No users.",
+      "loadMore": "Load more",
+      "roleChanged": "{name}'s role is now {role}.",
+      "syncDone_one": "Sync complete: {count} account disabled.",
+      "syncDone_other": "Sync complete: {count} accounts disabled."
+    }
+  },
+  "login": {
+    "title": "Sign in",
+    "withGoogle": "Sign in with Google",
+    "withSso": "Sign in with company SSO",
+    "demoAccounts": "Demo accounts (emulators)"
+  },
+  "pwa": {
+    "updateAvailable": "A new version is available.",
+    "reload": "Reload",
+    "offlineBanner": "You're offline. The data shown comes from the cache; booking is unavailable.",
+    "install": {
+      "title": "Install the app",
+      "text": "Get to your bookings in one tap, even offline, and receive reminders.",
+      "install": "Install",
+      "howTo": "How?",
+      "iosTitle": "Install on iPhone or iPad",
+      "iosStep1": "Tap Safari's <strong>Share</strong> button (a square with an arrow pointing up).",
+      "iosStep2": "Choose <strong>Add to Home Screen</strong>.",
+      "iosStep3": "Tap <strong>Add</strong>.",
+      "iosPushNote": "On iOS, push notifications are only available once the app is installed (iOS 16.4 or later).",
+      "gotIt": "Got it"
+    }
+  },
+  "offline": {
+    "title": "Offline",
+    "heading": "You're offline",
+    "text": "This page isn't available without a connection. Bookings you've already viewed are still accessible."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "The page you requested doesn't exist or has been moved.",
+    "back": "Back to home"
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "authRequired": "Your session has expired. Please sign in again.",
+    "forbidden": "You don't have permission to do this.",
+    "invalidInput": "Invalid data.",
+    "rateLimited": "Too many requests, please try again in a moment.",
+    "unavailable": "Service unavailable. Check your connection.",
+    "internal": "An internal error occurred.",
+    "popupClosed": "The sign-in window was closed.",
+    "network": "Network connection failed.",
+    "invalidCredential": "Invalid credentials.",
+    "accountDisabled": "This account has been disabled.",
+    "noEmail": "No email address is linked to this account.",
+    "notInCompany": "This account doesn't belong to the company.",
+    "cannotDemoteSelf": "You can't remove your own administrator role.",
+    "userNotFound": "User not found."
+  }
+}

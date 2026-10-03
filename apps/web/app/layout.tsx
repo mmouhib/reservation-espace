@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import { DEFAULT_LOCALE } from "@reservation/shared";
 import { APP } from "@/lib/app";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -10,7 +11,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 
 export const metadata: Metadata = {
   applicationName: APP.name,
-  title: { default: APP.name, template: `%s · ${APP.shortName}` },
+  // No `title`: pages render a translated <title> (components/i18n/DocumentTitle).
   description: APP.description,
   appleWebApp: { capable: true, statusBarStyle: "default", title: APP.shortName },
   formatDetection: { telephone: false },
@@ -29,7 +30,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" dir="ltr" className={inter.variable}>
+    // `lang` is updated at runtime by I18nProvider.
+    <html lang={DEFAULT_LOCALE} dir="ltr" className={inter.variable}>
       <body className="min-h-dvh font-sans">
         <Providers>{children}</Providers>
       </body>

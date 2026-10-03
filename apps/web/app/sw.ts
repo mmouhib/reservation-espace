@@ -4,6 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { ExpirationPlugin, NetworkFirst, Serwist, StaleWhileRevalidate } from "serwist";
+import { APP } from "@/lib/app";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -118,10 +119,11 @@ const firebaseConfig = {
 if (firebaseConfig.messagingSenderId && firebaseConfig.appId) {
   const messaging = getMessaging(initializeApp(firebaseConfig));
 
-  // The server sends data-only messages ({ title, body, link }) so display is handled here.
+  // The server sends data-only messages ({ title, body, link }), already in the
+  // user's language (profile `locale`), so display is handled here.
   onBackgroundMessage(messaging, (payload) => {
     const data = payload.data ?? {};
-    void self.registration.showNotification(data.title ?? "Réservation d'Espace", {
+    void self.registration.showNotification(data.title ?? APP.name, {
       body: data.body,
       icon: "/icons/icon-192.png",
       badge: "/icons/badge-72.png",

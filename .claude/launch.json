@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "emulators-pwa",
+      "runtimeExecutable": "C:/Program Files/Git/bin/bash.exe",
+      "runtimeArgs": [
+        "-c",
+        "export JAVA_HOME=/c/Users/mouhi/.jdks/temurin-21.0.12 PATH=/c/Users/mouhi/.jdks/temurin-21.0.12/bin:/c/Users/mouhi/AppData/Local/hermes/node:$PATH && npm run emulators:clean"
+      ],
+      "port": 5050
+    }
+  ]
+}

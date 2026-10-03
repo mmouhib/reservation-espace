@@ -1,0 +1,110 @@
+rules_version = '2';
+
+// Strategy: default deny. Reads are scoped by role and ownership. Anything that
+// needs trust (roles, bookings, slots, credits, audit) is written by Cloud
+// Functions only; the Admin SDK bypasses these rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // A "member" has been bootstrapped by the bootstrapProfile function, which
+    // sets the role claim only for allowed company accounts.
+    function isMember() {
+      return signedIn() && request.auth.token.role in ['user', 'manager', 'admin'];
+    }
+
+    function isManager() {
+      return isMember() && request.auth.token.role in ['manager', 'admin'];
+    }
+
+    function isAdmin() {
+      return isMember() && request.auth.token.role == 'admin';
+    }
+
+    function isSelf(uid) {
+      return isMember() && request.auth.uid == uid;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function isOptionalString(value, maxLen) {
+      return value == null || (value is string && value.size() <= maxLen);
+    }
+
+    // ---------- Users ----------
+    function validNotificationPrefs(p) {
+      return p is map
+        && p.keys().hasOnly(['email', 'push', 'weeklyDigest'])
+        && p.keys().hasAll(['email', 'push', 'weeklyDigest'])
+        && p.email is bool && p.push is bool && p.weeklyDigest is bool;
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      // Profiles are created by bootstrapProfile; role/status/claims fields are server-owned.
+      allow create, delete: if false;
+      allow update: if isSelf(uid)
+        && changedKeys().hasOnly(['displayName', 'defaultSiteId', 'notificationPrefs'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && isOptionalString(request.resource.data.defaultSiteId, 64)
+        && validNotificationPrefs(request.resource.data.notificationPrefs);
+
+      // FCM registration tokens, one document per device.
+      match /devices/{deviceId} {
+        allow read, delete: if isSelf(uid);
+        allow create, update: if isSelf(uid)
+          && request.resource.data.keys().hasOnly(['fcmToken', 'platform', 'userAgent', 'lastSeenAt'])
+          && request.resource.data.fcmToken is string
+          && request.resource.data.fcmToken.size() < 4096
+          && request.resource.data.platform is string
+          && request.resource.data.lastSeenAt == request.time;
+      }
+
+      // In-app inbox. Written by Functions; the user can only mark items as read.
+      match /notifications/{notificationId} {
+        allow read: if isSelf(uid);
+        allow update: if isSelf(uid)
+          && changedKeys().hasOnly(['readAt'])
+          && request.resource.data.readAt == request.time;
+      }
+    }
+
+    // ---------- Reference data ----------
+    match /departments/{departmentId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    match /teams/{teamId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    match /sites/{siteId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // Phase 2 adds full field validation for space documents.
+    match /spaces/{spaceId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // ---------- Server-owned ----------
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // _rateLimits, config and anything not matched above: denied by default.
+  }
+}

@@ -11,17 +11,84 @@ so each of the 7 developers can work on one module without touching the data of 
 
 Legend: ✅ done · 🟡 in progress · ⬜ not started
 
-| # | Module | Owns (Firestore collections) | Phase | Status | Done | Remaining |
-|---|---|---|---|---|---|---|
-| 1 | **Users** | `users`, `departments`, `teams` | 1 | 🟡 Core done | Google / company SSO sign-in (OIDC, SAML), email-domain restriction, first-admin bootstrap, demo accounts. Roles (`user` < `manager` < `admin`). Admin user list (role filter, pagination, change role). Directory sync that disables departed employees. Profile (display name, notification preferences, language FR/EN). | Departments and teams admin screens. Manager view of their team. Account anonymization / deletion and personal data export. |
-| 2 | **Spaces** | `sites`, `spaces` | 2 | ⬜ Model ready | Data model, security rules and seed data (2 sites, 28 spaces). No screens yet. | Admin CRUD for sites, floors and spaces (desk, open space, meeting room, coworking, phone booth). Capacity, equipment, tags, opening hours, closures. Space validation rules. |
-| 3 | **Bookings** | `bookings` (proposed), absences (proposed) | 2 | ⬜ Not started | Placeholder pages (Book, My bookings). | Availability search (site, capacity, equipment, date). Book, change, cancel with no double booking. My bookings and history, readable offline. Admin: all bookings, force release, move, absences. Cancel the future bookings of departed employees. |
-| 4 | **Notifications** | `users/{uid}/notifications`, `users/{uid}/devices` | 3 | ⬜ Rules ready | Security rules and notification preferences on the profile. | Push notifications (FCM), emails (confirmation, cancellation, reminder 24 h before), weekly digest, in-app inbox with read / unread. Messages sent in the user's language. |
-| 5 | **Credits & Subscriptions** | `plans`, `subscriptions`, `creditTransactions` (all proposed) | 4 | ⬜ Not started | Nothing yet. | Prices and plans, subscriptions, credit top-ups, balance and history, charge on booking, refund on cancellation. |
-| 6 | **Incidents & Equipment** | `incidents`, `equipmentRequests` (both proposed) | 5 | ⬜ Not started | Nothing yet. | Report an incident with photos (Storage rules to open), equipment requests, status tracking and admin handling. |
-| 7 | **Analytics & Audit** | `auditLogs` (and aggregates, proposed) | 6 | 🟡 Write side done | Audit entries are written for user creation, role changes and account disabling. Read access is admin-only. | Audit log viewer with filters. Dashboards (occupancy, usage). CSV exports. |
+| # | Module | Owns (Firestore collections) | Phase | Status |
+|---|---|---|---|---|
+| 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | 1 | 🟡 Core done |
+| 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | 2 | ⬜ Model ready |
+| 3 | [**Bookings**](#3-bookings) | `bookings`, `absences` (proposed) | 2 | ⬜ Not started |
+| 4 | [**Notifications**](#4-notifications) | `users/{uid}/notifications`, `users/{uid}/devices` | 3 | ⬜ Rules ready |
+| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `plans`, `subscriptions`, `creditTransactions` (proposed) | 4 | ⬜ Not started |
+| 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` (proposed) | 5 | ⬜ Not started |
+| 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` (and aggregates, proposed) | 6 | 🟡 Write side done |
 
 Collections marked "proposed" do not exist in the code yet; their names are a suggestion.
+
+### 1. Users
+
+Owns `users`, `departments`, `teams`. Status: 🟡 core done.
+
+- ✅ Google / company SSO sign-in (OIDC, SAML), email-domain restriction, first-admin bootstrap, demo accounts.
+- ✅ Roles: `user` < `manager` < `admin`.
+- ✅ Admin user list: role filter, pagination, change role.
+- ✅ Directory sync that disables departed employees (scheduled or manual).
+- ✅ Profile: display name, notification preferences, language (FR/EN).
+- ⬜ Departments and teams admin screens.
+- ⬜ Manager view of their team.
+- ⬜ Account anonymization / deletion and personal data export.
+
+### 2. Spaces
+
+Owns `sites`, `spaces`. Status: ⬜ model ready, no screens yet.
+
+- ✅ Data model, security rules and seed data (2 sites, 28 spaces).
+- ⬜ Admin CRUD for sites, floors and spaces (desk, open space, meeting room, coworking, phone booth).
+- ⬜ Capacity, equipment, tags, opening hours, closures.
+- ⬜ Validation rules for space documents.
+
+### 3. Bookings
+
+Owns `bookings` and `absences` (both proposed). Status: ⬜ not started (placeholder pages only).
+
+- ⬜ Availability search by site, capacity, equipment and date.
+- ⬜ Book, change and cancel, with no double booking.
+- ⬜ My bookings and history, readable offline.
+- ⬜ Admin: all bookings, force release, move, absences.
+- ⬜ Cancel the future bookings of departed employees.
+
+### 4. Notifications
+
+Owns `users/{uid}/notifications` and `users/{uid}/devices`. Status: ⬜ rules ready.
+
+- ✅ Security rules, and notification preferences on the profile.
+- ⬜ Push notifications (FCM).
+- ⬜ Emails: confirmation, cancellation, reminder 24 h before, weekly digest.
+- ⬜ In-app inbox with read / unread.
+- ⬜ Messages sent in the user's language.
+
+### 5. Credits & Subscriptions
+
+Owns `plans`, `subscriptions`, `creditTransactions` (all proposed). Status: ⬜ not started.
+
+- ⬜ Prices and plans, subscriptions.
+- ⬜ Credit top-ups, balance and history.
+- ⬜ Charge on booking, refund on cancellation.
+
+### 6. Incidents & Equipment
+
+Owns `incidents` and `equipmentRequests` (both proposed). Status: ⬜ not started.
+
+- ⬜ Report an incident with photos (Storage rules to open).
+- ⬜ Equipment requests.
+- ⬜ Status tracking and admin handling.
+
+### 7. Analytics & Audit
+
+Owns `auditLogs` (and aggregates, proposed). Status: 🟡 write side done.
+
+- ✅ Audit entries written for user creation, role changes and account disabling. Read access is admin-only.
+- ⬜ Audit log viewer with filters.
+- ⬜ Dashboards: occupancy, usage.
+- ⬜ CSV exports.
 
 ### Shared platform (not owned by a single module)
 

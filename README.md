@@ -1,177 +1,187 @@
-# Réservation d'Espace
+# Space Booking (Réservation d'Espace)
 
-Application web progressive (PWA) de réservation de postes, de salles de réunion et d'espaces de coworking.
-Disponible en français et en anglais.
+Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces. The UI is available in French and English.
 
-**Stack :** Next.js 16 (export statique) · React 19 · Tailwind CSS 4 · Firebase (Auth, Firestore, Cloud Functions, Storage, Hosting) · Serwist (service worker) · Vitest.
+**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Firebase (Auth, Firestore, Cloud Functions, Storage, Hosting) · Serwist (service worker) · Vitest.
 
-## Fonctionnalités actuelles (phase 1)
+## Modules and progress
 
-- Connexion Google ou SSO d'entreprise (OIDC/SAML), avec comptes de démonstration en local.
-- Rôles `user` < `manager` < `admin`, gestion des utilisateurs (liste, filtre, changement de rôle), synchronisation de l'annuaire.
-- Profil : nom affiché, préférences de notification, langue (FR/EN).
-- PWA installable et utilisable hors ligne, avec message « Nouvelle version disponible ».
-- Règles Firestore « refus par défaut », limitation de débit des fonctions, journal d'audit.
+The app is split into **7 modules**. A module is a part of the app that owns its own Firestore collections (the "tables"),
+so each of the 7 developers can work on one module without touching the data of the others.
 
-Les réservations, la gestion des espaces, les notifications, les crédits, les signalements et les tableaux de bord arrivent dans les phases 2 à 6.
+Legend: ✅ done · 🟡 in progress · ⬜ not started
 
-## Structure
+| # | Module | Owns (Firestore collections) | Phase | Status | Done | Remaining |
+|---|---|---|---|---|---|---|
+| 1 | **Users** | `users`, `departments`, `teams` | 1 | 🟡 Core done | Google / company SSO sign-in (OIDC, SAML), email-domain restriction, first-admin bootstrap, demo accounts. Roles (`user` < `manager` < `admin`). Admin user list (role filter, pagination, change role). Directory sync that disables departed employees. Profile (display name, notification preferences, language FR/EN). | Departments and teams admin screens. Manager view of their team. Account anonymization / deletion and personal data export. |
+| 2 | **Spaces** | `sites`, `spaces` | 2 | ⬜ Model ready | Data model, security rules and seed data (2 sites, 28 spaces). No screens yet. | Admin CRUD for sites, floors and spaces (desk, open space, meeting room, coworking, phone booth). Capacity, equipment, tags, opening hours, closures. Space validation rules. |
+| 3 | **Bookings** | `bookings` (proposed), absences (proposed) | 2 | ⬜ Not started | Placeholder pages (Book, My bookings). | Availability search (site, capacity, equipment, date). Book, change, cancel with no double booking. My bookings and history, readable offline. Admin: all bookings, force release, move, absences. Cancel the future bookings of departed employees. |
+| 4 | **Notifications** | `users/{uid}/notifications`, `users/{uid}/devices` | 3 | ⬜ Rules ready | Security rules and notification preferences on the profile. | Push notifications (FCM), emails (confirmation, cancellation, reminder 24 h before), weekly digest, in-app inbox with read / unread. Messages sent in the user's language. |
+| 5 | **Credits & Subscriptions** | `plans`, `subscriptions`, `creditTransactions` (all proposed) | 4 | ⬜ Not started | Nothing yet. | Prices and plans, subscriptions, credit top-ups, balance and history, charge on booking, refund on cancellation. |
+| 6 | **Incidents & Equipment** | `incidents`, `equipmentRequests` (both proposed) | 5 | ⬜ Not started | Nothing yet. | Report an incident with photos (Storage rules to open), equipment requests, status tracking and admin handling. |
+| 7 | **Analytics & Audit** | `auditLogs` (and aggregates, proposed) | 6 | 🟡 Write side done | Audit entries are written for user creation, role changes and account disabling. Read access is admin-only. | Audit log viewer with filters. Dashboards (occupancy, usage). CSV exports. |
+
+Collections marked "proposed" do not exist in the code yet; their names are a suggestion.
+
+### Shared platform (not owned by a single module)
+
+Already built and used by every module. Change it through a pull request that the whole team can see.
+
+- **Auth and roles:** the sign-in flow, the `secureCall` wrapper for Cloud Functions (authentication, role check, rate limiting, input validation) and the role helpers in `packages/shared`.
+- **Security rules:** `firebase/firestore.rules` is one file. Each module owns its own `match` block.
+- **Translations:** `fr.json` and `en.json`. Each module adds its keys under its own namespace.
+- **PWA shell:** install prompt, offline support, update message, navigation, page layout.
+- **Quality:** typecheck, lint, unit tests, rules tests and GitHub Actions CI.
+
+### Suggested layout for each module
+
+| Part | Where |
+|---|---|
+| Screens | `apps/web/app/(app)/<module>/` |
+| Cloud Functions | `functions/src/<module>/`, exported from `functions/src/index.ts` |
+| Types, schemas | `packages/shared/src/` (one file per module) |
+| Security rules | one `match` block in `firebase/firestore.rules` |
+| Rules tests | `tests/rules/<module>.test.ts` |
+| Translations | `packages/shared/src/i18n/{fr,en}.json`, under the module's namespace |
+| Demo data | a section in `scripts/seed.ts` |
+
+## Project structure
 
 ```
-apps/web/          Application Next.js (PWA)
+apps/web/          Next.js app (PWA)
 functions/         Cloud Functions (Node 22)
-packages/shared/   Types, schémas zod, rôles, traductions (fr.json / en.json)
-firebase/          Règles Firestore et Storage, index
-tests/rules/       Tests des règles de sécurité (émulateur)
-scripts/           seed.ts (données de démo), generate-icons.mjs
+packages/shared/   Types, zod schemas, roles, translations (fr.json / en.json)
+firebase/          Firestore and Storage rules, indexes
+tests/rules/       Security rules tests (emulator)
+scripts/           seed.ts (demo data), generate-icons.mjs
 ```
 
-## Prérequis
+## Requirements
 
-| Outil | Version | Pourquoi |
+| Tool | Version | Why |
 |---|---|---|
-| Node.js | **22 ou plus** (voir `.nvmrc`) | Next.js 16 et Cloud Functions |
-| npm | 10 ou plus (fourni avec Node 22) | Workspaces |
-| Java (JDK) | **21 ou plus** | Requis par l'émulateur Firestore (firebase-tools 15) |
+| Node.js | **22 or later** (see `.nvmrc`) | Next.js 16 and Cloud Functions |
+| npm | 10 or later (comes with Node 22) | Workspaces |
+| Java (JDK) | **21 or later** | Required by the Firestore emulator (firebase-tools 15) |
 
-Aucun compte Firebase n'est nécessaire pour développer : tout tourne sur les émulateurs locaux.
+No Firebase account is needed for development: everything runs on the local emulators.
 
-Vérifier les versions :
+Check your versions:
 
 ```bash
 node -v
 java -version
 ```
 
-## Lancer en local
+## Run it locally
 
-### 1. Installer les dépendances
+### 1. Install the dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Créer les fichiers d'environnement
+### 2. Create the environment files
 
 ```bash
 cp apps/web/.env.example apps/web/.env.local
 cp functions/.env.example functions/.env.local
 ```
 
-Sous Windows (PowerShell) :
+On Windows (PowerShell):
 
 ```powershell
 Copy-Item apps/web/.env.example apps/web/.env.local
 Copy-Item functions/.env.example functions/.env.local
 ```
 
-Les valeurs par défaut fonctionnent telles quelles avec les émulateurs. Vous pouvez changer
-`NEXT_PUBLIC_DEMO_PASSWORD` (mot de passe des comptes de démonstration, 6 caractères minimum).
+The default values work as they are with the emulators. You can change `NEXT_PUBLIC_DEMO_PASSWORD`
+(the password of the demo accounts, at least 6 characters).
 
-### 3. Démarrer les émulateurs et l'application
+### 3. Start the emulators and the app
 
 ```bash
 npm run dev
 ```
 
-Cette commande compile les fonctions, démarre les émulateurs Firebase et lance le serveur Next.js.
-Les données des émulateurs sont conservées dans `.emulator-data/` entre deux exécutions.
+This builds the functions, starts the Firebase emulators and runs the Next.js dev server.
+The emulator data is kept in `.emulator-data/` between runs.
 
 | Service | URL |
 |---|---|
-| Application (Next.js) | http://localhost:3000 |
-| Interface des émulateurs | http://127.0.0.1:4000 |
-| Auth / Firestore / Functions / Storage | 9099 / 8080 / 5001 / 9199 |
+| App (Next.js) | http://localhost:3000 |
+| Emulator UI | http://127.0.0.1:4000 |
+| Auth / Firestore / Functions / Storage | ports 9099 / 8080 / 5001 / 9199 |
 
-### 4. Charger les données de démonstration
+### 4. Load the demo data
 
-Dans un second terminal, une fois les émulateurs prêts :
+In a second terminal, once the emulators are ready:
 
 ```bash
 npm run seed
 ```
 
-Le script crée 2 sites, 28 espaces, 4 départements, 1 équipe et 26 utilisateurs (il peut être relancé sans risque).
+This creates 2 sites, 28 spaces, 4 departments, 1 team and 26 users. It is safe to run again.
 
-### 5. Se connecter
+### 5. Sign in
 
-Sur http://localhost:3000, utilisez les boutons « Comptes de démonstration » :
+On http://localhost:3000, use the "Demo accounts" buttons:
 
-| Compte | Rôle |
+| Account | Role |
 |---|---|
-| `admin@exemple.fr` | Administrateur |
+| `admin@exemple.fr` | Administrator |
 | `manager@exemple.fr` | Manager |
-| `user@exemple.fr` | Collaborateur |
+| `user@exemple.fr` | Employee |
 
-Le mot de passe est la valeur de `NEXT_PUBLIC_DEMO_PASSWORD` dans `apps/web/.env.local`.
+The password is the value of `NEXT_PUBLIC_DEMO_PASSWORD` in `apps/web/.env.local`.
 
-> Le serveur de développement n'inclut pas le service worker : pour tester l'installation, le mode hors ligne
-> ou les mises à jour de la PWA, utilisez la version de production ci-dessous.
+> The dev server does not include the service worker. To test installation, offline mode or PWA updates,
+> use the production build below.
 
-## Tester la PWA (build de production)
+## Try the PWA (production build)
 
 ```bash
 npm run build
 npm run emulators
 ```
 
-Les émulateurs servent le build statique (`apps/web/out`) sur **http://localhost:5050**, avec le service worker actif.
-Après un nouveau `npm run build`, rechargez la page : le message « Nouvelle version disponible » apparaît.
+The emulators serve the static build (`apps/web/out`) on **http://localhost:5050**, with the service worker enabled.
+After a new `npm run build`, reload the page: the "A new version is available" message appears.
 
-## Commandes utiles
+## Useful commands
 
-| Commande | Rôle |
+| Command | What it does |
 |---|---|
-| `npm run dev` | Émulateurs + serveur de développement |
-| `npm run emulators` | Émulateurs seuls (données conservées dans `.emulator-data/`) |
-| `npm run emulators:clean` | Émulateurs sans import ni export (état vierge) |
-| `npm run seed` | Charge les données de démo dans les émulateurs |
-| `npm run build` | Compile les fonctions et l'application (`apps/web/out`) |
-| `npm run typecheck` | Vérification TypeScript de tous les workspaces |
+| `npm run dev` | Emulators and dev server |
+| `npm run emulators` | Emulators only (data kept in `.emulator-data/`) |
+| `npm run emulators:clean` | Emulators with no import or export (empty state) |
+| `npm run seed` | Load the demo data into the emulators |
+| `npm run build` | Build the functions and the app (`apps/web/out`) |
+| `npm run typecheck` | TypeScript check of every workspace |
 | `npm run lint` | ESLint |
-| `npm test` | Tests unitaires (shared et functions) |
-| `npm run test:rules` | Tests des règles Firestore/Storage (démarre les émulateurs, Java 21 requis) |
-| `npm run icons` | Régénère les icônes de la PWA (`apps/web/public/icons`) |
+| `npm test` | Unit tests (shared and functions) |
+| `npm run test:rules` | Firestore and Storage rules tests (starts the emulators, needs Java 21) |
+| `npm run icons` | Regenerate the PWA icons (`apps/web/public/icons`) |
 
-## Traductions
+## Translations
 
-Les textes sont dans `packages/shared/src/i18n/fr.json` (référence) et `en.json`.
-Pour ajouter un texte, ajoutez la même clé dans les deux fichiers, puis utilisez `t("ma.cle")` via `useI18n()`.
-Les tests vérifient que les deux fichiers ont exactement les mêmes clés et les mêmes variables.
+Texts live in `packages/shared/src/i18n/fr.json` (the reference) and `en.json`.
+To add a text, add the same key to both files, then use `t("my.key")` from `useI18n()`.
+The tests check that both files have exactly the same keys and the same variables.
 
-## Dépannage
+## Troubleshooting
 
-- **`firebase-tools no longer supports Java version before 21`** : installez un JDK 21 ou plus et vérifiez `java -version`.
-- **Erreur de version de Node** : utilisez Node 22 (`nvm use` lit `.nvmrc`).
-- **Port déjà utilisé** : un émulateur précédent tourne encore. Arrêtez-le ou libérez les ports 4000, 5001, 5050, 8080, 9099 et 9199.
-- **Sous Windows, `next build` échoue avec `EBUSY`** : aucun terminal ne doit être ouvert dans `apps/web/out`.
-- **La page reste sur « Chargement… »** : vérifiez que les émulateurs tournent et que `NEXT_PUBLIC_USE_EMULATORS=true`.
-- **Aucun utilisateur de démo** : lancez `npm run seed` pendant que les émulateurs sont démarrés.
+- **`firebase-tools no longer supports Java version before 21`**: install JDK 21 or later and check `java -version`.
+- **Node version error**: use Node 22 (`nvm use` reads `.nvmrc`).
+- **Port already in use**: a previous emulator is still running. Stop it, or free ports 4000, 5001, 5050, 8080, 9099 and 9199.
+- **On Windows, `next build` fails with `EBUSY`**: no terminal should be open inside `apps/web/out`.
+- **A page stays on "Loading…"**: check that the emulators are running and that `NEXT_PUBLIC_USE_EMULATORS=true`.
+- **No demo users**: run `npm run seed` while the emulators are running.
 
-## Déploiement (aperçu)
+## Deployment (overview)
 
-1. Créez un projet Firebase (plan Blaze, nécessaire pour les Cloud Functions) et activez Authentication, Firestore et Storage.
-2. Renseignez `.firebaserc`, `apps/web/.env.local` (valeurs de la console Firebase, `NEXT_PUBLIC_USE_EMULATORS=false`) et `functions/.env.<projectId>`.
-3. Définissez `ALLOWED_EMAIL_DOMAINS` et `BOOTSTRAP_ADMIN_EMAILS`, et mettez `ENFORCE_APP_CHECK=true`.
-4. `npm run build`, puis `npx firebase deploy`.
-
----
-
-## English summary
-
-Progressive web app for booking desks, meeting rooms and coworking spaces (French and English UI).
-
-**Requirements:** Node.js 22+, Java 21+ (for the Firestore emulator). No Firebase account needed for local development.
-
-```bash
-npm install
-cp apps/web/.env.example apps/web/.env.local
-cp functions/.env.example functions/.env.local
-npm run dev          # emulators + Next.js on http://localhost:3000
-npm run seed         # in a second terminal: demo data
-```
-
-Sign in with a demo account (`admin@exemple.fr`, `manager@exemple.fr` or `user@exemple.fr`; the password is
-`NEXT_PUBLIC_DEMO_PASSWORD` from `apps/web/.env.local`). To try the installable/offline PWA, run
-`npm run build && npm run emulators` and open http://localhost:5050. Run the checks with `npm run typecheck`,
-`npm run lint`, `npm test` and `npm run test:rules`.
+1. Create a Firebase project (Blaze plan, needed for Cloud Functions) and enable Authentication, Firestore and Storage.
+2. Fill in `.firebaserc`, `apps/web/.env.local` (values from the Firebase console, `NEXT_PUBLIC_USE_EMULATORS=false`)
+   and `functions/.env.<projectId>`.
+3. Set `ALLOWED_EMAIL_DOMAINS` and `BOOTSTRAP_ADMIN_EMAILS`, and set `ENFORCE_APP_CHECK=true`.
+4. Run `npm run build`, then `npx firebase deploy`.

@@ -1,8 +1,21 @@
 rules_version = '2';
 
-// Default deny. Phase 5 opens incidents/{incidentId}/{file} for photo uploads.
+// Default deny. Incident photos live in incidents/{uid}/{file}: the reporter uploads
+// them (images under 5 MB) and can read them, and administrators can read them too.
 service firebase.storage {
   match /b/{bucket}/o {
+    function isMember() {
+      return request.auth != null && request.auth.token.role in ['user', 'manager', 'admin'];
+    }
+
+    match /incidents/{uid}/{file} {
+      allow read: if isMember() && (request.auth.uid == uid || request.auth.token.role == 'admin');
+      allow create: if isMember() && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow update, delete: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

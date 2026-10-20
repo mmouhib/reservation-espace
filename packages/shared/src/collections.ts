@@ -8,5 +8,14 @@ export const COL = {
   sites: "sites",
   spaces: "spaces",
   auditLogs: "auditLogs",
+  bookings: "bookings",
+  absences: "absences",
+  wallets: "wallets",
+  creditTransactions: "creditTransactions",
+  plans: "plans",
+  subscriptions: "subscriptions",
+  incidents: "incidents",
+  equipmentRequests: "equipmentRequests",
+  mail: "mail", // read by the Firebase "Trigger Email" extension
   rateLimits: "_rateLimits",
 } as const;

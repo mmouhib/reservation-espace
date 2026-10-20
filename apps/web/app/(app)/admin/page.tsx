@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const SECTIONS = [
-  { id: "users", href: "/admin/utilisateurs", phase: null },
-  { id: "spaces", href: "#", phase: 2 },
-  { id: "bookings", href: "#", phase: 2 },
-  { id: "credits", href: "#", phase: 4 },
-  { id: "reports", href: "#", phase: 5 },
-  { id: "dashboards", href: "#", phase: 6 },
-] as const;
+  { id: "users", href: "/admin/utilisateurs", icon: "users" },
+  { id: "organization", href: "/admin/organisation", icon: "building" },
+  { id: "spaces", href: "/admin/espaces", icon: "layers" },
+  { id: "bookings", href: "/admin/reservations", icon: "list" },
+  { id: "credits", href: "/admin/credits", icon: "wallet" },
+  { id: "support", href: "/admin/support", icon: "lifebuoy" },
+  { id: "statistics", href: "/admin/statistiques", icon: "chart" },
+  { id: "audit", href: "/admin/audit", icon: "clipboard" },
+] as const satisfies readonly { id: string; href: string; icon: IconName }[];
 
 export default function AdminPage() {
   const { t } = useI18n();
@@ -20,24 +23,19 @@ export default function AdminPage() {
     <>
       <DocumentTitle titleKey="admin.title" />
       <PageHeader title={t("admin.title")} />
-      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {SECTIONS.map((s) => (
-          <li key={s.id}>
-            {s.phase === null ? (
-              <Link
-                href={s.href}
-                className="block h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-brand-600"
-              >
-                <span className="font-semibold text-brand-800">{t(`admin.sections.${s.id}.title`)}</span>
-                <span className="mt-1 block text-sm text-slate-600">{t(`admin.sections.${s.id}.text`)}</span>
-              </Link>
-            ) : (
-              <div className="h-full rounded-xl border border-dashed border-slate-300 bg-white p-5" aria-disabled="true">
-                <span className="font-semibold text-slate-700">{t(`admin.sections.${s.id}.title`)}</span>
-                <span className="mt-1 block text-sm text-slate-600">{t(`admin.sections.${s.id}.text`)}</span>
-                <span className="mt-2 block text-xs text-slate-500">{t("common.availableInPhase", { phase: s.phase })}</span>
-              </div>
-            )}
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {SECTIONS.map((section) => (
+          <li key={section.id}>
+            <Link
+              href={section.href}
+              className="flex h-full flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-brand-600 hover:shadow"
+            >
+              <span className="flex items-center gap-2 font-semibold text-brand-800">
+                <Icon name={section.icon} />
+                {t(`admin.sections.${section.id}.title`)}
+              </span>
+              <span className="text-sm text-slate-600">{t(`admin.sections.${section.id}.text`)}</span>
+            </Link>
           </li>
         ))}
       </ul>

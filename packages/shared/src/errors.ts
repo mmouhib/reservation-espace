@@ -4,6 +4,7 @@
  * `errors.<reason>` in the user's language.
  */
 export const ERROR_REASONS = [
+  // Access
   "authRequired",
   "forbidden",
   "invalidInput",
@@ -12,6 +13,25 @@ export const ERROR_REASONS = [
   "notInCompany",
   "cannotDemoteSelf",
   "userNotFound",
+  // Bookings
+  "invalidSlot",
+  "spaceClosed",
+  "outsideHours",
+  "pastSlot",
+  "tooFarAhead",
+  "slotTaken",
+  "tooManyAttendees",
+  "alreadyBooked",
+  "absent",
+  "spaceNotFound",
+  "bookingNotFound",
+  "bookingNotCancellable",
+  "invalidDates",
+  // Credits
+  "notEnoughCredits",
+  "planNotFound",
+  "alreadySubscribed",
+  "subscriptionNotFound",
 ] as const;
 export type ErrorReason = (typeof ERROR_REASONS)[number];
 

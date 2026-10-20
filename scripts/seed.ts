@@ -9,12 +9,19 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import {
   COL,
   DEMO_ACCOUNTS,
+  addDays,
+  bookingCost,
+  nowIn,
+  weekdayOf,
+  zonedTimeToUtc,
+  type Booking,
   type Department,
   type OpeningHours,
+  type Plan,
   type Role,
   type Site,
   type Space,
@@ -112,6 +119,22 @@ function desks(siteId: string, floor: string, prefix: string, count: number, zon
   });
 }
 
+/** Credits charged per hour, by type of space. */
+const CREDITS_PER_HOUR: Record<SpaceCategory, number> = {
+  desk: 1,
+  open_space: 1,
+  coworking: 1,
+  meeting_room: 4,
+  phone_booth: 0,
+};
+
+const PLANS: Record<string, Plan> = {
+  "pack-10": { name: "Pack 10 crédits", description: "Idéal pour quelques journées sur site.", kind: "pack", credits: 10, priceCents: 900, active: true },
+  "pack-30": { name: "Pack 30 crédits", description: "Le meilleur prix par crédit.", kind: "pack", credits: 30, priceCents: 2400, active: true },
+  "monthly-20": { name: "Abonnement mensuel", description: "20 crédits chaque mois.", kind: "subscription", credits: 20, priceCents: 1500, active: true },
+  "legacy-5": { name: "Ancien pack 5 crédits", description: "Formule retirée de la vente.", kind: "pack", credits: 5, priceCents: 500, active: false },
+};
+
 const SPACES: [string, SpaceSeed][] = [
   ...desks("paris", "1", "1A-", 6, "Zone calme"),
   ...desks("paris", "2", "2B-", 6, "Plateau collaboratif"),
@@ -185,6 +208,7 @@ async function main() {
   for (const [id, s] of SPACES) {
     const space: Space<FieldValue> = {
       ...s,
+      creditsPerHour: CREDITS_PER_HOUR[s.category],
       openingHours: SITES[s.siteId]!.defaultOpeningHours,
       status: "active",
       closures: [],
@@ -216,10 +240,155 @@ async function main() {
     batch.set(db.collection(COL.users).doc(u.uid), profile);
   }
 
+
+  // ---------- Credits, plans, bookings and support requests ----------
+  for (const [id, plan] of Object.entries(PLANS)) batch.set(db.collection(COL.plans).doc(id), plan);
+
+  const balances = new Map<string, number>();
+  const credit = (uid: string, amount: number, type: string, label: string, id: string, bookingId?: string) => {
+    const balanceAfter = (balances.get(uid) ?? 0) + amount;
+    balances.set(uid, balanceAfter);
+    batch.set(db.collection(COL.creditTransactions).doc(id), { userId: uid, type, amount, balanceAfter, label, bookingId: bookingId ?? null, createdAt: now });
+  };
+  for (const u of users) {
+    if (u.uid === DEPARTED.uid) continue;
+    credit(u.uid, u.uid.startsWith("demo-colleague") ? 12 : 30, "adjustment", "Crédits de bienvenue", `seed-welcome-${u.uid}`);
+  }
+
+  const today = nowIn("Europe/Paris").date;
+  const workday = (offset: number) => {
+    let date = addDays(today, offset);
+    while (["sat", "sun"].includes(weekdayOf(date))) date = addDays(date, offset < 0 ? -1 : 1);
+    return date;
+  };
+  const [tomorrow, inTwoDays, lastWeek] = [workday(1), workday(2), workday(-4)];
+
+  let bookingCount = 0;
+  const book = (user: SeedUser, spaceId: string, date: string, from: number, to: number, attendees = 1) => {
+    const space = SPACES.find(([id]) => id === spaceId)![1];
+    bookingCount += 1;
+    const id = `seed-booking-${bookingCount}`;
+    const cost = bookingCost(CREDITS_PER_HOUR[space.category], { from, to });
+    const booking: Booking<FieldValue | Timestamp> = {
+      userId: user.uid,
+      userName: user.displayName,
+      teamIds: user.teamIds,
+      spaceId,
+      spaceName: space.name,
+      siteId: space.siteId,
+      date,
+      from,
+      to,
+      attendees,
+      startsAt: Timestamp.fromDate(zonedTimeToUtc(date, from, SITES[space.siteId]!.timeZone)),
+      status: "confirmed",
+      credits: cost,
+      cancelledBy: null,
+      cancelReason: null,
+      reminderSent: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    batch.set(db.collection(COL.bookings).doc(id), booking);
+    if (cost > 0) credit(user.uid, -cost, "booking", space.name, `seed-booking-tx-${bookingCount}`, id);
+  };
+
+  const demoUser = DEMO_ACCOUNTS.find((a) => a.uid === "demo-user")!;
+  const demoManager = DEMO_ACCOUNTS.find((a) => a.uid === "demo-manager")!;
+  book(demoUser, "paris-1A-01", tomorrow, 9 * 60, 17 * 60);
+  book(demoUser, "paris-salle-orsay", inTwoDays, 10 * 60, 11 * 60 + 30, 3);
+  book(demoUser, "paris-1A-02", lastWeek, 9 * 60, 12 * 60);
+  book(demoManager, "paris-2B-03", tomorrow, 8 * 60 + 30, 12 * 60 + 30);
+  book(COLLEAGUES[0]!, "paris-2B-01", tomorrow, 9 * 60, 18 * 60);
+  book(COLLEAGUES[1]!, "paris-2B-02", tomorrow, 9 * 60, 13 * 60);
+  book(COLLEAGUES[2]!, "paris-open-2", tomorrow, 9 * 60, 17 * 60);
+  book(COLLEAGUES[3]!, "paris-open-2", tomorrow, 13 * 60, 17 * 60);
+  book(COLLEAGUES[4]!, "paris-salle-louvre", tomorrow, 14 * 60, 16 * 60, 6);
+
+  batch.set(db.collection(COL.subscriptions).doc("seed-subscription-1"), {
+    userId: demoManager.uid,
+    planId: "monthly-20",
+    planName: PLANS["monthly-20"]!.name,
+    credits: 20,
+    status: "active",
+    nextRenewalAt: Timestamp.fromDate(new Date(Date.now() + 25 * 86_400_000)),
+    createdAt: now,
+    cancelledAt: null,
+  });
+  credit(demoManager.uid, 20, "subscription", PLANS["monthly-20"]!.name, "seed-subscription-tx-1");
+
+  for (const [uid, balance] of balances) batch.set(db.collection(COL.wallets).doc(uid), { balance, updatedAt: now });
+
+  batch.set(db.collection(COL.absences).doc("seed-absence-1"), {
+    userId: COLLEAGUES[5]!.uid,
+    userName: COLLEAGUES[5]!.displayName,
+    from: workday(8),
+    to: workday(9),
+    note: "Congés",
+    createdAt: now,
+  });
+
+  const inbox = db.collection(COL.users).doc(demoUser.uid).collection(COL.notifications);
+  batch.set(inbox.doc("seed-notification-1"), {
+    type: "bookingConfirmed",
+    title: "Réservation confirmée",
+    body: "Poste 1A-01 · de 09:00 à 17:00",
+    link: "/mes-reservations",
+    readAt: null,
+    createdAt: now,
+  });
+  batch.set(inbox.doc("seed-notification-2"), {
+    type: "creditsAdded",
+    title: "Crédits ajoutés",
+    body: "30 crédits ont été ajoutés à votre solde (Crédits de bienvenue).",
+    link: "/credits",
+    readAt: null,
+    createdAt: now,
+  });
+
+  batch.set(db.collection(COL.incidents).doc("seed-incident-1"), {
+    reporterId: demoUser.uid,
+    reporterName: demoUser.displayName,
+    spaceId: "paris-1A-03",
+    spaceName: "Poste 1A-03",
+    title: "Écran qui clignote",
+    description: "L'écran du poste s'éteint de temps en temps depuis lundi.",
+    photoPaths: [],
+    status: "in_progress",
+    adminNote: "Un technicien passe demain matin.",
+    createdAt: now,
+    updatedAt: now,
+  });
+  batch.set(db.collection(COL.incidents).doc("seed-incident-2"), {
+    reporterId: COLLEAGUES[0]!.uid,
+    reporterName: COLLEAGUES[0]!.displayName,
+    spaceId: "paris-salle-louvre",
+    spaceName: "Salle Louvre",
+    title: "Marqueurs du tableau blanc vides",
+    description: "Il n'y a plus de marqueurs dans la salle.",
+    photoPaths: [],
+    status: "open",
+    adminNote: "",
+    createdAt: now,
+    updatedAt: now,
+  });
+  batch.set(db.collection(COL.equipmentRequests).doc("seed-request-1"), {
+    requesterId: demoUser.uid,
+    requesterName: demoUser.displayName,
+    item: "mouse",
+    quantity: 1,
+    neededOn: tomorrow,
+    comment: "Souris sans fil si possible.",
+    status: "pending",
+    adminNote: "",
+    createdAt: now,
+    updatedAt: now,
+  });
+
   await batch.commit();
   console.log(
     `✓ ${Object.keys(SITES).length} sites, ${SPACES.length} spaces, ${Object.keys(DEPARTMENTS).length} departments, ` +
-      `${Object.keys(TEAMS).length} team, ${users.length} users`,
+      `${Object.keys(TEAMS).length} team, ${users.length} users, ${bookingCount} bookings, ${Object.keys(PLANS).length} plans`,
   );
   console.log("Demo accounts:", DEMO_ACCOUNTS.map((a) => `${a.email} (${a.role})`).join(", "));
   console.log("Password: NEXT_PUBLIC_DEMO_PASSWORD from apps/web/.env.local");

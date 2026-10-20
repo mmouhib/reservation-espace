@@ -13,7 +13,33 @@
     "signOut": "Sign out",
     "skipToContent": "Skip to main content",
     "comingSoon": "This feature is coming soon <muted>(phase {phase})</muted>.",
-    "availableInPhase": "Coming soon (phase {phase})"
+    "availableInPhase": "Coming soon (phase {phase})",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "create": "Create",
+    "search": "Search",
+    "all": "All",
+    "none": "None",
+    "name": "Name",
+    "description": "Description",
+    "status": "Status",
+    "date": "Date",
+    "from": "From",
+    "to": "To",
+    "optional": "(optional)",
+    "saved": "Saved.",
+    "deleted": "Deleted.",
+    "free": "Free",
+    "download": "Download",
+    "needsConnection": "This action needs a connection.",
+    "credits_one": "{count} credit",
+    "credits_other": "{count} credits",
+    "people_one": "{count} person",
+    "people_other": "{count} people"
   },
   "language": {
     "label": "Language",
@@ -43,7 +69,12 @@
     "reserve": "Book",
     "myBookings": "My bookings",
     "profile": "Profile",
-    "admin": "Administration"
+    "admin": "Administration",
+    "team": "My team",
+    "credits": "Credits",
+    "support": "Support",
+    "notifications": "Notifications",
+    "myBookingsShort": "Bookings"
   },
   "home": {
     "greeting": "Hello",
@@ -53,18 +84,80 @@
       "reserve": "Find an available desk, room or coworking space.",
       "myBookings": "View, change or cancel your bookings, even offline.",
       "profile": "Your details and notification preferences.",
-      "admin": "Spaces, users, moderation and statistics."
+      "admin": "Spaces, users, moderation and statistics.",
+      "team": "The bookings of your team members.",
+      "credits": "Your balance, plans and history.",
+      "support": "Report a problem or request equipment."
     },
     "upcoming": "Upcoming bookings",
-    "noUpcoming": "No upcoming bookings."
+    "noUpcoming": "No upcoming bookings.",
+    "nextBooking": "Next booking",
+    "noNextBooking": "Nothing planned",
+    "balance": "Credit balance",
+    "unread_one": "{count} unread notification",
+    "unread_other": "{count} unread notifications",
+    "allRead": "All caught up",
+    "seeAll": "See all"
   },
   "reserve": {
     "title": "Book a space",
-    "description": "Search by site, capacity, equipment and date."
+    "description": "Search by site, capacity, equipment and date.",
+    "site": "Site",
+    "date": "Date",
+    "start": "Start",
+    "end": "End",
+    "category": "Space type",
+    "anyCategory": "All types",
+    "minCapacity": "Minimum capacity",
+    "equipment": "Equipment",
+    "attendees": "Number of people",
+    "search": "Check availability",
+    "searching": "Searching…",
+    "resultsCount_one": "{count} space available for this slot",
+    "resultsCount_other": "{count} spaces available for this slot",
+    "noResults": "No space matches your search.",
+    "noSites": "No site has been set up yet.",
+    "firstSearch": "Pick a time slot to see the available spaces.",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "showUnavailable": "Also show unavailable spaces",
+    "book": "Book",
+    "floor": "Floor {floor}",
+    "capacity_one": "{count} seat",
+    "capacity_other": "{count} seats",
+    "perHour": "{count} cr./h",
+    "cost": "Cost",
+    "confirmTitle": "Confirm the booking",
+    "balance": "Your balance: {balance} credits",
+    "booked": "Booking confirmed.",
+    "offline": "Checking availability needs a connection.",
+    "busy": "Already booked: {slots}"
   },
   "myBookings": {
     "title": "My bookings",
-    "description": "Your upcoming bookings and history."
+    "description": "Your upcoming bookings and history.",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "emptyUpcoming": "No upcoming bookings.",
+    "emptyPast": "No past bookings.",
+    "cancelledBadge": "Cancelled",
+    "change": "Change",
+    "cancel": "Cancel",
+    "changeTitle": "Change the booking",
+    "cancelTitle": "Cancel the booking",
+    "cancelConfirm": "The credits of this booking will be refunded.",
+    "cancelled": "Booking cancelled.",
+    "updated": "Booking changed.",
+    "absences": "Absences",
+    "absencesHint": "During an absence, your bookings are cancelled and you can't book.",
+    "declareAbsence": "Declare an absence",
+    "absenceFrom": "First day",
+    "absenceTo": "Last day",
+    "absenceNote": "Note",
+    "absenceDeclared_one": "Absence saved. {count} booking cancelled.",
+    "absenceDeclared_other": "Absence saved. {count} bookings cancelled.",
+    "noAbsences": "No absences declared.",
+    "absenceRemoved": "Absence removed."
   },
   "profile": {
     "title": "My profile",
@@ -94,7 +187,20 @@
     "saved": "Preferences saved.",
     "savedOffline": "Saved on this device, will sync when you're back online.",
     "privacy": "Personal data",
-    "privacyText": "Exporting your data and deleting your account will be available here (phase 6)."
+    "privacyText": "Export your data or delete your account.",
+    "team": "Teams",
+    "noTeam": "None",
+    "push": {
+      "enable": "Enable on this device",
+      "enabled": "Push notifications are on for this device.",
+      "denied": "Permission was denied by the browser.",
+      "unavailable": "Push notifications are not available here."
+    },
+    "export": "Export my data",
+    "exportHint": "Downloads a JSON file with your profile, bookings and credits.",
+    "deleteAccount": "Delete my account",
+    "deleteTitle": "Delete your account?",
+    "deleteConfirm": "This can't be undone: your upcoming bookings will be cancelled and your personal data erased."
   },
   "admin": {
     "title": "Administration",
@@ -102,27 +208,35 @@
     "sections": {
       "users": {
         "title": "Users",
-        "text": "Roles, disabled accounts, directory sync."
+        "text": "Roles, teams, disabled accounts, directory sync."
       },
       "spaces": {
-        "title": "Spaces",
-        "text": "Sites, floors, spaces, opening hours and closures."
+        "title": "Sites and spaces",
+        "text": "Sites, floors, spaces, prices, opening hours and closures."
       },
       "bookings": {
         "title": "Bookings",
-        "text": "Forced release, moves, absences."
+        "text": "Every booking: force release, move."
       },
       "credits": {
         "title": "Credits and subscriptions",
-        "text": "Prices, plans, top-ups."
+        "text": "Plans, prices and balance adjustments."
       },
-      "reports": {
-        "title": "Issues and equipment",
+      "organization": {
+        "title": "Organization",
+        "text": "Departments and teams."
+      },
+      "support": {
+        "title": "Reports and equipment",
         "text": "Incidents and equipment requests."
       },
-      "dashboards": {
-        "title": "Dashboards",
-        "text": "Occupancy, usage, exports, audit log."
+      "statistics": {
+        "title": "Statistics",
+        "text": "Occupancy, usage and exports."
+      },
+      "audit": {
+        "title": "Audit log",
+        "text": "Who did what, and when."
       }
     },
     "users": {
@@ -141,14 +255,181 @@
       "loadMore": "Load more",
       "roleChanged": "{name}'s role is now {role}.",
       "syncDone_one": "Sync complete: {count} account disabled.",
-      "syncDone_other": "Sync complete: {count} accounts disabled."
+      "syncDone_other": "Sync complete: {count} accounts disabled.",
+      "department": "Department",
+      "teams": "Teams",
+      "editOrg": "Edit department and teams",
+      "orgUpdated": "Organization updated.",
+      "noDepartment": "No department",
+      "anonymize": "Delete account",
+      "anonymizeTitle": "Delete this account?",
+      "anonymizeConfirm": "{name}'s upcoming bookings will be cancelled and their personal data erased. This can't be undone.",
+      "anonymized": "Account deleted.",
+      "actions": "Actions"
+    },
+    "organization": {
+      "title": "Organization",
+      "description": "The departments and teams of the company.",
+      "departments": "Departments",
+      "teams": "Teams",
+      "newDepartment": "New department",
+      "editDepartment": "Edit department",
+      "newTeam": "New team",
+      "editTeam": "Edit team",
+      "departmentName": "Department name",
+      "teamName": "Team name",
+      "department": "Department",
+      "managers": "Managers",
+      "managersHint": "Managers see the team's bookings. Only managers and administrators are listed.",
+      "members_one": "{count} member",
+      "members_other": "{count} members",
+      "noDepartments": "No departments.",
+      "noTeams": "No teams.",
+      "confirmDelete": "Delete \"{name}\"?"
+    },
+    "spaces": {
+      "title": "Sites and spaces",
+      "description": "The sites, their opening hours and the bookable spaces.",
+      "sites": "Sites",
+      "spaces": "Spaces",
+      "newSite": "New site",
+      "editSite": "Edit site",
+      "newSpace": "New space",
+      "editSpace": "Edit space",
+      "siteName": "Site name",
+      "address": "Address",
+      "timeZone": "Time zone",
+      "floors": "Floors (one per line)",
+      "openingHours": "Opening hours",
+      "closedDay": "Closed",
+      "site": "Site",
+      "floor": "Floor",
+      "location": "Location",
+      "category": "Space type",
+      "capacity": "Capacity",
+      "creditsPerHour": "Credits per hour",
+      "equipment": "Equipment",
+      "tags": "Features",
+      "useSiteHours": "Use the site's opening hours",
+      "closures": "Exceptional closures",
+      "addClosure": "Add a closure",
+      "closureReason": "Reason",
+      "noSites": "No sites.",
+      "noSpaces": "No spaces.",
+      "allSites": "All sites",
+      "confirmDelete": "Delete \"{name}\"? Existing bookings are kept.",
+      "siteInUse": "This site still has spaces: delete them first.",
+      "statusActive": "Active",
+      "statusClosed": "Closed"
+    },
+    "bookings": {
+      "title": "Bookings",
+      "description": "Every booking of the organization.",
+      "user": "User",
+      "space": "Space",
+      "slot": "Time slot",
+      "statusConfirmed": "Confirmed",
+      "statusCancelled": "Cancelled",
+      "move": "Move",
+      "moveTitle": "Move the booking",
+      "release": "Release",
+      "releaseTitle": "Release the space",
+      "reason": "Reason (shown to the user)",
+      "moved": "Booking moved.",
+      "released": "Booking cancelled.",
+      "empty": "No bookings in this period."
+    },
+    "credits": {
+      "title": "Credits and subscriptions",
+      "description": "The plans on offer and the balances of the users.",
+      "plans": "Plans",
+      "newPlan": "New plan",
+      "editPlan": "Edit plan",
+      "planName": "Name",
+      "planKind": "Type",
+      "planCredits": "Credits",
+      "planPrice": "Price (€)",
+      "planActive": "Offered to users",
+      "hidden": "Hidden",
+      "noPlans": "No plans.",
+      "adjust": "Adjust a balance",
+      "adjustUser": "User",
+      "adjustAmount": "Amount (negative to remove)",
+      "adjustLabel": "Reason",
+      "adjusted": "Balance adjusted.",
+      "confirmDelete": "Delete the plan \"{name}\"?"
+    },
+    "support": {
+      "title": "Reports and equipment",
+      "description": "Handle incidents and equipment requests.",
+      "incidents": "Incident reports",
+      "requests": "Equipment requests",
+      "from": "From {name}",
+      "note": "Answer to the user",
+      "updated": "Updated.",
+      "noIncidents": "No reports.",
+      "noRequests": "No requests."
+    },
+    "statistics": {
+      "title": "Statistics",
+      "description": "Occupancy and usage of the spaces.",
+      "bookings": "Bookings",
+      "cancelled": "Cancelled",
+      "hours": "Hours booked",
+      "creditsSpent": "Credits spent",
+      "activeUsers": "Active users",
+      "byDay": "Bookings per day",
+      "byCategory": "Hours by space type",
+      "topSpaces": "Most booked spaces",
+      "export": "Export as CSV",
+      "noData": "No bookings in this period.",
+      "hoursShort": "{count} h"
+    },
+    "audit": {
+      "title": "Audit log",
+      "description": "The history of important actions.",
+      "action": "Action",
+      "allActions": "All actions",
+      "when": "Date",
+      "actor": "Author",
+      "target": "Target",
+      "system": "System",
+      "empty": "No entries.",
+      "actions": {
+        "booking": {
+          "created": "Booking created",
+          "updated": "Booking changed",
+          "cancelled": "Booking cancelled"
+        },
+        "absence": {
+          "declared": "Absence declared"
+        },
+        "credits": {
+          "purchased": "Credits purchased",
+          "adjusted": "Credits adjusted"
+        },
+        "subscription": {
+          "cancelled": "Subscription cancelled"
+        },
+        "user": {
+          "created": "Account created",
+          "role_changed": "Role changed",
+          "disabled": "Account disabled",
+          "org_changed": "Organization changed",
+          "anonymized": "Account deleted"
+        }
+      }
     }
   },
   "login": {
     "title": "Sign in",
     "withGoogle": "Sign in with Google",
     "withSso": "Sign in with company SSO",
-    "demoAccounts": "Demo accounts (emulators)"
+    "demoAccounts": "Demo accounts (emulators)",
+    "feature1": "Desks, meeting rooms and coworking spaces",
+    "feature2": "Installable, and works even offline",
+    "feature3": "Real-time reminders and notifications",
+    "welcome": "Welcome"
   },
   "pwa": {
     "updateAvailable": "A new version is available.",
@@ -192,6 +473,182 @@
     "noEmail": "No email address is linked to this account.",
     "notInCompany": "This account doesn't belong to the company.",
     "cannotDemoteSelf": "You can't remove your own administrator role.",
-    "userNotFound": "User not found."
+    "userNotFound": "User not found.",
+    "invalidSlot": "This time slot is not valid (30 minutes minimum, 8 hours maximum, in 30-minute steps).",
+    "spaceClosed": "This space is closed on that date.",
+    "outsideHours": "This slot is outside opening hours.",
+    "pastSlot": "This slot is in the past.",
+    "tooFarAhead": "You can't book more than 60 days ahead.",
+    "slotTaken": "This space is no longer available for that slot.",
+    "tooManyAttendees": "The number of people exceeds the space's capacity.",
+    "alreadyBooked": "You already have a booking at that time.",
+    "absent": "You are marked as absent on that date.",
+    "spaceNotFound": "Space not found.",
+    "bookingNotFound": "Booking not found.",
+    "bookingNotCancellable": "This booking can no longer be changed or cancelled.",
+    "invalidDates": "The dates are not valid.",
+    "notEnoughCredits": "Not enough credits.",
+    "planNotFound": "Plan not found.",
+    "alreadySubscribed": "You already have an active subscription.",
+    "subscriptionNotFound": "Subscription not found."
+  },
+  "incidentStatus": {
+    "open": "Open",
+    "in_progress": "In progress",
+    "resolved": "Resolved"
+  },
+  "equipmentStatus": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "items": {
+    "screen": "Screen",
+    "keyboard": "Keyboard",
+    "mouse": "Mouse",
+    "headset": "Headset",
+    "webcam": "Webcam",
+    "adapter": "Adapter",
+    "chair": "Office chair"
+  },
+  "notify": {
+    "bookingConfirmed": {
+      "title": "Booking confirmed",
+      "body": "{space} · {date} from {from} to {to}"
+    },
+    "bookingCancelled": {
+      "title": "Booking cancelled",
+      "body": "{space} · {date} from {from} to {to}"
+    },
+    "bookingCancelledByAdmin": {
+      "title": "Booking cancelled by an administrator",
+      "body": "{space} · {date} from {from} to {to}. Reason: {reason}"
+    },
+    "bookingMoved": {
+      "title": "Booking changed",
+      "body": "{space} · {date} from {from} to {to}"
+    },
+    "bookingReminder": {
+      "title": "Booking reminder",
+      "body": "{space} · {date} from {from} to {to}"
+    },
+    "weeklyDigest": {
+      "title": "Your week",
+      "body_one": "You have {count} booking this week.",
+      "body_other": "You have {count} bookings this week."
+    },
+    "creditsAdded": {
+      "title": "Credits added",
+      "body_one": "{count} credit was added to your balance ({label}).",
+      "body_other": "{count} credits were added to your balance ({label})."
+    },
+    "subscriptionRenewed": {
+      "title": "Subscription renewed",
+      "body_one": "{count} credit added ({label}).",
+      "body_other": "{count} credits added ({label})."
+    },
+    "incidentReceived": {
+      "title": "New incident report",
+      "body": "{title}, by {name}"
+    },
+    "incidentUpdated": {
+      "title": "Incident updated",
+      "body": "\"{title}\" is now: {status}"
+    },
+    "equipmentUpdated": {
+      "title": "Equipment request updated",
+      "body": "Your request ({item}) is now: {status}"
+    }
+  },
+  "weekdays": {
+    "mon": "Monday",
+    "tue": "Tuesday",
+    "wed": "Wednesday",
+    "thu": "Thursday",
+    "fri": "Friday",
+    "sat": "Saturday",
+    "sun": "Sunday"
+  },
+  "equipment": {
+    "screen": "Screen",
+    "dock": "Docking station",
+    "whiteboard": "Whiteboard",
+    "videoconference": "Video conferencing",
+    "projector": "Projector"
+  },
+  "tags": {
+    "quiet_zone": "Quiet zone",
+    "window": "Window seat",
+    "standing_desk": "Standing desk",
+    "accessible": "Accessible"
+  },
+  "team": {
+    "title": "My team",
+    "description": "The bookings of the members of your teams.",
+    "noTeam": "You don't manage any team yet.",
+    "member": "Member",
+    "bookings": "Bookings",
+    "noBooking": "No booking that day",
+    "team": "Team"
+  },
+  "credits": {
+    "title": "Credits",
+    "description": "Your balance, plans and transaction history.",
+    "balance": "Current balance",
+    "plans": "Plans",
+    "noPlans": "No plan is available yet.",
+    "buy": "Buy",
+    "subscribe": "Subscribe",
+    "kindPack": "Credit pack",
+    "kindSubscription": "Monthly subscription",
+    "perMonth": "per month",
+    "subscription": "Your subscription",
+    "renewsOn": "Next renewal: {date}",
+    "cancelSubscription": "Cancel subscription",
+    "subscriptionCancelled": "Subscription cancelled.",
+    "purchased_one": "Purchase complete: {count} credit added.",
+    "purchased_other": "Purchase complete: {count} credits added.",
+    "simulated": "Payment is simulated in this version of the app.",
+    "history": "History",
+    "noHistory": "No transactions yet.",
+    "types": {
+      "purchase": "Purchase",
+      "subscription": "Subscription",
+      "booking": "Booking",
+      "refund": "Refund",
+      "adjustment": "Adjustment"
+    }
+  },
+  "support": {
+    "title": "Support",
+    "description": "Report a problem or request equipment.",
+    "tabIncidents": "Incident reports",
+    "tabEquipment": "Equipment",
+    "newIncident": "Report a problem",
+    "incidentTitle": "Title",
+    "incidentDescription": "Description",
+    "incidentSpace": "Space concerned",
+    "noSpace": "No particular space",
+    "photos": "Photos (3 maximum)",
+    "send": "Send",
+    "sending": "Sending…",
+    "incidentSent": "Report sent.",
+    "myIncidents": "My reports",
+    "noIncidents": "No reports.",
+    "answer": "Answer",
+    "newRequest": "Request equipment",
+    "item": "Equipment",
+    "quantity": "Quantity",
+    "neededOn": "Needed on",
+    "comment": "Comment",
+    "requestSent": "Request sent.",
+    "myRequests": "My requests",
+    "noRequests": "No requests."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Your confirmations, reminders and alerts.",
+    "empty": "No notifications.",
+    "markAllRead": "Mark all as read"
   }
 }

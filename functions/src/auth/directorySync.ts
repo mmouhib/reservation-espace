@@ -3,6 +3,7 @@ import { logger } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { z } from "zod";
 import { COL } from "@reservation/shared";
+import { cancelUpcomingBookings } from "../bookings/cancelBooking";
 import { auth, db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
@@ -16,8 +17,7 @@ export interface DirectorySyncResult {
 
 /**
  * Disables accounts of departed employees: blocks sign-in, revokes refresh
- * tokens and marks the profile as disabled.
- * Phase 2 extends this to cancel and refund their future bookings.
+ * tokens, marks the profile as disabled and cancels their upcoming bookings.
  */
 export async function runDirectorySync(actorId = "system"): Promise<DirectorySyncResult> {
   const departed = await getDirectoryProvider().listDepartedEmails();
@@ -29,6 +29,8 @@ export async function runDirectorySync(actorId = "system"): Promise<DirectorySyn
 
     await auth.updateUser(user.uid, { disabled: true });
     await auth.revokeRefreshTokens(user.uid);
+    // Their upcoming bookings free the spaces, and the credits go back to their wallet.
+    await cancelUpcomingBookings(user.uid, { uid: actorId, role: "system" }, "left_company");
     await db
       .collection(COL.users)
       .doc(user.uid)

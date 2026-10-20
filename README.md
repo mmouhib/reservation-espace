@@ -9,86 +9,86 @@ Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces.
 The app is split into **7 modules**. A module is a part of the app that owns its own Firestore collections (the "tables"),
 so each of the 7 developers can work on one module without touching the data of the others.
 
-Legend: ✅ done · 🟡 in progress · ⬜ not started
+Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
 
-| # | Module | Owns (Firestore collections) | Phase | Status |
-|---|---|---|---|---|
-| 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | 1 | 🟡 Core done |
-| 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | 2 | ⬜ Model ready |
-| 3 | [**Bookings**](#3-bookings) | `bookings`, `absences` (proposed) | 2 | ⬜ Not started |
-| 4 | [**Notifications**](#4-notifications) | `users/{uid}/notifications`, `users/{uid}/devices` | 3 | ⬜ Rules ready |
-| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `plans`, `subscriptions`, `creditTransactions` (proposed) | 4 | ⬜ Not started |
-| 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` (proposed) | 5 | ⬜ Not started |
-| 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` (and aggregates, proposed) | 6 | 🟡 Write side done |
-
-Collections marked "proposed" do not exist in the code yet; their names are a suggestion.
+| # | Module | Owns (Firestore collections) | Status |
+|---|---|---|---|
+| 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | ✅ Done |
+| 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | ✅ Done |
+| 3 | [**Bookings**](#3-bookings) | `bookings`, `absences` | ✅ Done |
+| 4 | [**Notifications**](#4-notifications) | `users/{uid}/notifications`, `users/{uid}/devices`, `mail` | 🟡 Push and email need a real project |
+| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions` | 🟡 Payment is simulated |
+| 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` | ✅ Done |
+| 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` | ✅ Done |
 
 ### 1. Users
 
-Owns `users`, `departments`, `teams`. Status: 🟡 core done.
+Owns `users`, `departments`, `teams`. Screens: sign-in, profile, `/admin/utilisateurs`, `/admin/organisation`, `/equipe`.
 
 - ✅ Google / company SSO sign-in (OIDC, SAML), email-domain restriction, first-admin bootstrap, demo accounts.
-- ✅ Roles: `user` < `manager` < `admin`.
-- ✅ Admin user list: role filter, pagination, change role.
-- ✅ Directory sync that disables departed employees (scheduled or manual).
-- ✅ Profile: display name, notification preferences, language (FR/EN).
-- ⬜ Departments and teams admin screens.
-- ⬜ Manager view of their team.
-- ⬜ Account anonymization / deletion and personal data export.
+- ✅ Roles: `user` < `manager` < `admin`. Admin user list with role filter and pagination.
+- ✅ Directory sync that disables departed employees and cancels their upcoming bookings.
+- ✅ Profile: display name, notification preferences, language (FR/EN), department and teams.
+- ✅ Departments and teams administration; users are placed in a department and in teams by an administrator.
+- ✅ Manager view of their teams' bookings (`/equipe`).
+- ✅ GDPR: export of personal data, deletion of the account (by the user or an administrator).
 
 ### 2. Spaces
 
-Owns `sites`, `spaces`. Status: ⬜ model ready, no screens yet.
+Owns `sites`, `spaces`. Screen: `/admin/espaces`.
 
-- ✅ Data model, security rules and seed data (2 sites, 28 spaces).
-- ⬜ Admin CRUD for sites, floors and spaces (desk, open space, meeting room, coworking, phone booth).
-- ⬜ Capacity, equipment, tags, opening hours, closures.
-- ⬜ Validation rules for space documents.
+- ✅ Sites with address, time zone, floors and default opening hours.
+- ✅ Spaces: desk, open space, meeting room, coworking, phone booth. Capacity, price in credits per hour, equipment, features.
+- ✅ Opening hours per space and exceptional closures.
+- ✅ Validation of every space document in the security rules.
 
 ### 3. Bookings
 
-Owns `bookings` and `absences` (both proposed). Status: ⬜ not started (placeholder pages only).
+Owns `bookings` and `absences`. Screens: `/reserver`, `/mes-reservations`, `/admin/reservations`.
 
-- ⬜ Availability search by site, capacity, equipment and date.
-- ⬜ Book, change and cancel, with no double booking.
-- ⬜ My bookings and history, readable offline.
-- ⬜ Admin: all bookings, force release, move, absences.
-- ⬜ Cancel the future bookings of departed employees.
+- ✅ Availability search by site, date, time slot and number of people, with filters on type, capacity and equipment.
+- ✅ Booking with no double booking (checked in a transaction): desks and rooms are booked whole, open spaces and coworking seat by seat.
+- ✅ Rules: 30 minute slots, 8 hours maximum, opening hours, closures, 60 days ahead, no overlap for one user.
+- ✅ My bookings (upcoming and past), change and cancel, readable offline.
+- ✅ Absences: declaring one cancels and refunds the bookings inside it and blocks new ones.
+- ✅ Admin: all bookings by period, force release with a reason, move to another space or time.
+- 🟡 Not included: recurring bookings and waiting lists.
 
 ### 4. Notifications
 
-Owns `users/{uid}/notifications` and `users/{uid}/devices`. Status: ⬜ rules ready.
+Owns `users/{uid}/notifications`, `users/{uid}/devices` and the `mail` queue. Screen: `/notifications` (bell in the header).
 
-- ✅ Security rules, and notification preferences on the profile.
-- ⬜ Push notifications (FCM).
-- ⬜ Emails: confirmation, cancellation, reminder 24 h before, weekly digest.
-- ⬜ In-app inbox with read / unread.
-- ⬜ Messages sent in the user's language.
+- ✅ In-app inbox with read / unread, written in the user's language.
+- ✅ Sent for: booking confirmed, cancelled, moved, 24 h reminder, weekly digest, credits added, subscription renewed, incident updates.
+- 🟡 Push (FCM): code and device registration are in place, but FCM is not emulated, so it needs a real Firebase project with a VAPID key.
+- 🟡 Email: messages are written to the `mail` collection, which the Firebase "Trigger Email" extension sends. Install and configure the extension to send them.
 
 ### 5. Credits & Subscriptions
 
-Owns `plans`, `subscriptions`, `creditTransactions` (all proposed). Status: ⬜ not started.
+Owns `wallets`, `creditTransactions`, `plans`, `subscriptions`. Screens: `/credits`, `/admin/credits`.
 
-- ⬜ Prices and plans, subscriptions.
-- ⬜ Credit top-ups, balance and history.
-- ⬜ Charge on booking, refund on cancellation.
+- ✅ Balance and full history. Bookings are charged, cancellations and changes are refunded or charged the difference.
+- ✅ Plans: credit packs and monthly subscriptions, created and priced by an administrator.
+- ✅ Subscriptions renew every month (scheduled function) and can be cancelled.
+- ✅ Administrators adjust balances. Optional welcome credits for new accounts (`WELCOME_CREDITS`).
+- 🟡 Payment is simulated: connect a payment provider in `functions/src/credits/credits.ts` before charging real money.
 
 ### 6. Incidents & Equipment
 
-Owns `incidents` and `equipmentRequests` (both proposed). Status: ⬜ not started.
+Owns `incidents`, `equipmentRequests`. Screens: `/support`, `/admin/support`.
 
-- ⬜ Report an incident with photos (Storage rules to open).
-- ⬜ Equipment requests.
-- ⬜ Status tracking and admin handling.
+- ✅ Report an incident with up to 3 photos (Storage), optionally linked to a space.
+- ✅ Equipment requests (item, quantity, date needed).
+- ✅ Administrators set the status and answer; the requester is notified.
 
 ### 7. Analytics & Audit
 
-Owns `auditLogs` (and aggregates, proposed). Status: 🟡 write side done.
+Owns `auditLogs`. Screens: `/admin/statistiques`, `/admin/audit`.
 
-- ✅ Audit entries written for user creation, role changes and account disabling. Read access is admin-only.
-- ⬜ Audit log viewer with filters.
-- ⬜ Dashboards: occupancy, usage.
-- ⬜ CSV exports.
+- ✅ Audit entries for bookings, absences, credits, subscriptions and user changes (role, organization, deletion).
+- ✅ Audit log viewer with an action filter.
+- ✅ Statistics over a period: bookings, cancellations, hours booked, credits spent, active users, per day, per space type, most booked spaces.
+- ✅ CSV export of the bookings of the period.
 
 ### Shared platform (not owned by a single module)
 
@@ -228,6 +228,7 @@ After a new `npm run build`, reload the page: the "A new version is available" m
 | `npm run lint` | ESLint |
 | `npm test` | Unit tests (shared and functions) |
 | `npm run test:rules` | Firestore and Storage rules tests (starts the emulators, needs Java 21) |
+| `npm run test:api` | Cloud Functions tests: boots the emulators, seeds the demo data and calls the functions as real users |
 | `npm run icons` | Regenerate the PWA icons (`apps/web/public/icons`) |
 
 ## Translations

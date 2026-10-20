@@ -13,7 +13,33 @@
     "signOut": "Déconnexion",
     "skipToContent": "Aller au contenu principal",
     "comingSoon": "Cette fonctionnalité arrive bientôt <muted>(phase {phase})</muted>.",
-    "availableInPhase": "Bientôt disponible (phase {phase})"
+    "availableInPhase": "Bientôt disponible (phase {phase})",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "add": "Ajouter",
+    "create": "Créer",
+    "search": "Rechercher",
+    "all": "Tous",
+    "none": "Aucun",
+    "name": "Nom",
+    "description": "Description",
+    "status": "Statut",
+    "date": "Date",
+    "from": "De",
+    "to": "À",
+    "optional": "(facultatif)",
+    "saved": "Enregistré.",
+    "deleted": "Supprimé.",
+    "free": "Gratuit",
+    "download": "Télécharger",
+    "needsConnection": "Cette action nécessite une connexion.",
+    "credits_one": "{count} crédit",
+    "credits_other": "{count} crédits",
+    "people_one": "{count} personne",
+    "people_other": "{count} personnes"
   },
   "language": {
     "label": "Langue",
@@ -43,7 +69,12 @@
     "reserve": "Réserver",
     "myBookings": "Mes réservations",
     "profile": "Profil",
-    "admin": "Administration"
+    "admin": "Administration",
+    "team": "Mon équipe",
+    "credits": "Crédits",
+    "support": "Assistance",
+    "notifications": "Notifications",
+    "myBookingsShort": "Réservations"
   },
   "home": {
     "greeting": "Bonjour",
@@ -53,18 +84,80 @@
       "reserve": "Trouvez un poste, une salle ou un espace de coworking disponible.",
       "myBookings": "Consultez, modifiez ou annulez vos réservations, même hors ligne.",
       "profile": "Vos informations et vos préférences de notification.",
-      "admin": "Espaces, utilisateurs, modération et statistiques."
+      "admin": "Espaces, utilisateurs, modération et statistiques.",
+      "team": "Les réservations des membres de votre équipe.",
+      "credits": "Votre solde, vos formules et l'historique.",
+      "support": "Signalez un problème ou demandez du matériel."
     },
     "upcoming": "Prochaines réservations",
-    "noUpcoming": "Aucune réservation à venir."
+    "noUpcoming": "Aucune réservation à venir.",
+    "nextBooking": "Prochaine réservation",
+    "noNextBooking": "Rien de prévu",
+    "balance": "Solde de crédits",
+    "unread_one": "{count} notification non lue",
+    "unread_other": "{count} notifications non lues",
+    "allRead": "Tout est lu",
+    "seeAll": "Tout voir"
   },
   "reserve": {
     "title": "Réserver un espace",
-    "description": "Recherchez par site, capacité, équipement et date."
+    "description": "Recherchez par site, capacité, équipement et date.",
+    "site": "Site",
+    "date": "Date",
+    "start": "Début",
+    "end": "Fin",
+    "category": "Type d'espace",
+    "anyCategory": "Tous les types",
+    "minCapacity": "Capacité minimale",
+    "equipment": "Équipement",
+    "attendees": "Nombre de personnes",
+    "search": "Voir les disponibilités",
+    "searching": "Recherche…",
+    "resultsCount_one": "{count} espace disponible sur ce créneau",
+    "resultsCount_other": "{count} espaces disponibles sur ce créneau",
+    "noResults": "Aucun espace ne correspond à votre recherche.",
+    "noSites": "Aucun site n'est encore configuré.",
+    "firstSearch": "Choisissez un créneau pour voir les espaces disponibles.",
+    "available": "Disponible",
+    "unavailable": "Indisponible",
+    "showUnavailable": "Afficher aussi les espaces indisponibles",
+    "book": "Réserver",
+    "floor": "Étage {floor}",
+    "capacity_one": "{count} place",
+    "capacity_other": "{count} places",
+    "perHour": "{count} cr./h",
+    "cost": "Coût",
+    "confirmTitle": "Confirmer la réservation",
+    "balance": "Votre solde : {balance} crédits",
+    "booked": "Réservation confirmée.",
+    "offline": "La recherche de disponibilités nécessite une connexion.",
+    "busy": "Déjà réservé : {slots}"
   },
   "myBookings": {
     "title": "Mes réservations",
-    "description": "Vos réservations à venir et votre historique."
+    "description": "Vos réservations à venir et votre historique.",
+    "upcoming": "À venir",
+    "past": "Passées",
+    "emptyUpcoming": "Aucune réservation à venir.",
+    "emptyPast": "Aucune réservation passée.",
+    "cancelledBadge": "Annulée",
+    "change": "Modifier",
+    "cancel": "Annuler",
+    "changeTitle": "Modifier la réservation",
+    "cancelTitle": "Annuler la réservation",
+    "cancelConfirm": "Les crédits de cette réservation seront remboursés.",
+    "cancelled": "Réservation annulée.",
+    "updated": "Réservation modifiée.",
+    "absences": "Absences",
+    "absencesHint": "Pendant une absence, vos réservations sont annulées et vous ne pouvez plus réserver.",
+    "declareAbsence": "Déclarer une absence",
+    "absenceFrom": "Premier jour",
+    "absenceTo": "Dernier jour",
+    "absenceNote": "Note",
+    "absenceDeclared_one": "Absence enregistrée. {count} réservation annulée.",
+    "absenceDeclared_other": "Absence enregistrée. {count} réservations annulées.",
+    "noAbsences": "Aucune absence déclarée.",
+    "absenceRemoved": "Absence supprimée."
   },
   "profile": {
     "title": "Mon profil",
@@ -94,7 +187,20 @@
     "saved": "Préférences enregistrées.",
     "savedOffline": "Enregistré localement, synchronisation au retour du réseau.",
     "privacy": "Données personnelles",
-    "privacyText": "L'export de vos données et la suppression de votre compte seront disponibles ici (phase 6)."
+    "privacyText": "Exportez vos données ou supprimez votre compte.",
+    "team": "Équipes",
+    "noTeam": "Aucune",
+    "push": {
+      "enable": "Activer sur cet appareil",
+      "enabled": "Notifications push activées sur cet appareil.",
+      "denied": "Permission refusée par le navigateur.",
+      "unavailable": "Les notifications push ne sont pas disponibles ici."
+    },
+    "export": "Exporter mes données",
+    "exportHint": "Télécharge un fichier JSON avec votre profil, vos réservations et vos crédits.",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteTitle": "Supprimer votre compte ?",
+    "deleteConfirm": "Cette action est définitive : vos réservations à venir seront annulées et vos données personnelles effacées."
   },
   "admin": {
     "title": "Administration",
@@ -102,27 +208,35 @@
     "sections": {
       "users": {
         "title": "Utilisateurs",
-        "text": "Rôles, comptes désactivés, synchronisation annuaire."
+        "text": "Rôles, équipes, comptes désactivés, synchronisation annuaire."
       },
       "spaces": {
-        "title": "Espaces",
-        "text": "Sites, étages, espaces, horaires et fermetures."
+        "title": "Sites et espaces",
+        "text": "Sites, étages, espaces, tarifs, horaires et fermetures."
       },
       "bookings": {
         "title": "Réservations",
-        "text": "Libération forcée, déplacement, absences."
+        "text": "Toutes les réservations : libération forcée, déplacement."
       },
       "credits": {
         "title": "Crédits et abonnements",
-        "text": "Tarifs, formules, recharges."
+        "text": "Formules, tarifs et ajustement des soldes."
       },
-      "reports": {
+      "organization": {
+        "title": "Organisation",
+        "text": "Départements et équipes."
+      },
+      "support": {
         "title": "Signalements et matériel",
         "text": "Incidents et demandes de matériel."
       },
-      "dashboards": {
-        "title": "Tableaux de bord",
-        "text": "Occupation, utilisation, exports, journal d'audit."
+      "statistics": {
+        "title": "Statistiques",
+        "text": "Occupation, utilisation et exports."
+      },
+      "audit": {
+        "title": "Journal d'audit",
+        "text": "Qui a fait quoi, et quand."
       }
     },
     "users": {
@@ -141,14 +255,181 @@
       "loadMore": "Charger plus",
       "roleChanged": "Rôle mis à jour pour {name} : {role}.",
       "syncDone_one": "Synchronisation terminée : {count} compte désactivé.",
-      "syncDone_other": "Synchronisation terminée : {count} comptes désactivés."
+      "syncDone_other": "Synchronisation terminée : {count} comptes désactivés.",
+      "department": "Département",
+      "teams": "Équipes",
+      "editOrg": "Modifier le département et les équipes",
+      "orgUpdated": "Organisation mise à jour.",
+      "noDepartment": "Aucun département",
+      "anonymize": "Supprimer le compte",
+      "anonymizeTitle": "Supprimer ce compte ?",
+      "anonymizeConfirm": "Les réservations à venir de {name} seront annulées et ses données personnelles effacées. Cette action est définitive.",
+      "anonymized": "Compte supprimé.",
+      "actions": "Actions"
+    },
+    "organization": {
+      "title": "Organisation",
+      "description": "Les départements et les équipes de l'entreprise.",
+      "departments": "Départements",
+      "teams": "Équipes",
+      "newDepartment": "Nouveau département",
+      "editDepartment": "Modifier le département",
+      "newTeam": "Nouvelle équipe",
+      "editTeam": "Modifier l'équipe",
+      "departmentName": "Nom du département",
+      "teamName": "Nom de l'équipe",
+      "department": "Département",
+      "managers": "Responsables",
+      "managersHint": "Les responsables voient les réservations de l'équipe. Seuls les managers et administrateurs sont proposés.",
+      "members_one": "{count} membre",
+      "members_other": "{count} membres",
+      "noDepartments": "Aucun département.",
+      "noTeams": "Aucune équipe.",
+      "confirmDelete": "Supprimer « {name} » ?"
+    },
+    "spaces": {
+      "title": "Sites et espaces",
+      "description": "Les sites, leurs horaires et les espaces réservables.",
+      "sites": "Sites",
+      "spaces": "Espaces",
+      "newSite": "Nouveau site",
+      "editSite": "Modifier le site",
+      "newSpace": "Nouvel espace",
+      "editSpace": "Modifier l'espace",
+      "siteName": "Nom du site",
+      "address": "Adresse",
+      "timeZone": "Fuseau horaire",
+      "floors": "Étages (un par ligne)",
+      "openingHours": "Horaires d'ouverture",
+      "closedDay": "Fermé",
+      "site": "Site",
+      "floor": "Étage",
+      "location": "Emplacement",
+      "category": "Type d'espace",
+      "capacity": "Capacité",
+      "creditsPerHour": "Crédits par heure",
+      "equipment": "Équipement",
+      "tags": "Caractéristiques",
+      "useSiteHours": "Reprendre les horaires du site",
+      "closures": "Fermetures exceptionnelles",
+      "addClosure": "Ajouter une fermeture",
+      "closureReason": "Motif",
+      "noSites": "Aucun site.",
+      "noSpaces": "Aucun espace.",
+      "allSites": "Tous les sites",
+      "confirmDelete": "Supprimer « {name} » ? Les réservations existantes sont conservées.",
+      "siteInUse": "Ce site contient encore des espaces : supprimez-les d'abord.",
+      "statusActive": "Actif",
+      "statusClosed": "Fermé"
+    },
+    "bookings": {
+      "title": "Réservations",
+      "description": "Toutes les réservations de l'organisation.",
+      "user": "Utilisateur",
+      "space": "Espace",
+      "slot": "Créneau",
+      "statusConfirmed": "Confirmée",
+      "statusCancelled": "Annulée",
+      "move": "Déplacer",
+      "moveTitle": "Déplacer la réservation",
+      "release": "Libérer",
+      "releaseTitle": "Libérer l'espace",
+      "reason": "Motif (communiqué à l'utilisateur)",
+      "moved": "Réservation déplacée.",
+      "released": "Réservation annulée.",
+      "empty": "Aucune réservation sur cette période."
+    },
+    "credits": {
+      "title": "Crédits et abonnements",
+      "description": "Les formules proposées et les soldes des utilisateurs.",
+      "plans": "Formules",
+      "newPlan": "Nouvelle formule",
+      "editPlan": "Modifier la formule",
+      "planName": "Nom",
+      "planKind": "Type",
+      "planCredits": "Crédits",
+      "planPrice": "Prix (€)",
+      "planActive": "Proposée aux utilisateurs",
+      "hidden": "Masquée",
+      "noPlans": "Aucune formule.",
+      "adjust": "Ajuster un solde",
+      "adjustUser": "Utilisateur",
+      "adjustAmount": "Montant (négatif pour retirer)",
+      "adjustLabel": "Motif",
+      "adjusted": "Solde ajusté.",
+      "confirmDelete": "Supprimer la formule « {name} » ?"
+    },
+    "support": {
+      "title": "Signalements et matériel",
+      "description": "Traitez les incidents et les demandes de matériel.",
+      "incidents": "Signalements",
+      "requests": "Demandes de matériel",
+      "from": "De {name}",
+      "note": "Réponse à l'utilisateur",
+      "updated": "Mis à jour.",
+      "noIncidents": "Aucun signalement.",
+      "noRequests": "Aucune demande."
+    },
+    "statistics": {
+      "title": "Statistiques",
+      "description": "L'occupation et l'utilisation des espaces.",
+      "bookings": "Réservations",
+      "cancelled": "Annulées",
+      "hours": "Heures réservées",
+      "creditsSpent": "Crédits dépensés",
+      "activeUsers": "Utilisateurs actifs",
+      "byDay": "Réservations par jour",
+      "byCategory": "Heures par type d'espace",
+      "topSpaces": "Espaces les plus réservés",
+      "export": "Exporter en CSV",
+      "noData": "Aucune réservation sur cette période.",
+      "hoursShort": "{count} h"
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "description": "L'historique des actions importantes.",
+      "action": "Action",
+      "allActions": "Toutes les actions",
+      "when": "Date",
+      "actor": "Auteur",
+      "target": "Cible",
+      "system": "Système",
+      "empty": "Aucune entrée.",
+      "actions": {
+        "booking": {
+          "created": "Réservation créée",
+          "updated": "Réservation modifiée",
+          "cancelled": "Réservation annulée"
+        },
+        "absence": {
+          "declared": "Absence déclarée"
+        },
+        "credits": {
+          "purchased": "Achat de crédits",
+          "adjusted": "Crédits ajustés"
+        },
+        "subscription": {
+          "cancelled": "Abonnement résilié"
+        },
+        "user": {
+          "created": "Compte créé",
+          "role_changed": "Rôle modifié",
+          "disabled": "Compte désactivé",
+          "org_changed": "Organisation modifiée",
+          "anonymized": "Compte supprimé"
+        }
+      }
     }
   },
   "login": {
     "title": "Connexion",
     "withGoogle": "Se connecter avec Google",
     "withSso": "Se connecter avec le SSO de l'entreprise",
-    "demoAccounts": "Comptes de démonstration (émulateurs)"
+    "demoAccounts": "Comptes de démonstration (émulateurs)",
+    "feature1": "Postes, salles de réunion et espaces de coworking",
+    "feature2": "Installable, et utilisable même hors ligne",
+    "feature3": "Rappels et notifications en temps réel",
+    "welcome": "Bienvenue"
   },
   "pwa": {
     "updateAvailable": "Nouvelle version disponible.",
@@ -192,6 +473,182 @@
     "noEmail": "Aucune adresse e-mail associée au compte.",
     "notInCompany": "Ce compte n'appartient pas à l'entreprise.",
     "cannotDemoteSelf": "Vous ne pouvez pas retirer votre propre rôle d'administrateur.",
-    "userNotFound": "Utilisateur introuvable."
+    "userNotFound": "Utilisateur introuvable.",
+    "invalidSlot": "Ce créneau n'est pas valide (30 min minimum, 8 h maximum, par tranches de 30 min).",
+    "spaceClosed": "Cet espace est fermé à cette date.",
+    "outsideHours": "Ce créneau est en dehors des horaires d'ouverture.",
+    "pastSlot": "Ce créneau est déjà passé.",
+    "tooFarAhead": "Vous ne pouvez pas réserver plus de 60 jours à l'avance.",
+    "slotTaken": "Cet espace n'est plus disponible sur ce créneau.",
+    "tooManyAttendees": "Le nombre de personnes dépasse la capacité de l'espace.",
+    "alreadyBooked": "Vous avez déjà une réservation sur ce créneau.",
+    "absent": "Vous êtes déclaré absent à cette date.",
+    "spaceNotFound": "Espace introuvable.",
+    "bookingNotFound": "Réservation introuvable.",
+    "bookingNotCancellable": "Cette réservation ne peut plus être modifiée ou annulée.",
+    "invalidDates": "Les dates ne sont pas valides.",
+    "notEnoughCredits": "Crédits insuffisants.",
+    "planNotFound": "Formule introuvable.",
+    "alreadySubscribed": "Vous avez déjà un abonnement actif.",
+    "subscriptionNotFound": "Abonnement introuvable."
+  },
+  "incidentStatus": {
+    "open": "Ouvert",
+    "in_progress": "En cours",
+    "resolved": "Résolu"
+  },
+  "equipmentStatus": {
+    "pending": "En attente",
+    "approved": "Approuvée",
+    "rejected": "Refusée"
+  },
+  "items": {
+    "screen": "Écran",
+    "keyboard": "Clavier",
+    "mouse": "Souris",
+    "headset": "Casque audio",
+    "webcam": "Webcam",
+    "adapter": "Adaptateur",
+    "chair": "Chaise de bureau"
+  },
+  "notify": {
+    "bookingConfirmed": {
+      "title": "Réservation confirmée",
+      "body": "{space} · {date} de {from} à {to}"
+    },
+    "bookingCancelled": {
+      "title": "Réservation annulée",
+      "body": "{space} · {date} de {from} à {to}"
+    },
+    "bookingCancelledByAdmin": {
+      "title": "Réservation annulée par un administrateur",
+      "body": "{space} · {date} de {from} à {to}. Motif : {reason}"
+    },
+    "bookingMoved": {
+      "title": "Réservation modifiée",
+      "body": "{space} · {date} de {from} à {to}"
+    },
+    "bookingReminder": {
+      "title": "Rappel de réservation",
+      "body": "{space} · {date} de {from} à {to}"
+    },
+    "weeklyDigest": {
+      "title": "Votre semaine",
+      "body_one": "Vous avez {count} réservation cette semaine.",
+      "body_other": "Vous avez {count} réservations cette semaine."
+    },
+    "creditsAdded": {
+      "title": "Crédits ajoutés",
+      "body_one": "{count} crédit a été ajouté à votre solde ({label}).",
+      "body_other": "{count} crédits ont été ajoutés à votre solde ({label})."
+    },
+    "subscriptionRenewed": {
+      "title": "Abonnement renouvelé",
+      "body_one": "{count} crédit ajouté ({label}).",
+      "body_other": "{count} crédits ajoutés ({label})."
+    },
+    "incidentReceived": {
+      "title": "Nouveau signalement",
+      "body": "{title}, par {name}"
+    },
+    "incidentUpdated": {
+      "title": "Signalement mis à jour",
+      "body": "« {title} » est maintenant : {status}"
+    },
+    "equipmentUpdated": {
+      "title": "Demande de matériel mise à jour",
+      "body": "Votre demande ({item}) est maintenant : {status}"
+    }
+  },
+  "weekdays": {
+    "mon": "Lundi",
+    "tue": "Mardi",
+    "wed": "Mercredi",
+    "thu": "Jeudi",
+    "fri": "Vendredi",
+    "sat": "Samedi",
+    "sun": "Dimanche"
+  },
+  "equipment": {
+    "screen": "Écran",
+    "dock": "Station d'accueil",
+    "whiteboard": "Tableau blanc",
+    "videoconference": "Visioconférence",
+    "projector": "Projecteur"
+  },
+  "tags": {
+    "quiet_zone": "Zone calme",
+    "window": "Près d'une fenêtre",
+    "standing_desk": "Bureau assis-debout",
+    "accessible": "Accessible PMR"
+  },
+  "team": {
+    "title": "Mon équipe",
+    "description": "Les réservations des membres de vos équipes.",
+    "noTeam": "Vous ne gérez aucune équipe pour le moment.",
+    "member": "Membre",
+    "bookings": "Réservations",
+    "noBooking": "Aucune réservation ce jour-là",
+    "team": "Équipe"
+  },
+  "credits": {
+    "title": "Crédits",
+    "description": "Votre solde, vos formules et l'historique des mouvements.",
+    "balance": "Solde actuel",
+    "plans": "Formules",
+    "noPlans": "Aucune formule n'est disponible pour le moment.",
+    "buy": "Acheter",
+    "subscribe": "S'abonner",
+    "kindPack": "Pack de crédits",
+    "kindSubscription": "Abonnement mensuel",
+    "perMonth": "par mois",
+    "subscription": "Votre abonnement",
+    "renewsOn": "Prochain renouvellement : {date}",
+    "cancelSubscription": "Résilier l'abonnement",
+    "subscriptionCancelled": "Abonnement résilié.",
+    "purchased_one": "Achat effectué : {count} crédit ajouté.",
+    "purchased_other": "Achat effectué : {count} crédits ajoutés.",
+    "simulated": "Le paiement est simulé dans cette version de l'application.",
+    "history": "Historique",
+    "noHistory": "Aucun mouvement pour le moment.",
+    "types": {
+      "purchase": "Achat",
+      "subscription": "Abonnement",
+      "booking": "Réservation",
+      "refund": "Remboursement",
+      "adjustment": "Ajustement"
+    }
+  },
+  "support": {
+    "title": "Assistance",
+    "description": "Signalez un problème ou demandez du matériel.",
+    "tabIncidents": "Signalements",
+    "tabEquipment": "Matériel",
+    "newIncident": "Signaler un problème",
+    "incidentTitle": "Titre",
+    "incidentDescription": "Description",
+    "incidentSpace": "Espace concerné",
+    "noSpace": "Aucun espace en particulier",
+    "photos": "Photos (3 maximum)",
+    "send": "Envoyer",
+    "sending": "Envoi…",
+    "incidentSent": "Signalement envoyé.",
+    "myIncidents": "Mes signalements",
+    "noIncidents": "Aucun signalement.",
+    "answer": "Réponse",
+    "newRequest": "Demander du matériel",
+    "item": "Matériel",
+    "quantity": "Quantité",
+    "neededOn": "Nécessaire le",
+    "comment": "Commentaire",
+    "requestSent": "Demande envoyée.",
+    "myRequests": "Mes demandes",
+    "noRequests": "Aucune demande."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Vos confirmations, rappels et alertes.",
+    "empty": "Aucune notification.",
+    "markAllRead": "Tout marquer comme lu"
   }
 }

@@ -11,12 +11,22 @@ import { auth, db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { appError } from "../lib/errors";
 import { secureCall } from "../lib/callable";
-import { ALLOWED_EMAIL_DOMAINS, BOOTSTRAP_ADMIN_EMAILS, csv } from "../lib/config";
+import { ALLOWED_EMAIL_DOMAINS, BOOTSTRAP_ADMIN_EMAILS, csv, WELCOME_CREDITS } from "../lib/config";
+import { readBalance, writeCredits } from "../lib/credits";
 
 export function isEmailAllowed(email: string, allowedDomains: string[]): boolean {
   if (allowedDomains.length === 0) return true;
   const domain = email.split("@")[1]?.toLowerCase();
   return !!domain && allowedDomains.includes(domain);
+}
+
+async function giveWelcomeCredits(uid: string): Promise<void> {
+  const amount = WELCOME_CREDITS.value();
+  if (amount <= 0) return;
+  await db.runTransaction(async (tx) => {
+    const balance = await readBalance(tx, uid);
+    writeCredits(tx, uid, balance, { amount, type: "adjustment", label: "Welcome" });
+  });
 }
 
 /**
@@ -73,6 +83,7 @@ export const bootstrapProfile = secureCall(
         createdAt: FieldValue.serverTimestamp(),
       };
       await ref.create(profile);
+      await giveWelcomeCredits(uid);
       await writeAudit({ actorId: uid, actorRole: role, action: "user.created", targetType: "user", targetId: uid });
     }
 

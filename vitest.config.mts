@@ -21,6 +21,17 @@ export default defineConfig({
       },
       {
         test: {
+          name: "api",
+          root: "./tests/api",
+          include: ["**/*.test.ts"],
+          environment: "node",
+          // The tests share the demo data and build on each other: run them in order.
+          fileParallelism: false,
+          testTimeout: 30_000,
+        },
+      },
+      {
+        test: {
           name: "rules",
           root: "./tests/rules",
           include: ["**/*.test.ts"],

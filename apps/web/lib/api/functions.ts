@@ -2,10 +2,24 @@ import { FirebaseError } from "firebase/app";
 import { FunctionsError, httpsCallable } from "firebase/functions";
 import {
   isErrorReason,
+  type AdjustCreditsInput,
+  type AnonymizeUserInput,
   type BootstrapProfileInput,
   type BootstrapProfileResult,
+  type CancelBookingInput,
+  type CancelSubscriptionInput,
+  type CreateBookingInput,
+  type DeclareAbsenceInput,
   type MessageKey,
+  type PurchasePlanInput,
+  type RemoveAbsenceInput,
+  type SearchSpacesInput,
   type SetUserRoleInput,
+  type SpaceSlotStatus,
+  type TeamBookingsInput,
+  type TeamBookingsResult,
+  type UpdateBookingInput,
+  type UpdateUserOrgInput,
 } from "@reservation/shared";
 import { getFirebase } from "@/lib/firebase/client";
 
@@ -19,10 +33,29 @@ function callable<I, O>(name: string) {
   };
 }
 
+type Empty = Record<string, never>;
+
 export const api = {
+  // Users
   bootstrapProfile: callable<BootstrapProfileInput, BootstrapProfileResult>("bootstrapProfile"),
   setUserRole: callable<SetUserRoleInput, { changed: boolean }>("setUserRole"),
-  runDirectorySyncNow: callable<Record<string, never>, { checked: number; disabled: string[] }>("runDirectorySyncNow"),
+  runDirectorySyncNow: callable<Empty, { checked: number; disabled: string[] }>("runDirectorySyncNow"),
+  updateUserOrg: callable<UpdateUserOrgInput, { updated: boolean }>("updateUserOrg"),
+  exportMyData: callable<Empty, Record<string, unknown>>("exportMyData"),
+  deleteMyAccount: callable<Empty, { deleted: boolean }>("deleteMyAccount"),
+  anonymizeUser: callable<AnonymizeUserInput, { deleted: boolean }>("anonymizeUser"),
+  // Bookings
+  searchSpaces: callable<SearchSpacesInput, SpaceSlotStatus[]>("searchSpaces"),
+  createBooking: callable<CreateBookingInput, { bookingId: string }>("createBooking"),
+  updateBooking: callable<UpdateBookingInput, { updated: boolean }>("updateBooking"),
+  cancelBooking: callable<CancelBookingInput, { cancelled: boolean }>("cancelBooking"),
+  declareAbsence: callable<DeclareAbsenceInput, { absenceId: string; cancelled: number }>("declareAbsence"),
+  removeAbsence: callable<RemoveAbsenceInput, { removed: boolean }>("removeAbsence"),
+  teamBookings: callable<TeamBookingsInput, TeamBookingsResult>("teamBookings"),
+  // Credits
+  purchasePlan: callable<PurchasePlanInput, { credits: number }>("purchasePlan"),
+  cancelSubscription: callable<CancelSubscriptionInput, { cancelled: boolean }>("cancelSubscription"),
+  adjustCredits: callable<AdjustCreditsInput, { adjusted: boolean }>("adjustCredits"),
 };
 
 const CODE_KEYS: Record<string, MessageKey> = {

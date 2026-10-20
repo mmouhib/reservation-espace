@@ -21,7 +21,26 @@ const PAGES_CACHE = "pages";
  * app shell opens offline even if it was never visited. They are still served
  * network-first when online.
  */
-const APP_ROUTES = ["/", "/connexion", "/reserver", "/mes-reservations", "/profil", "/admin", "/admin/utilisateurs"];
+const APP_ROUTES = [
+  "/",
+  "/connexion",
+  "/reserver",
+  "/mes-reservations",
+  "/equipe",
+  "/credits",
+  "/support",
+  "/notifications",
+  "/profil",
+  "/admin",
+  "/admin/utilisateurs",
+  "/admin/organisation",
+  "/admin/espaces",
+  "/admin/reservations",
+  "/admin/credits",
+  "/admin/support",
+  "/admin/statistiques",
+  "/admin/audit",
+];
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,

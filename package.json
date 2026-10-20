@@ -21,6 +21,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "test": "vitest run --project shared --project functions",
     "test:rules": "firebase emulators:exec --only firestore,storage \"vitest run --project rules\"",
+    "test:api": "npm run build -w functions && firebase emulators:exec --only auth,firestore,functions \"npm run seed && vitest run --project api\"",
     "test:e2e": "npm run test:e2e -w apps/web",
     "icons": "node scripts/generate-icons.mjs"
   },

@@ -30,17 +30,6 @@ export default defineConfig({
           testTimeout: 30_000,
         },
       },
-      {
-        test: {
-          name: "rules",
-          root: "./tests/rules",
-          include: ["**/*.test.ts"],
-          environment: "node",
-          // Rules tests share one emulator; run files sequentially to avoid clearFirestore races.
-          fileParallelism: false,
-          testTimeout: 20_000,
-        },
-      },
     ],
   },
 });

@@ -6,12 +6,12 @@ Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces.
 
 ## Modules and progress
 
-The app is split into **7 modules**. A module is a part of the app that owns its own Firestore collections (the "tables"),
-so each of the 7 developers can work on one module without touching the data of the others.
+The app is split into **8 modules**. A module is a part of the app that owns its own collections (the "tables"),
+so each developer can work on one module without touching the data of the others.
 
 Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
 
-| # | Module | Owns (Firestore collections) | Status |
+| # | Module | Owns (collections) | Status |
 |---|---|---|---|
 | 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | ✅ Done |
 | 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | ✅ Done |
@@ -20,6 +20,7 @@ Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
 | 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions` | 🟡 Payment is simulated |
 | 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` | ✅ Done |
 | 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` | ✅ Done |
+| 8 | [**Visitors**](#8-visitors) | `visits` (MongoDB, not Firestore) | ✅ Done |
 
 ### 1. Users
 
@@ -89,6 +90,20 @@ Owns `auditLogs`. Screens: `/admin/statistiques`, `/admin/audit`.
 - ✅ Audit log viewer with an action filter.
 - ✅ Statistics over a period: bookings, cancellations, hours booked, credits spent, active users, per day, per space type, most booked spaces.
 - ✅ CSV export of the bookings of the period.
+
+### 8. Visitors
+
+Owns `visits`. Screens: `/visiteurs`, `/admin/visiteurs`.
+
+- ✅ Invite an external guest to a site and a date; any employee can be a host.
+- ✅ Reception view of a day's expected guests, with check-in and check-out.
+- ✅ The host is notified in-app the moment their guest checks in.
+- ✅ Cancelling an invite before the visit, by the host or an administrator.
+- 🟡 Stored in **MongoDB**, the only module whose data isn't in Firestore. It's the first module built on the Mongo
+  stack being introduced for the rest of the app (see `functions/src/lib/mongo.ts`, `packages/shared/src/entities.ts`);
+  it still reads the Firestore `users`/`sites` collections for display names, since those modules haven't migrated yet.
+  No `firestore.rules` block or rules test exists for it — authorization is enforced entirely in the callables
+  (`functions/src/visitors/visits.ts`) via `secureCall`'s role check and ownership checks.
 
 ### Shared platform (not owned by a single module)
 

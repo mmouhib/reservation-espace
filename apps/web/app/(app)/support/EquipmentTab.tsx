@@ -1,21 +1,20 @@
 "use client";
 
-import { addDoc, collection, limit, orderBy, query, serverTimestamp, where, type Timestamp } from "firebase/firestore";
-import { useMemo, useState, type FormEvent } from "react";
-import { COL, REQUESTABLE_ITEMS, type EquipmentRequest, type RequestableItem } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import { REQUESTABLE_ITEMS, type RequestableItem } from "@reservation/shared";
 import { EquipmentStatusBadge } from "@/components/support/StatusBadges";
 import { Button } from "@/components/ui/Button";
 import { Card, EmptyState, Section } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection } from "@/lib/firebase/hooks";
 import { formatDate, nextWorkday } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export function EquipmentTab() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { t, locale } = useI18n();
   const flash = useFlash();
   const uid = user?.uid;
@@ -26,32 +25,19 @@ export function EquipmentTab() {
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const requestsQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.equipmentRequests), where("requesterId", "==", uid), orderBy("createdAt", "desc"), limit(50)) : null),
-    [uid],
-  );
-  const { data: requests } = useCollection<EquipmentRequest<Timestamp>>(requestsQuery);
+  const requestsQuery = useCallableQuery("listMyEquipmentRequests", api.listMyEquipmentRequests, {});
+  const requests = requestsQuery.data ?? [];
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!uid || !profile) return;
+    if (!uid) return;
     setBusy(true);
     try {
-      await addDoc(collection(getFirebase().db, COL.equipmentRequests), {
-        requesterId: uid,
-        requesterName: profile.displayName,
-        item,
-        quantity,
-        neededOn,
-        comment: comment.trim(),
-        status: "pending",
-        adminNote: "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      await api.createEquipmentRequest({ item, quantity, neededOn, comment: comment.trim() });
       flash.success("support.requestSent");
       setComment("");
       setQuantity(1);
+      requestsQuery.refetch();
     } catch (err) {
       flash.error(err);
     } finally {

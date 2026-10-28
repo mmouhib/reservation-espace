@@ -13,6 +13,7 @@ const SECTIONS = [
   { id: "bookings", href: "/admin/reservations", icon: "list" },
   { id: "credits", href: "/admin/credits", icon: "wallet" },
   { id: "support", href: "/admin/support", icon: "lifebuoy" },
+  { id: "visitors", href: "/admin/visiteurs", icon: "user-plus" },
   { id: "statistics", href: "/admin/statistiques", icon: "chart" },
   { id: "audit", href: "/admin/audit", icon: "clipboard" },
 ] as const satisfies readonly { id: string; href: string; icon: IconName }[];

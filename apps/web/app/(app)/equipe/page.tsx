@@ -1,41 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { formatMinutes, hasRole, type TeamBookingsResult } from "@reservation/shared";
+import { useState } from "react";
+import { formatMinutes, hasRole } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Badge } from "@/components/ui/Badge";
 import { Card, EmptyState } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
-import { useFlash } from "@/components/ui/Flash";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { todayLocal } from "@/lib/format";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 /** For managers: who in their teams has booked what on a given day. */
 export default function TeamPage() {
   const { role } = useAuth();
-  const { t } = useI18n();
-  const flash = useFlash();
+  const { t, locale } = useI18n();
+  const online = useOnlineStatus();
   const [date, setDate] = useState(todayLocal());
-  const [loaded, setLoaded] = useState<{ date: string; result: TeamBookingsResult } | null>(null);
   const allowed = role !== null && hasRole(role, "manager");
 
-  useEffect(() => {
-    if (!allowed) return;
-    let active = true;
-    api
-      .teamBookings({ date })
-      .then((result) => active && setLoaded({ date, result }))
-      .catch((err) => active && flash.error(err));
-    return () => {
-      active = false;
-    };
-  }, [allowed, date, flash]);
-
-  const result = loaded?.date === date ? loaded.result : null;
+  const team = useCallableQuery("teamBookings", api.teamBookings, allowed ? { date } : null, { pollMs: 30_000 });
+  const result = team.data;
 
   return (
     <>
@@ -51,8 +40,19 @@ export default function TeamPage() {
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value || todayLocal())} />
           </Field>
 
+          {result && team.fromCache && team.savedAt && (
+            <p className="text-sm text-amber-800">
+              {t("offline.staleSince", {
+                date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(team.savedAt),
+              })}
+            </p>
+          )}
           {!result ? (
-            <Spinner />
+            team.loading ? (
+              <Spinner />
+            ) : (
+              <EmptyState icon="users">{online ? t("errors.unavailable") : t("offline.notCached")}</EmptyState>
+            )
           ) : result.members.length === 0 ? (
             <EmptyState icon="users">{t("team.noTeam")}</EmptyState>
           ) : (

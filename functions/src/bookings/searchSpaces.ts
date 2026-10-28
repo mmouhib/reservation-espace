@@ -1,21 +1,15 @@
 import {
-  COL,
   isWithinRanges,
   bookingCost,
   findBookingProblem,
   nowIn,
   overlaps,
   searchSpacesInput,
-  type Absence,
-  type Booking,
-  type Site,
-  type Space,
   type SpaceSlotStatus,
 } from "@reservation/shared";
-import { db } from "../lib/admin";
 import { appError } from "../lib/errors";
 import { secureCall } from "../lib/callable";
-import { userAbsencesQuery, userDayQuery } from "./common";
+import { absences, bookings, sites, spaces, userAbsencesFilter, userDayFilter } from "./common";
 
 /**
  * Tells, for every space of a site, whether it can be booked on a given slot.
@@ -24,31 +18,29 @@ import { userAbsencesQuery, userDayQuery } from "./common";
 export const searchSpaces = secureCall(
   { name: "searchSpaces", schema: searchSpacesInput, rateLimit: { limit: 40, windowSec: 60 } },
   async ({ uid, data }): Promise<SpaceSlotStatus[]> => {
-    const siteSnap = await db.collection(COL.sites).doc(data.siteId).get();
-    if (!siteSnap.exists) throw appError("not-found", "spaceNotFound", "Site not found.");
-    const site = siteSnap.data() as Site;
+    const site = await (await sites()).findOne({ _id: data.siteId });
+    if (!site) throw appError("not-found", "spaceNotFound", "Site not found.");
 
-    const [spaces, dayBookings, myBookings, myAbsences] = await Promise.all([
-      db.collection(COL.spaces).where("siteId", "==", data.siteId).get(),
-      db.collection(COL.bookings).where("siteId", "==", data.siteId).where("date", "==", data.date).where("status", "==", "confirmed").get(),
-      userDayQuery(uid, data.date).get(),
-      userAbsencesQuery(uid).get(),
+    const [siteSpaces, dayBookings, myBookings, myAbsences] = await Promise.all([
+      (await spaces()).find({ siteId: data.siteId }).toArray(),
+      (await bookings()).find({ siteId: data.siteId, date: data.date, status: "confirmed" }).toArray(),
+      (await bookings()).find(userDayFilter(uid, data.date)).toArray(),
+      (await absences()).find(userAbsencesFilter(uid)).toArray(),
     ]);
 
     const slot = { from: data.from, to: data.to };
     const now = nowIn(site.timeZone);
-    const absent = isWithinRanges(data.date, myAbsences.docs.map((d) => d.data() as Absence));
-    const alreadyBooked = myBookings.docs.some((d) => overlaps(d.data() as Booking, slot));
+    const absent = isWithinRanges(data.date, myAbsences);
+    const alreadyBooked = myBookings.some((b) => overlaps(b, slot));
 
-    return spaces.docs.map((doc) => {
-      const space = doc.data() as Space;
-      const existing = dayBookings.docs.map((b) => ({ id: b.id, ...(b.data() as Booking) })).filter((b) => b.spaceId === doc.id);
+    return siteSpaces.map((space) => {
+      const existing = dayBookings.filter((b) => b.spaceId === space._id);
       const problem =
         findBookingProblem({ space, date: data.date, slot, attendees: data.attendees ?? 1, existing, now }) ??
         (absent ? "absent" : alreadyBooked ? "alreadyBooked" : null);
 
       return {
-        spaceId: doc.id,
+        spaceId: space._id,
         available: problem === null,
         reason: problem,
         cost: bookingCost(space.creditsPerHour ?? 0, slot),

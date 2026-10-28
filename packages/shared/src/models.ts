@@ -173,6 +173,7 @@ export const NOTIFICATION_TYPES = [
   "incidentReceived",
   "incidentUpdated",
   "equipmentUpdated",
+  "visitorArrived",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -275,3 +276,11 @@ export interface EquipmentRequest<T = unknown> {
   createdAt: T;
   updatedAt: T;
 }
+
+// ---------- Visitors ----------
+// Unlike every entity above, this module was never on Firestore: it's stored
+// directly in MongoDB (see entities.ts's visitSchema), ahead of the users/bookings
+// slices it references by id.
+
+export const VISIT_STATUSES = ["expected", "checkedIn", "checkedOut", "cancelled"] as const;
+export type VisitStatus = (typeof VISIT_STATUSES)[number];

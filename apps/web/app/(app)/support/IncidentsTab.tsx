@@ -1,18 +1,18 @@
 "use client";
 
-import { addDoc, collection, limit, orderBy, query, serverTimestamp, where, type Timestamp } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
-import { useMemo, useState, type FormEvent } from "react";
-import { COL, type Incident, type Space } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import { COL } from "@reservation/shared";
 import { IncidentPhotos } from "@/components/support/IncidentPhotos";
 import { IncidentStatusBadge } from "@/components/support/StatusBadges";
 import { Button } from "@/components/ui/Button";
 import { Card, EmptyState, Section } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getFirebase } from "@/lib/firebase/client";
-import { useCollection } from "@/lib/firebase/hooks";
 import { formatDateTime } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -20,7 +20,7 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 const MAX_PHOTOS = 3;
 
 export function IncidentsTab() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { t, locale } = useI18n();
   const flash = useFlash();
   const online = useOnlineStatus();
@@ -32,45 +32,36 @@ export function IncidentsTab() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const spacesQuery = useMemo(() => query(collection(getFirebase().db, COL.spaces), orderBy("name")), []);
-  const incidentsQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.incidents), where("reporterId", "==", uid), orderBy("createdAt", "desc"), limit(50)) : null),
-    [uid],
-  );
-  const { data: spaces } = useCollection<Space<Timestamp>>(spacesQuery);
-  const { data: incidents } = useCollection<Incident<Timestamp>>(incidentsQuery);
+  const spacesQuery = useCallableQuery("listSpaces", api.listSpaces, {});
+  const spaces = [...(spacesQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const incidentsQuery = useCallableQuery("listMyIncidents", api.listMyIncidents, {});
+  const incidents = incidentsQuery.data ?? [];
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!uid || !profile) return;
+    if (!uid) return;
     setBusy(true);
     try {
-      const { db, storage } = getFirebase();
+      // Photos are uploaded first; the server checks that each path is under incidents/{uid}/.
+      const { storage } = getFirebase();
       const photoPaths: string[] = [];
       for (const file of photos) {
         const path = `${COL.incidents}/${uid}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
         await uploadBytes(ref(storage, path), file);
         photoPaths.push(path);
       }
-      const space = spaces.find((s) => s.id === spaceId);
-      await addDoc(collection(db, COL.incidents), {
-        reporterId: uid,
-        reporterName: profile.displayName,
-        spaceId: space?.id ?? null,
-        spaceName: space?.name ?? null,
+      await api.createIncident({
         title: title.trim(),
         description: description.trim(),
+        spaceId: spaceId || null,
         photoPaths,
-        status: "open",
-        adminNote: "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
       flash.success("support.incidentSent");
       setTitle("");
       setDescription("");
       setSpaceId("");
       setPhotos([]);
+      incidentsQuery.refetch();
     } catch (err) {
       flash.error(err);
     } finally {

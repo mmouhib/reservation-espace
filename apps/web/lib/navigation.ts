@@ -23,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/equipe", labelKey: "nav.team", descriptionKey: "home.shortcuts.team", icon: "users", minRole: "manager", mobile: false },
   { href: "/credits", labelKey: "nav.credits", descriptionKey: "home.shortcuts.credits", icon: "wallet", minRole: "user", mobile: true },
   { href: "/support", labelKey: "nav.support", descriptionKey: "home.shortcuts.support", icon: "lifebuoy", minRole: "user", mobile: false },
+  { href: "/visiteurs", labelKey: "nav.visitors", descriptionKey: "home.shortcuts.visitors", icon: "user-plus", minRole: "user", mobile: false },
   { href: "/profil", labelKey: "nav.profile", descriptionKey: "home.shortcuts.profile", icon: "user", minRole: "user", mobile: true },
   { href: "/admin", labelKey: "nav.admin", descriptionKey: "home.shortcuts.admin", icon: "shield", minRole: "admin", mobile: false },
 ];

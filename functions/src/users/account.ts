@@ -1,46 +1,52 @@
-import { FieldValue, type DocumentData, type Query } from "firebase-admin/firestore";
-import { COL, anonymizeUserInput, emptyInput, type Role } from "@reservation/shared";
+import type { Db, Document, Filter } from "mongodb";
+import { COL, anonymizeUserInput, emptyInput, type Role, type UserProfile } from "@reservation/shared";
 import { cancelUpcomingBookings } from "../bookings/cancelBooking";
-import { auth, db } from "../lib/admin";
+import { auth } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
+import { cancelActiveSubscriptionsForUser, getWallet, listCreditTransactions, listSubscriptionsForUser } from "../lib/credits";
 import { appError } from "../lib/errors";
+import { getDb } from "../lib/mongo";
 
 const ANONYMOUS_NAME = "[deleted user]";
 
-/** Plain JSON for a Firestore document (timestamps become ISO strings). */
-function toPlain(data: DocumentData): DocumentData {
-  return JSON.parse(JSON.stringify(data, (_key, value) => (value && typeof value.toDate === "function" ? value.toDate().toISOString() : value)));
+type UserDoc = UserProfile<Date> & { _id: string };
+type TeamDoc = { _id: string; memberIds: string[]; managerIds: string[] };
+
+/** Plain JSON for a Mongo document (dates become ISO strings) and its `_id` exposed as `id`. */
+function toPlain(data: Document): Record<string, unknown> {
+  const { _id, ...rest } = data;
+  return { id: _id, ...JSON.parse(JSON.stringify(rest)) };
 }
 
-async function documents(query: Query) {
-  return (await query.get()).docs.map((d) => ({ id: d.id, ...toPlain(d.data()) }));
+async function documents(db: Db, collection: string, filter: Filter<Document>) {
+  return (await db.collection(collection).find(filter).toArray()).map(toPlain);
 }
 
 /** Everything the app stores about the signed-in user (GDPR data export). */
 export const exportMyData = secureCall(
   { name: "exportMyData", schema: emptyInput, rateLimit: { limit: 5, windowSec: 60 } },
   async ({ uid }) => {
-    const userRef = db.collection(COL.users).doc(uid);
+    const db = await getDb();
     const [profile, wallet, bookings, absences, transactions, subscriptions, incidents, equipmentRequests, notifications] = await Promise.all([
-      userRef.get(),
-      db.collection(COL.wallets).doc(uid).get(),
-      documents(db.collection(COL.bookings).where("userId", "==", uid)),
-      documents(db.collection(COL.absences).where("userId", "==", uid)),
-      documents(db.collection(COL.creditTransactions).where("userId", "==", uid)),
-      documents(db.collection(COL.subscriptions).where("userId", "==", uid)),
-      documents(db.collection(COL.incidents).where("reporterId", "==", uid)),
-      documents(db.collection(COL.equipmentRequests).where("requesterId", "==", uid)),
-      documents(userRef.collection(COL.notifications)),
+      db.collection<UserDoc>(COL.users).findOne({ _id: uid }),
+      getWallet(uid),
+      documents(db, COL.bookings, { userId: uid }),
+      documents(db, COL.absences, { userId: uid }),
+      listCreditTransactions(uid, Number.MAX_SAFE_INTEGER),
+      listSubscriptionsForUser(uid),
+      documents(db, COL.incidents, { reporterId: uid }),
+      documents(db, COL.equipmentRequests, { requesterId: uid }),
+      documents(db, COL.notifications, { userId: uid }),
     ]);
     return {
       exportedAt: new Date().toISOString(),
-      profile: toPlain(profile.data() ?? {}),
-      wallet: toPlain(wallet.data() ?? {}),
+      profile: JSON.parse(JSON.stringify(profile ?? {})),
+      wallet: JSON.parse(JSON.stringify(wallet ?? {})),
       bookings,
       absences,
-      creditTransactions: transactions,
-      subscriptions,
+      creditTransactions: JSON.parse(JSON.stringify(transactions)),
+      subscriptions: JSON.parse(JSON.stringify(subscriptions)),
       incidents,
       equipmentRequests,
       notifications,
@@ -49,11 +55,8 @@ export const exportMyData = secureCall(
 );
 
 /** Replaces the person's name by a placeholder in the records that are kept (history, statistics). */
-async function anonymizeNames(collection: string, userField: string, nameField: string, uid: string): Promise<void> {
-  const writer = db.bulkWriter();
-  const snap = await db.collection(collection).where(userField, "==", uid).get();
-  for (const doc of snap.docs) void writer.update(doc.ref, { [nameField]: ANONYMOUS_NAME });
-  await writer.close();
+async function anonymizeNames(db: Db, collection: string, userField: string, nameField: string, uid: string): Promise<void> {
+  await db.collection(collection).updateMany({ [userField]: uid }, { $set: { [nameField]: ANONYMOUS_NAME } });
 }
 
 /**
@@ -62,37 +65,37 @@ async function anonymizeNames(collection: string, userField: string, nameField: 
  * history are kept without the name.
  */
 async function anonymizeAccount(uid: string, actor: { uid: string; role: Role }): Promise<void> {
-  const userRef = db.collection(COL.users).doc(uid);
-  if (!(await userRef.get()).exists) throw appError("not-found", "userNotFound", "User not found.");
+  const db = await getDb();
+  const users = db.collection<UserDoc>(COL.users);
+  if (!(await users.findOne({ _id: uid }))) throw appError("not-found", "userNotFound", "User not found.");
 
   await cancelUpcomingBookings(uid, { uid: actor.uid, role: "system" }, "account_deleted");
 
-  const writer = db.bulkWriter();
-  for (const collection of [COL.notifications, COL.devices]) {
-    for (const doc of (await userRef.collection(collection).get()).docs) void writer.delete(doc.ref);
-  }
-  for (const doc of (await db.collection(COL.subscriptions).where("userId", "==", uid).where("status", "==", "active").get()).docs) {
-    void writer.update(doc.ref, { status: "cancelled", cancelledAt: FieldValue.serverTimestamp() });
-  }
-  for (const doc of (await db.collection(COL.teams).where("memberIds", "array-contains", uid).get()).docs) {
-    void writer.update(doc.ref, { memberIds: FieldValue.arrayRemove(uid), managerIds: FieldValue.arrayRemove(uid) });
-  }
-  void writer.update(userRef, {
-    email: `${uid}@anonymized.invalid`,
-    displayName: ANONYMOUS_NAME,
-    photoURL: null,
-    departmentId: null,
-    teamIds: [],
-    defaultSiteId: null,
-    status: "anonymized",
-    notificationPrefs: { email: false, push: false, weeklyDigest: false },
-  });
-  await writer.close();
+  await cancelActiveSubscriptionsForUser(uid);
 
-  await anonymizeNames(COL.bookings, "userId", "userName", uid);
-  await anonymizeNames(COL.absences, "userId", "userName", uid);
-  await anonymizeNames(COL.incidents, "reporterId", "reporterName", uid);
-  await anonymizeNames(COL.equipmentRequests, "requesterId", "requesterName", uid);
+  await db.collection(COL.notifications).deleteMany({ userId: uid });
+  await db.collection(COL.devices).deleteMany({ userId: uid });
+  await db.collection<TeamDoc>(COL.teams).updateMany({ memberIds: uid }, { $pull: { memberIds: uid, managerIds: uid } });
+  await users.updateOne(
+    { _id: uid },
+    {
+      $set: {
+        email: `${uid}@anonymized.invalid`,
+        displayName: ANONYMOUS_NAME,
+        photoURL: null,
+        departmentId: null,
+        teamIds: [],
+        defaultSiteId: null,
+        status: "anonymized",
+        notificationPrefs: { email: false, push: false, weeklyDigest: false },
+      },
+    },
+  );
+
+  await anonymizeNames(db, COL.bookings, "userId", "userName", uid);
+  await anonymizeNames(db, COL.absences, "userId", "userName", uid);
+  await anonymizeNames(db, COL.incidents, "reporterId", "reporterName", uid);
+  await anonymizeNames(db, COL.equipmentRequests, "requesterId", "requesterName", uid);
 
   await auth.deleteUser(uid).catch(() => undefined);
   await writeAudit({ actorId: actor.uid, actorRole: actor.role, action: "user.anonymized", targetType: "user", targetId: uid });

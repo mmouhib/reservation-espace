@@ -12,15 +12,15 @@ import {
   type AuthProvider as FirebaseAuthProvider,
   type User,
 } from "firebase/auth";
-import { clearIndexedDbPersistence, doc, onSnapshot, terminate, type Timestamp } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { COL, isMessageKey, isRole, type MessageKey, type Role, type UserProfile } from "@reservation/shared";
+import { isMessageKey, isRole, type MessageKey, type Role, type UserSummary } from "@reservation/shared";
+import { clearCallableCache, readCached, writeCached } from "@/lib/api/cache";
 import { api, errorKey } from "@/lib/api/functions";
 import { getFirebase, USE_EMULATORS } from "@/lib/firebase/client";
 import { getLocale } from "@/lib/i18n/I18nProvider";
 
-export type Profile = UserProfile<Timestamp> & { id: string };
+export type Profile = UserSummary;
 
 type Status = "loading" | "signed-out" | "signed-in";
 
@@ -51,6 +51,8 @@ function ssoProvider(): FirebaseAuthProvider {
 const BOOTSTRAP_KEY = "bootstrapped:";
 // Survives the reload done by signOut so the sign-in page can say why the session ended.
 const SIGN_OUT_REASON_KEY = "signOutReason";
+/** Profile refresh interval while signed in (also refreshed on focus, visibility change and reconnect). */
+const PROFILE_POLL_MS = 60_000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>("loading");
@@ -62,17 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshedFor = useRef<number | null>(null);
 
   const signOut = useCallback(async (reason?: MessageKey) => {
-    const { auth, db } = getFirebase();
+    const { auth } = getFirebase();
     if (reason) sessionStorage.setItem(SIGN_OUT_REASON_KEY, reason);
     await firebaseSignOut(auth);
-    // Remove cached Firestore data (bookings, profile) from shared devices.
-    try {
-      await terminate(db);
-      await clearIndexedDbPersistence(db);
-    } catch (err) {
-      console.warn("Could not clear Firestore cache", err);
-    }
-    // Full reload on purpose: the terminated Firestore instance cannot be reused.
+    // Remove cached callable responses (including the profile) from shared devices.
+    await clearCallableCache();
+    // Full reload on purpose: it resets all in-memory state.
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.assign("/connexion");
   }, []);
@@ -123,21 +120,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Profile document (served from the offline cache when there is no network).
+  // Profile (one-shot reads through getMyProfile). Refreshed on focus, visibility change,
+  // reconnect and on an interval. The last copy stays on the device for offline use.
   const uid = user?.uid;
   useEffect(() => {
     if (!uid) return;
-    const { db } = getFirebase();
-    return onSnapshot(
-      doc(db, COL.users, uid),
-      (snap) => setProfile(snap.exists() ? { id: snap.id, ...(snap.data() as UserProfile<Timestamp>) } : null),
-      (err) => console.warn("Profile listener error", err),
-    );
+    let cancelled = false;
+    const key = `${uid}:getMyProfile`;
+
+    const refresh = async () => {
+      if (document.visibilityState !== "visible" || !navigator.onLine) return;
+      try {
+        let next = await api.getMyProfile({});
+        if (next === null) {
+          // Profile not created yet: bootstrap it, then read it again.
+          await api.bootstrapProfile({ locale: getLocale() }).catch((err) => console.warn("Profile bootstrap failed", err));
+          next = await api.getMyProfile({});
+        }
+        if (cancelled) return;
+        setProfile(next);
+        if (next) void writeCached(key, next);
+      } catch (err) {
+        console.warn("Profile refresh failed", err);
+      }
+    };
+
+    void readCached<Profile>(key).then((cached) => {
+      if (!cancelled && cached) setProfile((prev) => prev ?? cached.data);
+    });
+    void refresh();
+    const timer = setInterval(() => void refresh(), PROFILE_POLL_MS);
+    const onWake = () => void refresh();
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
+    window.addEventListener("online", onWake);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
+      window.removeEventListener("online", onWake);
+    };
   }, [uid]);
 
   // Refresh the ID token when a Function changed our claims (e.g. an admin changed our role).
   useEffect(() => {
-    const changedAt = profile?.claimsUpdatedAt?.toMillis();
+    const changedAt = profile?.claimsUpdatedAt ? Date.parse(profile.claimsUpdatedAt) : 0;
     if (!user || !changedAt || changedAt <= tokenIssuedAt || refreshedFor.current === changedAt) return;
     refreshedFor.current = changedAt;
     void user.getIdToken(true);

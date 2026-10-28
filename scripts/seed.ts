@@ -1,6 +1,6 @@
 /**
- * Seeds the Firebase emulators with sample sites, spaces, departments, teams and users.
- * Idempotent: re-running updates the same documents.
+ * Seeds the Firebase Auth emulator and MongoDB with sample sites, spaces, departments, teams and users.
+ * Idempotent: re-running replaces the same documents (bulkWrite upserts keyed by _id).
  *
  *   npm run emulators   (in another terminal)
  *   npm run seed
@@ -9,7 +9,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
+import { MongoClient, type AnyBulkWriteOperation, type Document } from "mongodb";
 import {
   COL,
   DEMO_ACCOUNTS,
@@ -32,20 +32,24 @@ import {
 
 const envFile = resolve(import.meta.dirname, "../apps/web/.env.local");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
+const functionsEnvFile = resolve(import.meta.dirname, "../functions/.env.local");
+if (existsSync(functionsEnvFile)) process.loadEnvFile(functionsEnvFile);
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "demo-reservation-espace";
 const password = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
 if (!password || password.length < 6) {
   throw new Error("Set NEXT_PUBLIC_DEMO_PASSWORD (6+ characters) in apps/web/.env.local");
 }
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) throw new Error("Set MONGODB_URI in functions/.env.local");
 
-// Always target the emulators: the Admin SDK honours these variables and never reaches production.
-process.env.FIRESTORE_EMULATOR_HOST ??= "127.0.0.1:8080";
+// Always target the Auth emulator: the Admin SDK honours this variable and never reaches production.
 process.env.FIREBASE_AUTH_EMULATOR_HOST ??= "127.0.0.1:9099";
 
 initializeApp({ projectId });
-const db = getFirestore();
 const auth = getAuth();
+const mongo = new MongoClient(mongoUri);
+const mdb = mongo.db(process.env.MONGODB_DB_NAME || undefined);
 
 const OFFICE_HOURS: OpeningHours = {
   mon: [{ from: 480, to: 1140 }],
@@ -199,14 +203,23 @@ async function upsertAuthUser(u: SeedUser) {
 
 async function main() {
   console.log(`Seeding emulators for project ${projectId}…`);
-  const batch = db.batch();
-  const now = FieldValue.serverTimestamp();
+  await mongo.connect();
+  const now = new Date();
 
-  for (const [id, d] of Object.entries(DEPARTMENTS)) batch.set(db.collection(COL.departments).doc(id), d);
-  for (const [id, t] of Object.entries(TEAMS)) batch.set(db.collection(COL.teams).doc(id), t);
-  for (const [id, s] of Object.entries(SITES)) batch.set(db.collection(COL.sites).doc(id), s);
+  // One bulkWrite per collection: replaceOne upserts keyed by _id, so reruns are idempotent.
+  type SeedDoc = { _id: string } & Document;
+  const writes = new Map<string, AnyBulkWriteOperation<SeedDoc>[]>();
+  const stage = (collection: string, id: string, doc: object) => {
+    const ops = writes.get(collection) ?? [];
+    ops.push({ replaceOne: { filter: { _id: id }, replacement: { _id: id, ...doc }, upsert: true } });
+    writes.set(collection, ops);
+  };
+
+  for (const [id, d] of Object.entries(DEPARTMENTS)) stage(COL.departments, id, d);
+  for (const [id, t] of Object.entries(TEAMS)) stage(COL.teams, id, t);
+  for (const [id, s] of Object.entries(SITES)) stage(COL.sites, id, s);
   for (const [id, s] of SPACES) {
-    const space: Space<FieldValue> = {
+    const space: Space<Date> = {
       ...s,
       creditsPerHour: CREDITS_PER_HOUR[s.category],
       openingHours: SITES[s.siteId]!.defaultOpeningHours,
@@ -215,14 +228,14 @@ async function main() {
       createdAt: now,
       updatedAt: now,
     };
-    batch.set(db.collection(COL.spaces).doc(id), space);
+    stage(COL.spaces, id, space);
   }
-  batch.set(db.collection("config").doc("directoryStub"), { departedEmails: [DEPARTED.email] });
+  stage("config", "directoryStub", { departedEmails: [DEPARTED.email] });
 
   const users: SeedUser[] = [...DEMO_ACCOUNTS, ...COLLEAGUES, DEPARTED];
   for (const u of users) {
     await upsertAuthUser(u);
-    const profile: UserProfile<FieldValue> = {
+    const profile: UserProfile<Date> = {
       email: u.email,
       displayName: u.displayName,
       photoURL: null,
@@ -237,18 +250,27 @@ async function main() {
       lastLoginAt: null,
       createdAt: now,
     };
-    batch.set(db.collection(COL.users).doc(u.uid), profile);
+    stage(COL.users, u.uid, profile);
   }
 
 
   // ---------- Credits, plans, bookings and support requests ----------
-  for (const [id, plan] of Object.entries(PLANS)) batch.set(db.collection(COL.plans).doc(id), plan);
+  // wallets/creditTransactions/plans/subscriptions live in MongoDB (see functions/src/lib/credits.ts).
+  // Deterministic string _ids (matching the old Firestore doc-id convention) keep reruns idempotent.
+  const mongoOps: Promise<unknown>[] = [];
+  for (const [id, plan] of Object.entries(PLANS)) {
+    mongoOps.push(mdb.collection(COL.plans).replaceOne({ _id: id }, { _id: id, ...plan }, { upsert: true }));
+  }
 
   const balances = new Map<string, number>();
   const credit = (uid: string, amount: number, type: string, label: string, id: string, bookingId?: string) => {
     const balanceAfter = (balances.get(uid) ?? 0) + amount;
     balances.set(uid, balanceAfter);
-    batch.set(db.collection(COL.creditTransactions).doc(id), { userId: uid, type, amount, balanceAfter, label, bookingId: bookingId ?? null, createdAt: now });
+    mongoOps.push(
+      mdb
+        .collection(COL.creditTransactions)
+        .replaceOne({ _id: id }, { _id: id, userId: uid, type, amount, balanceAfter, label, bookingId: bookingId ?? null, createdAt: now }, { upsert: true }),
+    );
   };
   for (const u of users) {
     if (u.uid === DEPARTED.uid) continue;
@@ -269,7 +291,7 @@ async function main() {
     bookingCount += 1;
     const id = `seed-booking-${bookingCount}`;
     const cost = bookingCost(CREDITS_PER_HOUR[space.category], { from, to });
-    const booking: Booking<FieldValue | Timestamp> = {
+    const booking: Booking<Date> = {
       userId: user.uid,
       userName: user.displayName,
       teamIds: user.teamIds,
@@ -280,7 +302,7 @@ async function main() {
       from,
       to,
       attendees,
-      startsAt: Timestamp.fromDate(zonedTimeToUtc(date, from, SITES[space.siteId]!.timeZone)),
+      startsAt: zonedTimeToUtc(date, from, SITES[space.siteId]!.timeZone),
       status: "confirmed",
       credits: cost,
       cancelledBy: null,
@@ -289,7 +311,7 @@ async function main() {
       createdAt: now,
       updatedAt: now,
     };
-    batch.set(db.collection(COL.bookings).doc(id), booking);
+    stage(COL.bookings, id, booking);
     if (cost > 0) credit(user.uid, -cost, "booking", space.name, `seed-booking-tx-${bookingCount}`, id);
   };
 
@@ -305,21 +327,30 @@ async function main() {
   book(COLLEAGUES[3]!, "paris-open-2", tomorrow, 13 * 60, 17 * 60);
   book(COLLEAGUES[4]!, "paris-salle-louvre", tomorrow, 14 * 60, 16 * 60, 6);
 
-  batch.set(db.collection(COL.subscriptions).doc("seed-subscription-1"), {
-    userId: demoManager.uid,
-    planId: "monthly-20",
-    planName: PLANS["monthly-20"]!.name,
-    credits: 20,
-    status: "active",
-    nextRenewalAt: Timestamp.fromDate(new Date(Date.now() + 25 * 86_400_000)),
-    createdAt: now,
-    cancelledAt: null,
-  });
+  mongoOps.push(
+    mdb.collection(COL.subscriptions).replaceOne(
+      { _id: "seed-subscription-1" },
+      {
+        _id: "seed-subscription-1",
+        userId: demoManager.uid,
+        planId: "monthly-20",
+        planName: PLANS["monthly-20"]!.name,
+        credits: 20,
+        status: "active",
+        nextRenewalAt: new Date(Date.now() + 25 * 86_400_000),
+        createdAt: now,
+        cancelledAt: null,
+      },
+      { upsert: true },
+    ),
+  );
   credit(demoManager.uid, 20, "subscription", PLANS["monthly-20"]!.name, "seed-subscription-tx-1");
 
-  for (const [uid, balance] of balances) batch.set(db.collection(COL.wallets).doc(uid), { balance, updatedAt: now });
+  for (const [uid, balance] of balances) {
+    mongoOps.push(mdb.collection(COL.wallets).replaceOne({ _id: uid }, { _id: uid, balance, updatedAt: now }, { upsert: true }));
+  }
 
-  batch.set(db.collection(COL.absences).doc("seed-absence-1"), {
+  stage(COL.absences, "seed-absence-1", {
     userId: COLLEAGUES[5]!.uid,
     userName: COLLEAGUES[5]!.displayName,
     from: workday(8),
@@ -328,8 +359,9 @@ async function main() {
     createdAt: now,
   });
 
-  const inbox = db.collection(COL.users).doc(demoUser.uid).collection(COL.notifications);
-  batch.set(inbox.doc("seed-notification-1"), {
+  // Notifications were users/{uid}/notifications on Firestore; now a top-level collection keyed by userId.
+  stage(COL.notifications, "seed-notification-1", {
+    userId: demoUser.uid,
     type: "bookingConfirmed",
     title: "Réservation confirmée",
     body: "Poste 1A-01 · de 09:00 à 17:00",
@@ -337,7 +369,8 @@ async function main() {
     readAt: null,
     createdAt: now,
   });
-  batch.set(inbox.doc("seed-notification-2"), {
+  stage(COL.notifications, "seed-notification-2", {
+    userId: demoUser.uid,
     type: "creditsAdded",
     title: "Crédits ajoutés",
     body: "30 crédits ont été ajoutés à votre solde (Crédits de bienvenue).",
@@ -346,7 +379,7 @@ async function main() {
     createdAt: now,
   });
 
-  batch.set(db.collection(COL.incidents).doc("seed-incident-1"), {
+  stage(COL.incidents, "seed-incident-1", {
     reporterId: demoUser.uid,
     reporterName: demoUser.displayName,
     spaceId: "paris-1A-03",
@@ -359,7 +392,7 @@ async function main() {
     createdAt: now,
     updatedAt: now,
   });
-  batch.set(db.collection(COL.incidents).doc("seed-incident-2"), {
+  stage(COL.incidents, "seed-incident-2", {
     reporterId: COLLEAGUES[0]!.uid,
     reporterName: COLLEAGUES[0]!.displayName,
     spaceId: "paris-salle-louvre",
@@ -372,7 +405,7 @@ async function main() {
     createdAt: now,
     updatedAt: now,
   });
-  batch.set(db.collection(COL.equipmentRequests).doc("seed-request-1"), {
+  stage(COL.equipmentRequests, "seed-request-1", {
     requesterId: demoUser.uid,
     requesterName: demoUser.displayName,
     item: "mouse",
@@ -385,7 +418,10 @@ async function main() {
     updatedAt: now,
   });
 
-  await batch.commit();
+  await Promise.all([
+    ...mongoOps,
+    ...[...writes].map(([collection, ops]) => mdb.collection<SeedDoc>(collection).bulkWrite(ops)),
+  ]);
   console.log(
     `✓ ${Object.keys(SITES).length} sites, ${SPACES.length} spaces, ${Object.keys(DEPARTMENTS).length} departments, ` +
       `${Object.keys(TEAMS).length} team, ${users.length} users, ${bookingCount} bookings, ${Object.keys(PLANS).length} plans`,
@@ -394,7 +430,9 @@ async function main() {
   console.log("Password: NEXT_PUBLIC_DEMO_PASSWORD from apps/web/.env.local");
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => void mongo.close());

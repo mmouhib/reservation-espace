@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { hasRole } from "@reservation/shared";
+import { ChatBot } from "@/components/ai/ChatBot";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OfflineBanner } from "@/components/pwa/OfflineBanner";
@@ -127,6 +128,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
         </ul>
       </nav>
+
+      <ChatBot />
     </div>
   );
 }

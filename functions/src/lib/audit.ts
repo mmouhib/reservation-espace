@@ -1,6 +1,8 @@
-import { FieldValue, type Transaction } from "firebase-admin/firestore";
-import { COL, type Role } from "@reservation/shared";
-import { db } from "./admin";
+import type { ClientSession } from "mongodb";
+import { ObjectId } from "mongodb";
+import type { z } from "zod";
+import { COL, auditLogSchema, type Role } from "@reservation/shared";
+import { getDb } from "./mongo";
 
 export interface AuditEntry {
   actorId: string;
@@ -11,10 +13,16 @@ export interface AuditEntry {
   details?: Record<string, unknown>;
 }
 
-/** Appends an immutable audit log entry. Pass a transaction to write it atomically with the audited change. */
-export async function writeAudit(entry: AuditEntry, tx?: Transaction): Promise<void> {
-  const ref = db.collection(COL.auditLogs).doc();
-  const data = { ...entry, details: entry.details ?? null, createdAt: FieldValue.serverTimestamp() };
-  if (tx) tx.create(ref, data);
-  else await ref.create(data);
+type AuditDoc = z.infer<typeof auditLogSchema>;
+
+/** Appends an immutable audit log entry. Pass a session to write it atomically with the audited change. */
+export async function writeAudit(entry: AuditEntry, session?: ClientSession): Promise<void> {
+  const db = await getDb();
+  const doc: AuditDoc = {
+    _id: new ObjectId().toHexString(),
+    ...entry,
+    details: entry.details ?? null,
+    createdAt: new Date(),
+  };
+  await db.collection<AuditDoc>(COL.auditLogs).insertOne(doc, { session });
 }

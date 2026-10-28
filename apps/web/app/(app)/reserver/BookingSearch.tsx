@@ -1,19 +1,17 @@
 "use client";
 
-import { collection, doc, orderBy, query, where, type Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
-  COL,
   EQUIPMENT,
   SPACE_CATEGORIES,
+  addDays,
   formatMinutes,
+  isErrorReason,
+  type ErrorReason,
   type SearchSpacesInput,
-  type Site,
-  type Space,
   type SpaceCategory,
   type SpaceSlotStatus,
-  type Wallet,
 } from "@reservation/shared";
 import { SpaceCard } from "@/components/spaces/SpaceCard";
 import { Button } from "@/components/ui/Button";
@@ -24,12 +22,16 @@ import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { TimeSelect } from "@/components/ui/TimeSelect";
 import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, useDocument } from "@/lib/firebase/hooks";
-import { formatDate, nextWorkday } from "@/lib/format";
+import { formatDate, nextWorkday, todayLocal } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+
+const DEFAULT_FROM = 9 * 60;
+const DEFAULT_TO = 17 * 60;
+/** Refusal reasons that apply to every space at once, unlike e.g. `slotTaken`. */
+const USER_REASONS: ReadonlySet<string> = new Set(["alreadyBooked", "absent", "pastSlot", "tooFarAhead", "invalidSlot"]);
 
 /** Search form, availability results and the confirmation step of a booking. */
 export function BookingSearch() {
@@ -37,14 +39,18 @@ export function BookingSearch() {
   const flash = useFlash();
   const online = useOnlineStatus();
   const { t, locale } = useI18n();
-  const { profile, user } = useAuth();
-  const uid = user?.uid;
+  const { profile } = useAuth();
 
   // Search form
   const [siteChoice, setSiteChoice] = useState("");
-  const [date, setDate] = useState(nextWorkday());
-  const [from, setFrom] = useState(9 * 60);
-  const [to, setTo] = useState(17 * 60);
+  const [from, setFrom] = useState(DEFAULT_FROM);
+  const [to, setTo] = useState(DEFAULT_TO);
+  // Once today's default slot is over, searching today can only return unavailable spaces.
+  const [date, setDate] = useState(() => {
+    const now = new Date();
+    const pastDefaultSlot = now.getHours() * 60 + now.getMinutes() >= DEFAULT_TO;
+    return nextWorkday(pastDefaultSlot ? addDays(todayLocal(), 1) : todayLocal());
+  });
   const [people, setPeople] = useState(1);
   // Filters applied to the results
   const [category, setCategory] = useState<SpaceCategory | "all">("all");
@@ -57,18 +63,14 @@ export function BookingSearch() {
   const [choice, setChoice] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
 
-  const sitesQuery = useMemo(() => query(collection(getFirebase().db, COL.sites), orderBy("name")), []);
-  const { data: sites, loading: loadingSites } = useCollection<Site>(sitesQuery);
+  const sitesQuery = useCallableQuery("listSites", api.listSites, {});
+  const sites = [...(sitesQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const loadingSites = sitesQuery.loading;
   const siteId = siteChoice || (sites.some((s) => s.id === profile?.defaultSiteId) ? profile!.defaultSiteId! : (sites[0]?.id ?? ""));
   const site = sites.find((s) => s.id === siteId);
 
-  const spacesQuery = useMemo(
-    () => (siteId ? query(collection(getFirebase().db, COL.spaces), where("siteId", "==", siteId)) : null),
-    [siteId],
-  );
-  const { data: spaces } = useCollection<Space<Timestamp>>(spacesQuery);
-  const walletRef = useMemo(() => (uid ? doc(getFirebase().db, COL.wallets, uid) : null), [uid]);
-  const { data: wallet } = useDocument<Wallet>(walletRef);
+  const spaces = useCallableQuery("listSpaces", api.listSpaces, siteId ? { siteId } : null).data ?? [];
+  const wallet = useCallableQuery("getMyWallet", api.getMyWallet, {}, { pollMs: 30_000 }).data;
 
   async function runSearch(params: SearchSpacesInput) {
     setSearching(true);
@@ -110,6 +112,11 @@ export function BookingSearch() {
     .filter((s) => s.capacity >= minCapacity)
     .filter((s) => equipment.every((e) => s.equipment.includes(e)));
   const availableCount = matching.filter((s) => results?.statuses.get(s.id)?.available).length;
+  // When nothing is bookable because of the user or the slot (not a particular space), say why.
+  const userReason =
+    availableCount === 0
+      ? (matching.map((s) => results?.statuses.get(s.id)?.reason).find((r): r is ErrorReason => isErrorReason(r) && USER_REASONS.has(r)) ?? null)
+      : null;
   const shown = matching
     .filter((s) => showUnavailable || results?.statuses.get(s.id)?.available)
     .sort((a, b) => Number(results?.statuses.get(b.id)?.available) - Number(results?.statuses.get(a.id)?.available) || a.name.localeCompare(b.name));
@@ -196,7 +203,7 @@ export function BookingSearch() {
             {t("reserve.resultsCount", { count: availableCount })}
           </p>
           {shown.length === 0 ? (
-            <EmptyState icon="search">{t("reserve.noResults")}</EmptyState>
+            <EmptyState icon="search">{userReason ? t(`errors.${userReason}`) : t("reserve.noResults")}</EmptyState>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {shown.map((space) => (

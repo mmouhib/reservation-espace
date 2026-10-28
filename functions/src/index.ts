@@ -1,7 +1,5 @@
-import { setGlobalOptions } from "firebase-functions/v2";
-import { REGION } from "./lib/config";
-
-setGlobalOptions({ region: REGION, maxInstances: 10 });
+// Must stay the first import: it sets the global function options (see the file).
+import "./lib/globalOptions";
 
 // Users
 export { bootstrapProfile } from "./auth/bootstrapProfile";
@@ -23,6 +21,49 @@ export { sendBookingReminders, sendWeeklyDigests } from "./bookings/reminders";
 
 // Credits and subscriptions
 export { adjustCredits, cancelSubscription, purchasePlan, renewSubscriptions } from "./credits/credits";
+export { createPlan, deletePlan, listAllPlans, listPlans, updatePlan } from "./credits/plans";
+export { getMyCreditHistory, getMySubscription, getMyWallet } from "./credits/queries";
 
 // Incidents and equipment
-export { onEquipmentRequestUpdated, onIncidentCreated, onIncidentUpdated } from "./support/triggers";
+export { createIncident, listAllIncidents, listMyIncidents, updateIncidentStatus } from "./support/incidents";
+export {
+  createEquipmentRequest,
+  listAllEquipmentRequests,
+  listMyEquipmentRequests,
+  updateEquipmentRequestStatus,
+} from "./support/equipment";
+
+// Visitors (first module built directly on MongoDB)
+export { cancelVisit, checkInVisit, checkOutVisit, createVisit, getMyVisits, listVisitsForDay } from "./visitors/visits";
+
+// Read and admin API used by the web app (replaces direct Firestore reads and writes)
+export { getMyProfile, updateMyProfile, registerDevice } from "./api/profile";
+export {
+  listSites,
+  listSpaces,
+  listDepartments,
+  listMyTeams,
+  listTeams,
+  createSite,
+  updateSite,
+  deleteSite,
+  createSpace,
+  updateSpace,
+  deleteSpace,
+  createDepartment,
+  updateDepartment,
+  deleteDepartment,
+  createTeam,
+  updateTeam,
+  deleteTeam,
+} from "./api/reference";
+export { listMyBookings, listMyUpcomingBookings, listBookingsInRange } from "./api/bookings-read";
+export { listMyAbsences } from "./api/absences";
+export { listMyNotifications, markNotificationRead, markAllNotificationsRead } from "./api/notifications";
+export { listUsers } from "./api/admin-users";
+export { listAuditLogs } from "./api/audit";
+export { getBookingTotals, getBookingsPerDay, getHoursPerCategory, getTopSpaces } from "./api/stats";
+
+// AI assistant
+export { chatWithAssistant } from "./ai/chatWithAssistant";
+export { generatePlanDescription } from "./ai/generatePlanDescription";

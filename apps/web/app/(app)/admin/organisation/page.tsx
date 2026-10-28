@@ -1,8 +1,7 @@
 "use client";
 
-import { addDoc, collection, deleteDoc, doc, orderBy, query, updateDoc, where } from "firebase/firestore";
-import { useMemo, useState, type FormEvent } from "react";
-import { COL, type Department, type Team, type UserProfile } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import { type DepartmentSummary, type TeamSummary } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, Section } from "@/components/ui/Card";
@@ -10,37 +9,40 @@ import { Checkbox, Field, Input, Select } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, type WithId } from "@/lib/firebase/hooks";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useI18n } from "@/lib/i18n/I18nProvider";
-
-type DepartmentRow = WithId<Department>;
-type TeamRow = WithId<Team>;
 
 export default function OrganizationPage() {
   const { t } = useI18n();
   const flash = useFlash();
-  const { db } = getFirebase();
 
-  const departmentsQuery = useMemo(() => query(collection(getFirebase().db, COL.departments), orderBy("name")), []);
-  const teamsQuery = useMemo(() => query(collection(getFirebase().db, COL.teams), orderBy("name")), []);
-  const managersQuery = useMemo(() => query(collection(getFirebase().db, COL.users), where("role", "in", ["manager", "admin"])), []);
-  const { data: departments } = useCollection<Department>(departmentsQuery);
-  const { data: teams } = useCollection<Team>(teamsQuery);
-  const { data: managers } = useCollection<UserProfile>(managersQuery);
+  const departmentsQuery = useCallableQuery("listDepartments", api.listDepartments, {});
+  const teamsQuery = useCallableQuery("listTeams", api.listTeams, {});
+  const managersQuery = useCallableQuery("listUsers", api.listUsers, { roles: ["manager", "admin"], limit: 300 });
+  const departments: DepartmentSummary[] = departmentsQuery.data ?? [];
+  const teams: TeamSummary[] = teamsQuery.data ?? [];
+  const managers = managersQuery.data?.users ?? [];
 
   const [department, setDepartment] = useState<{ id: string | null; name: string } | null>(null);
   const [team, setTeam] = useState<{ id: string | null; name: string; departmentId: string; managerIds: string[] } | null>(null);
-  const [deleting, setDeleting] = useState<{ collection: string; id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState<{ kind: "department" | "team"; id: string; name: string } | null>(null);
+
+  function reload() {
+    departmentsQuery.refetch();
+    teamsQuery.refetch();
+  }
 
   async function saveDepartment(e: FormEvent) {
     e.preventDefault();
     if (!department) return;
     try {
-      if (department.id) await updateDoc(doc(db, COL.departments, department.id), { name: department.name.trim() });
-      else await addDoc(collection(db, COL.departments), { name: department.name.trim() });
+      const name = department.name.trim();
+      if (department.id) await api.updateDepartment({ departmentId: department.id, name });
+      else await api.createDepartment({ name });
       flash.success("common.saved");
       setDepartment(null);
+      reload();
     } catch (err) {
       flash.error(err);
     }
@@ -51,10 +53,11 @@ export default function OrganizationPage() {
     if (!team) return;
     const fields = { name: team.name.trim(), departmentId: team.departmentId, managerIds: team.managerIds };
     try {
-      if (team.id) await updateDoc(doc(db, COL.teams, team.id), fields);
-      else await addDoc(collection(db, COL.teams), { ...fields, memberIds: [] });
+      if (team.id) await api.updateTeam({ teamId: team.id, ...fields });
+      else await api.createTeam(fields);
       flash.success("common.saved");
       setTeam(null);
+      reload();
     } catch (err) {
       flash.error(err);
     }
@@ -63,9 +66,11 @@ export default function OrganizationPage() {
   async function remove() {
     if (!deleting) return;
     try {
-      await deleteDoc(doc(db, deleting.collection, deleting.id));
+      if (deleting.kind === "department") await api.deleteDepartment({ departmentId: deleting.id });
+      else await api.deleteTeam({ teamId: deleting.id });
       flash.success("common.deleted");
       setDeleting(null);
+      reload();
     } catch (err) {
       flash.error(err);
     }
@@ -90,14 +95,14 @@ export default function OrganizationPage() {
             <EmptyState icon="building">{t("admin.organization.noDepartments")}</EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {departments.map((d: DepartmentRow) => (
+              {departments.map((d) => (
                 <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="font-medium">{d.name}</span>
                   <span className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setDepartment({ id: d.id, name: d.name })}>
                       {t("common.edit")}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setDeleting({ collection: COL.departments, id: d.id, name: d.name })}>
+                    <Button size="sm" variant="ghost" onClick={() => setDeleting({ kind: "department", id: d.id, name: d.name })}>
                       {t("common.delete")}
                     </Button>
                   </span>
@@ -120,7 +125,7 @@ export default function OrganizationPage() {
             <EmptyState icon="users">{t("admin.organization.noTeams")}</EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {teams.map((tm: TeamRow) => (
+              {teams.map((tm) => (
                 <li key={tm.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
                     <span className="block font-medium">{tm.name}</span>
@@ -132,7 +137,7 @@ export default function OrganizationPage() {
                     <Button size="sm" variant="ghost" onClick={() => setTeam({ id: tm.id, name: tm.name, departmentId: tm.departmentId, managerIds: tm.managerIds })}>
                       {t("common.edit")}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setDeleting({ collection: COL.teams, id: tm.id, name: tm.name })}>
+                    <Button size="sm" variant="ghost" onClick={() => setDeleting({ kind: "team", id: tm.id, name: tm.name })}>
                       {t("common.delete")}
                     </Button>
                   </span>

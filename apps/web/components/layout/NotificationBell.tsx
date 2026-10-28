@@ -1,26 +1,18 @@
 "use client";
 
-import { collection, limit, query, where } from "firebase/firestore";
 import Link from "next/link";
-import { useMemo } from "react";
-import { COL, type AppNotification } from "@reservation/shared";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { Icon } from "@/components/ui/Icon";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection } from "@/lib/firebase/hooks";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+
+const UNREAD_INPUT = { unreadOnly: true, limit: 50 };
 
 /** The bell of the header, with the number of unread notifications. */
 export function NotificationBell() {
-  const { user } = useAuth();
   const { t } = useI18n();
-  const uid = user?.uid;
-
-  const unreadQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.users, uid, COL.notifications), where("readAt", "==", null), limit(50)) : null),
-    [uid],
-  );
-  const { data: unread } = useCollection<AppNotification>(unreadQuery);
+  const { data: unread } = useCallableQuery("listMyNotifications", api.listMyNotifications, UNREAD_INPUT);
+  const count = unread?.length ?? 0;
 
   return (
     <Link
@@ -29,9 +21,9 @@ export function NotificationBell() {
       className="relative flex size-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100"
     >
       <Icon name="bell" />
-      {unread.length > 0 && (
+      {count > 0 && (
         <span className="absolute right-1 top-1 flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold leading-5 text-white">
-          {unread.length > 9 ? "9+" : unread.length}
+          {count > 9 ? "9+" : count}
         </span>
       )}
     </Link>

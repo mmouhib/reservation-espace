@@ -1,20 +1,27 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
-import { addDays, nowIn, weekdayOf } from "@reservation/shared";
+import { MongoClient } from "mongodb";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { COL, addDays, nowIn, weekdayOf } from "@reservation/shared";
 
 /**
  * Calls the Cloud Functions as real users, against the emulators with the demo data
  * (see `npm run test:api`). Each test builds on the previous ones, like a user session.
  */
 
-const envFile = resolve(__dirname, "../../apps/web/.env.local");
-if (existsSync(envFile)) process.loadEnvFile(envFile);
+for (const file of ["../../apps/web/.env.local", "../../functions/.env.local"]) {
+  const envFile = resolve(__dirname, file);
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+}
 const password = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "";
 
-const FUNCTIONS = "http://127.0.0.1:5001/demo-reservation-espace/europe-west1";
-const AUTH = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo";
-const FIRESTORE = "http://127.0.0.1:8080/v1/projects/demo-reservation-espace/databases/(default)/documents";
+// Overridable so the suite can run on spare ports next to a running `npm run dev`.
+const FUNCTIONS_HOST = process.env.FUNCTIONS_EMULATOR_HOST ?? "127.0.0.1:5001";
+const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
+const FUNCTIONS = `http://${FUNCTIONS_HOST}/demo-reservation-espace/europe-west1`;
+const AUTH = `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo`;
+const mongo = new MongoClient(process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/reservation?replicaSet=rs0");
+afterAll(() => mongo.close());
 
 async function login(email: string): Promise<string> {
   const res = await fetch(AUTH, {
@@ -36,8 +43,8 @@ async function call(name: string, token: string | null, data: object = {}): Prom
 }
 
 async function balance(uid: string): Promise<number> {
-  const res = await fetch(`${FIRESTORE}/wallets/${uid}`, { headers: { Authorization: "Bearer owner" } });
-  return Number(((await res.json()) as any).fields.balance.integerValue);
+  const wallet = await mongo.db(process.env.MONGODB_DB_NAME || undefined).collection<{ _id: string; balance: number }>(COL.wallets).findOne({ _id: uid });
+  return wallet?.balance ?? 0;
 }
 
 /** The first date, from `fromDay` on, that falls on the given weekday. */

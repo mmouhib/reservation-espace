@@ -1,4 +1,3 @@
-import { FieldValue } from "firebase-admin/firestore";
 import {
   COL,
   DEFAULT_LOCALE,
@@ -7,12 +6,15 @@ import {
   type Role,
   type UserProfile,
 } from "@reservation/shared";
-import { auth, db } from "../lib/admin";
+import { auth } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { appError } from "../lib/errors";
 import { secureCall } from "../lib/callable";
 import { ALLOWED_EMAIL_DOMAINS, BOOTSTRAP_ADMIN_EMAILS, csv, WELCOME_CREDITS } from "../lib/config";
-import { readBalance, writeCredits } from "../lib/credits";
+import { applyCredit } from "../lib/credits";
+import { getDb } from "../lib/mongo";
+
+type UserDoc = UserProfile<Date> & { _id: string };
 
 export function isEmailAllowed(email: string, allowedDomains: string[]): boolean {
   if (allowedDomains.length === 0) return true;
@@ -23,15 +25,12 @@ export function isEmailAllowed(email: string, allowedDomains: string[]): boolean
 async function giveWelcomeCredits(uid: string): Promise<void> {
   const amount = WELCOME_CREDITS.value();
   if (amount <= 0) return;
-  await db.runTransaction(async (tx) => {
-    const balance = await readBalance(tx, uid);
-    writeCredits(tx, uid, balance, { amount, type: "adjustment", label: "Welcome" });
-  });
+  await applyCredit(uid, { amount, type: "adjustment", label: "Welcome" });
 }
 
 /**
  * Called by the client right after sign-in. Assigns the initial role claim
- * (which Firestore rules require for any access) and creates or refreshes the
+ * (which the callables require for any access) and creates or refreshes the
  * profile document. Replaces a blocking `beforeUserCreated` function, which
  * would require Identity Platform.
  */
@@ -45,12 +44,13 @@ export const bootstrapProfile = secureCall(
       throw appError("permission-denied", "notInCompany", "Email domain is not allowed.");
     }
 
-    const ref = db.collection(COL.users).doc(uid);
-    const snap = await ref.get();
+    const users = (await getDb()).collection<UserDoc>(COL.users);
+    const existing = await users.findOne({ _id: uid });
     const existingRole = user.customClaims?.role as Role | undefined;
 
     // The client's current language seeds the preference; afterwards the profile is the source of truth.
     const locale = data.locale ?? DEFAULT_LOCALE;
+    const now = new Date();
 
     let claimsChanged = false;
     let role: Role = existingRole ?? "user";
@@ -60,14 +60,20 @@ export const bootstrapProfile = secureCall(
       claimsChanged = true;
     }
 
-    if (snap.exists) {
-      await ref.update({
-        lastLoginAt: FieldValue.serverTimestamp(),
-        ...(snap.get("locale") ? {} : { locale }),
-        ...(claimsChanged ? { role, claimsUpdatedAt: FieldValue.serverTimestamp() } : {}),
-      });
+    if (existing) {
+      await users.updateOne(
+        { _id: uid },
+        {
+          $set: {
+            lastLoginAt: now,
+            ...(existing.locale ? {} : { locale }),
+            ...(claimsChanged ? { role, claimsUpdatedAt: now } : {}),
+          },
+        },
+      );
     } else {
-      const profile: UserProfile<FieldValue> = {
+      const profile: UserDoc = {
+        _id: uid,
         email,
         displayName: user.displayName ?? email.split("@")[0]!,
         photoURL: user.photoURL ?? null,
@@ -78,15 +84,15 @@ export const bootstrapProfile = secureCall(
         status: "active",
         notificationPrefs: { email: true, push: false, weeklyDigest: false },
         locale,
-        claimsUpdatedAt: FieldValue.serverTimestamp(),
-        lastLoginAt: FieldValue.serverTimestamp(),
-        createdAt: FieldValue.serverTimestamp(),
+        claimsUpdatedAt: now,
+        lastLoginAt: now,
+        createdAt: now,
       };
-      await ref.create(profile);
+      await users.insertOne(profile);
       await giveWelcomeCredits(uid);
       await writeAudit({ actorId: uid, actorRole: role, action: "user.created", targetType: "user", targetId: uid });
     }
 
-    return { created: !snap.exists, claimsChanged };
+    return { created: !existing, claimsChanged };
   },
 );

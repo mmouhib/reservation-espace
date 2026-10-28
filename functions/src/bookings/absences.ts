@@ -1,10 +1,10 @@
-import { FieldValue } from "firebase-admin/firestore";
-import { COL, declareAbsenceInput, removeAbsenceInput, type Absence, type UserProfile } from "@reservation/shared";
-import { db } from "../lib/admin";
+import { ObjectId } from "mongodb";
+import { declareAbsenceInput, removeAbsenceInput } from "@reservation/shared";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
 import { appError } from "../lib/errors";
 import { cancelUpcomingBookings } from "./cancelBooking";
+import { absences, users, type AbsenceDoc } from "./common";
 
 /** Declares that the user is away: their bookings in that period are cancelled and refunded. */
 export const declareAbsence = secureCall(
@@ -12,16 +12,18 @@ export const declareAbsence = secureCall(
   async ({ uid, role, data }) => {
     if (data.from > data.to) throw appError("invalid-argument", "invalidDates", "The start date is after the end date.");
 
-    const user = (await db.collection(COL.users).doc(uid).get()).data() as UserProfile | undefined;
-    const absence: Absence<FieldValue> = {
+    const user = await (await users()).findOne({ _id: uid });
+    const absenceId = new ObjectId().toHexString();
+    const absence: AbsenceDoc = {
+      _id: absenceId,
       userId: uid,
       userName: user?.displayName ?? "",
       from: data.from,
       to: data.to,
       note: data.note,
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: new Date(),
     };
-    const ref = await db.collection(COL.absences).add(absence);
+    await (await absences()).insertOne(absence);
 
     const cancelled = await cancelUpcomingBookings(uid, { uid, role: "system" }, "absence", { from: data.from, to: data.to });
     await writeAudit({
@@ -29,10 +31,10 @@ export const declareAbsence = secureCall(
       actorRole: role ?? "user",
       action: "absence.declared",
       targetType: "absence",
-      targetId: ref.id,
+      targetId: absenceId,
       details: { from: data.from, to: data.to, cancelledBookings: cancelled },
     });
-    return { absenceId: ref.id, cancelled };
+    return { absenceId, cancelled };
   },
 );
 
@@ -40,13 +42,13 @@ export const declareAbsence = secureCall(
 export const removeAbsence = secureCall(
   { name: "removeAbsence", schema: removeAbsenceInput, rateLimit: { limit: 20, windowSec: 60 } },
   async ({ uid, role, data }) => {
-    const ref = db.collection(COL.absences).doc(data.absenceId);
-    const snap = await ref.get();
-    if (!snap.exists) throw appError("not-found", "bookingNotFound", "Absence not found.");
-    if ((snap.data() as Absence).userId !== uid && role !== "admin") {
+    const col = await absences();
+    const absence = await col.findOne({ _id: data.absenceId });
+    if (!absence) throw appError("not-found", "bookingNotFound", "Absence not found.");
+    if (absence.userId !== uid && role !== "admin") {
       throw appError("permission-denied", "forbidden", "Not your absence.");
     }
-    await ref.delete();
+    await col.deleteOne({ _id: data.absenceId });
     return { removed: true };
   },
 );

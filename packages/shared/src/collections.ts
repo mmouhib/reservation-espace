@@ -17,5 +17,6 @@ export const COL = {
   incidents: "incidents",
   equipmentRequests: "equipmentRequests",
   mail: "mail", // read by the Firebase "Trigger Email" extension
-  rateLimits: "_rateLimits",
+  rateLimits: "_rateLimits", // MongoDB
+  visits: "visits", // MongoDB (new module, never on Firestore)
 } as const;

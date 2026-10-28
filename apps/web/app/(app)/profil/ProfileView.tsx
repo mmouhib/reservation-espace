@@ -1,8 +1,7 @@
 "use client";
 
-import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { COL, type Department, type MessageKey, type NotificationPrefs, type Team } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import type { MessageKey, NotificationPrefs } from "@reservation/shared";
 import { usePwa } from "@/components/pwa/PwaProvider";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Card";
@@ -11,41 +10,24 @@ import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { api, errorKey } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth, type Profile } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
 import { requestPushToken } from "@/lib/firebase/messaging";
-import { useCollection } from "@/lib/firebase/hooks";
 import { downloadFile } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const PREF_KEYS: (keyof NotificationPrefs)[] = ["email", "push", "weeklyDigest"];
 
-/** Department label, falling back to the id until loaded (or if the document is missing). */
-function DepartmentName({ id }: { id: string }) {
-  const [name, setName] = useState<string | null>(null);
-
-  useEffect(() => {
-    return onSnapshot(
-      doc(getFirebase().db, COL.departments, id),
-      (snap) => setName(snap.exists() ? (snap.data() as Department).name : null),
-      (err) => console.warn("Department listener error", err),
-    );
-  }, [id]);
-
-  return <>{name ?? id}</>;
-}
-
 export function ProfileView() {
   const { profile, role } = useAuth();
   const { canPromptInstall, promptInstall, isStandalone } = usePwa();
   const { t } = useI18n();
 
-  const teamsQuery = useMemo(
-    () => (profile ? query(collection(getFirebase().db, COL.teams), where("memberIds", "array-contains", profile.id)) : null),
-    [profile],
-  );
-  const { data: teams } = useCollection<Team>(teamsQuery);
+  const { data: teamsData } = useCallableQuery("listMyTeams", api.listMyTeams, {});
+  const { data: departmentsData } = useCallableQuery("listDepartments", api.listDepartments, {});
+  const teams = teamsData ?? [];
+  const departmentName = (id: string) => departmentsData?.find((d) => d.id === id)?.name ?? id;
 
   if (!profile) return <Spinner />;
 
@@ -58,7 +40,7 @@ export function ProfileView() {
           <dt className="text-slate-600">{t("profile.role")}</dt>
           <dd>{role ? t(`roles.${role}`) : "—"}</dd>
           <dt className="text-slate-600">{t("profile.department")}</dt>
-          <dd>{profile.departmentId ? <DepartmentName id={profile.departmentId} /> : "—"}</dd>
+          <dd>{profile.departmentId ? departmentName(profile.departmentId) : "—"}</dd>
           <dt className="text-slate-600">{t("profile.team")}</dt>
           <dd>{teams.length > 0 ? teams.map((team) => team.name).join(", ") : t("profile.noTeam")}</dd>
         </dl>
@@ -86,21 +68,16 @@ function PreferencesForm({ profile }: { profile: Profile }) {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setMessage(null);
-    const write = updateDoc(doc(getFirebase().db, COL.users, profile.id), {
-      displayName: displayName.trim(),
-      notificationPrefs: prefs,
-    });
+    // Profile changes go through the server, so they cannot be queued while offline.
+    if (!online) {
+      setMessage({ kind: "error", key: "errors.unavailable" });
+      return;
+    }
+    setSaving(true);
     try {
-      if (online) {
-        await write;
-        setMessage({ kind: "ok", key: "profile.saved" });
-      } else {
-        // Offline: Firestore queues the write and syncs it when the connection returns.
-        write.catch((err) => setMessage({ kind: "error", key: errorKey(err) }));
-        setMessage({ kind: "ok", key: "profile.savedOffline" });
-      }
+      await api.updateMyProfile({ displayName: displayName.trim(), notificationPrefs: prefs });
+      setMessage({ kind: "ok", key: "profile.saved" });
     } catch (err) {
       setMessage({ kind: "error", key: errorKey(err) });
     } finally {
@@ -108,7 +85,7 @@ function PreferencesForm({ profile }: { profile: Profile }) {
     }
   }
 
-  /** Asks the browser for permission and stores this device's push token on the profile. */
+  /** Asks the browser for permission and stores this device's push token on the server. */
   async function enablePush() {
     try {
       const token = await requestPushToken();
@@ -116,11 +93,10 @@ function PreferencesForm({ profile }: { profile: Profile }) {
         flash.failure(Notification.permission === "denied" ? "profile.push.denied" : "profile.push.unavailable");
         return;
       }
-      await setDoc(doc(getFirebase().db, COL.users, profile.id, COL.devices, token.slice(0, 40)), {
+      await api.registerDevice({
         fcmToken: token,
-        platform: navigator.platform,
+        platform: navigator.platform.slice(0, 100),
         userAgent: navigator.userAgent.slice(0, 200),
-        lastSeenAt: serverTimestamp(),
       });
       flash.success("profile.push.enabled");
     } catch (err) {

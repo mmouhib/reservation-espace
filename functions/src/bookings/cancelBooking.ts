@@ -15,8 +15,9 @@ export interface Actor {
 }
 
 /**
- * Cancels a booking and refunds its credits. Owners can cancel bookings that have
- * not started; administrators and the system can cancel any confirmed booking.
+ * Cancels a booking and refunds its credits, in one transaction: the booking is never
+ * left cancelled without its refund. Owners can cancel bookings that have not started;
+ * administrators and the system can cancel any confirmed booking.
  */
 export async function cancelBookingById(bookingId: string, actor: Actor, reason?: string): Promise<Booking<Date>> {
   const booking = await withTransaction(async (session) => {
@@ -35,14 +36,11 @@ export async function cancelBookingById(bookingId: string, actor: Actor, reason?
       { $set: { status: "cancelled", cancelledBy: actor.uid, cancelReason: reason ?? null, updatedAt: new Date() } },
       { session },
     );
+    if (booking.credits > 0) {
+      await applyCredit(booking.userId, { amount: booking.credits, type: "refund", label: booking.spaceName, bookingId }, session);
+    }
     return booking;
   });
-
-  // A refund can never fail the "not enough credits" check (it only adds), so this
-  // can safely run after the cancellation commits, same trade-off as the charge.
-  if (booking.credits > 0) {
-    await applyCredit(booking.userId, { amount: booking.credits, type: "refund", label: booking.spaceName, bookingId });
-  }
 
   await writeAudit({
     actorId: actor.uid,

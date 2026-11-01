@@ -15,12 +15,8 @@ import { withTransaction } from "./transaction";
 
 /**
  * Credits are kept in `wallets/{uid}` (Mongo `_id` = uid); every change is also
- * recorded in `creditTransactions`. Unlike the Firestore-era version, this is no
- * longer composable inside an external (Firestore) transaction — booking-triggered
- * charges/refunds call this *after* their Firestore transaction commits (see
- * createBooking/cancelBooking/updateBooking), which is a deliberate, accepted
- * trade-off: the booking write and the credit write are each atomic on their own
- * database, but not atomic with each other.
+ * recorded in `creditTransactions`. Booking code passes its `session` to applyCredit,
+ * so the charge or refund commits (or fails) together with the booking change.
  */
 
 type WalletDoc = Wallet<Date> & { _id: string };

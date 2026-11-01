@@ -11,19 +11,19 @@ import {
 } from "@reservation/shared";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
-import { applyCredit, getBalance } from "../lib/credits";
+import { applyCredit } from "../lib/credits";
 import { appError } from "../lib/errors";
+import { lockForUpdate, spaceDayLock, userDayLock } from "../lib/locks";
 import { notifyUser } from "../lib/notify";
 import { withTransaction } from "../lib/transaction";
 import { absences, bookings, loadSpace, spaceDayFilter, toBookedSlot, userAbsencesFilter, userDayFilter, users, type BookingDoc } from "./common";
 
 /**
- * Books a space for the signed-in user, charging credits. The checks and the booking
- * insert run in one Mongo transaction; the charge is a separate operation applied right
- * after it commits (credits live in Mongo, see functions/src/lib/credits.ts). The
- * balance is read inside the transaction to reject "not enough credits" early; the
- * authoritative check happens in `applyCredit`, and if that rare race still fails,
- * the just-created booking is deleted to avoid an unpaid "ghost" booking.
+ * Books a space for the signed-in user, charging credits. The checks, the booking and the
+ * charge all happen in one Mongo transaction, so a booking is never left unpaid and a charge
+ * is never left without its booking. The space and the user are locked for the day first
+ * (see lib/locks.ts): without it, two people booking the same desk at the same moment would
+ * both pass the checks and both be confirmed.
  */
 export const createBooking = secureCall(
   { name: "createBooking", schema: createBookingInput, rateLimit: { limit: 20, windowSec: 60 } },
@@ -31,7 +31,8 @@ export const createBooking = secureCall(
     const slot = { from: data.from, to: data.to };
     const bookingId = new ObjectId().toHexString();
 
-    const { space, cost } = await withTransaction(async (session) => {
+    const space = await withTransaction(async (session) => {
+      await lockForUpdate(session, spaceDayLock(data.spaceId, data.date), userDayLock(uid, data.date));
       const { space, site } = await loadSpace(session, data.spaceId);
       const user = await (await users()).findOne({ _id: uid }, { session });
       const sameSpace = await (await bookings()).find(spaceDayFilter(data.spaceId, data.date), { session }).toArray();
@@ -55,8 +56,6 @@ export const createBooking = secureCall(
       }
 
       const cost = bookingCost(space.creditsPerHour ?? 0, slot);
-      if (cost > 0 && (await getBalance(uid, session)) < cost) throw appError("failed-precondition", "notEnoughCredits", "Not enough credits.");
-
       const now = new Date();
       const booking: BookingDoc = {
         _id: bookingId,
@@ -80,17 +79,10 @@ export const createBooking = secureCall(
         updatedAt: now,
       };
       await (await bookings()).insertOne(booking, { session });
-      return { space, cost };
+      // Throws notEnoughCredits, which cancels the whole transaction, booking included.
+      if (cost > 0) await applyCredit(uid, { amount: -cost, type: "booking", label: space.name, bookingId }, session);
+      return space;
     });
-
-    if (cost > 0) {
-      try {
-        await applyCredit(uid, { amount: -cost, type: "booking", label: space.name, bookingId });
-      } catch (err) {
-        await (await bookings()).deleteOne({ _id: bookingId });
-        throw err;
-      }
-    }
 
     await writeAudit({
       actorId: uid,

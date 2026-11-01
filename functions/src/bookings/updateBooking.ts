@@ -12,6 +12,7 @@ import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
 import { applyCredit } from "../lib/credits";
 import { appError } from "../lib/errors";
+import { lockForUpdate, spaceDayLock, userDayLock } from "../lib/locks";
 import { notifyUser } from "../lib/notify";
 import { withTransaction } from "../lib/transaction";
 import {
@@ -23,16 +24,14 @@ import {
   toBookedSlot,
   userAbsencesFilter,
   userDayFilter,
-  type BookingDoc,
 } from "./common";
 
 /**
  * Changes the date, time or number of people of a booking. Administrators can also
- * move it to another space. The credits are adjusted to the new price: the booking
- * update is one Mongo transaction, and the credit difference is a separate operation
- * applied right after it commits (see functions/src/lib/credits.ts). If that charge
- * fails (not enough credits for a more expensive slot), the booking is reverted to its
- * previous fields rather than left changed-but-unpaid.
+ * move it to another space. The credits are adjusted to the new price in the same Mongo
+ * transaction as the change, so a more expensive slot the user cannot pay for is refused
+ * as a whole. The target space and the owner are locked for the day first (see lib/locks.ts),
+ * so two changes cannot both take the last place.
  */
 export const updateBooking = secureCall(
   { name: "updateBooking", schema: updateBookingInput, rateLimit: { limit: 20, windowSec: 60 } },
@@ -40,7 +39,7 @@ export const updateBooking = secureCall(
     const isAdmin = role === "admin";
     const slot = { from: data.from, to: data.to };
 
-    const { before, spaceName, difference } = await withTransaction(async (session) => {
+    const { before, spaceName } = await withTransaction(async (session) => {
       const col = await bookings();
       const before = await col.findOne({ _id: data.bookingId }, { session });
       if (!before) throw appError("not-found", "bookingNotFound", "Booking not found.");
@@ -51,6 +50,7 @@ export const updateBooking = secureCall(
 
       const spaceId = isAdmin && data.spaceId ? data.spaceId : before.spaceId;
       const attendees = data.attendees ?? before.attendees;
+      await lockForUpdate(session, spaceDayLock(spaceId, data.date), userDayLock(before.userId, data.date));
       const { space, site } = await loadSpace(session, spaceId);
       const sameSpace = await col.find(spaceDayFilter(spaceId, data.date), { session }).toArray();
       const owners = await col.find(userDayFilter(before.userId, data.date), { session }).toArray();
@@ -84,17 +84,18 @@ export const updateBooking = secureCall(
         },
         { session },
       );
-      return { before, spaceName: space.name, difference: cost - before.credits };
-    });
 
-    if (difference !== 0) {
-      try {
-        await applyCredit(before.userId, { amount: -difference, type: difference > 0 ? "booking" : "refund", label: spaceName, bookingId: data.bookingId });
-      } catch (err) {
-        await revertBooking(data.bookingId, before);
-        throw err;
+      // Charge the difference, or refund it when the new slot is cheaper.
+      const difference = cost - before.credits;
+      if (difference !== 0) {
+        await applyCredit(
+          before.userId,
+          { amount: -difference, type: difference > 0 ? "booking" : "refund", label: space.name, bookingId: data.bookingId },
+          session,
+        );
       }
-    }
+      return { before, spaceName: space.name };
+    });
 
     await writeAudit({
       actorId: uid,
@@ -115,25 +116,3 @@ export const updateBooking = secureCall(
     return { updated: true };
   },
 );
-
-/** Restores the fields a failed credit charge would otherwise leave changed. */
-async function revertBooking(bookingId: string, before: BookingDoc): Promise<void> {
-  await (await bookings()).updateOne(
-    { _id: bookingId },
-    {
-      $set: {
-        spaceId: before.spaceId,
-        spaceName: before.spaceName,
-        siteId: before.siteId,
-        date: before.date,
-        from: before.from,
-        to: before.to,
-        attendees: before.attendees,
-        credits: before.credits,
-        startsAt: before.startsAt,
-        reminderSent: before.reminderSent,
-        updatedAt: new Date(),
-      },
-    },
-  );
-}

@@ -18,5 +18,6 @@ export const COL = {
   equipmentRequests: "equipmentRequests",
   mail: "mail", // read by the Firebase "Trigger Email" extension
   rateLimits: "_rateLimits", // MongoDB
+  locks: "_locks", // MongoDB: one document per booking day of a space or a user, see functions/src/lib/locks.ts
   visits: "visits", // MongoDB (new module, never on Firestore)
 } as const;

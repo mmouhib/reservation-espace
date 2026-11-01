@@ -32,3 +32,5 @@ auth-debug.log
 # Playwright
 test-results/
 playwright-report/
+server/*.log
+server/*.err

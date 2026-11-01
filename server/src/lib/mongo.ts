@@ -7,7 +7,14 @@ function connect(): Promise<MongoClient> {
   if (!clientPromise) {
     const uri = MONGODB_URI();
     if (!uri) throw new Error("MONGODB_URI is not set");
-    clientPromise = new MongoClient(uri, { maxPoolSize: 10 }).connect();
+    // A few connections stay open, so a request does not pay for a new handshake with a distant database.
+    const pending = new MongoClient(uri, { maxPoolSize: 10, minPoolSize: 2, serverSelectionTimeoutMS: 15_000 }).connect();
+    clientPromise = pending;
+    // A failed first connection must not be remembered: the next request tries again. (Once connected, the
+    // driver reconnects by itself after a network drop.)
+    pending.catch(() => {
+      if (clientPromise === pending) clientPromise = null;
+    });
   }
   return clientPromise;
 }

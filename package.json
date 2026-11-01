@@ -25,7 +25,7 @@
     "build": "npm run build -w server && npm run build -w apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "vitest run --project shared --project server",
+    "test": "vitest run --project shared --project server --project web",
     "test:api": "npm run mongo:up && npm run build -w server && cross-env MONGODB_DB_NAME=reservation_test firebase emulators:exec --only auth \"tsx scripts/mongo-reset-test-db.ts && npm run mongo:init-indexes && npm run seed && vitest run --project api\"",
     "check:prod": "node scripts/production-check.mjs",
     "icons": "node scripts/generate-icons.mjs"

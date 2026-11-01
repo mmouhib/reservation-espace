@@ -29,7 +29,7 @@ export const exportMyData = secureCall(
   { name: "exportMyData", schema: emptyInput, rateLimit: { limit: 5, windowSec: 60 } },
   async ({ uid }) => {
     const db = await getDb();
-    const [profile, wallet, bookings, absences, transactions, subscriptions, incidents, equipmentRequests, notifications] = await Promise.all([
+    const [profile, wallet, bookings, absences, transactions, subscriptions, incidents, equipmentRequests, notifications, events] = await Promise.all([
       db.collection<UserDoc>(COL.users).findOne({ _id: uid }),
       getWallet(uid),
       documents(db, COL.bookings, { userId: uid }),
@@ -39,6 +39,7 @@ export const exportMyData = secureCall(
       documents(db, COL.incidents, { reporterId: uid }),
       documents(db, COL.equipmentRequests, { requesterId: uid }),
       documents(db, COL.notifications, { userId: uid }),
+      documents(db, COL.events, { userId: uid }),
     ]);
     return {
       exportedAt: new Date().toISOString(),
@@ -51,6 +52,7 @@ export const exportMyData = secureCall(
       incidents,
       equipmentRequests,
       notifications,
+      events,
     };
   },
 );
@@ -75,6 +77,7 @@ async function anonymizeAccount(uid: string, actor: { uid: string; role: Role })
   await cancelActiveSubscriptionsForUser(uid);
 
   await db.collection(COL.notifications).deleteMany({ userId: uid });
+  await db.collection(COL.events).deleteMany({ userId: uid });
   await db.collection(COL.devices).deleteMany({ userId: uid });
   await deletePhotosOf(uid);
   await db.collection(COL.incidents).updateMany({ reporterId: uid }, { $set: { photoIds: [] } });

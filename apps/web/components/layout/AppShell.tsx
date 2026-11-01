@@ -8,13 +8,14 @@ import { ChatBot } from "@/components/ai/ChatBot";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OfflineBanner } from "@/components/pwa/OfflineBanner";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { isActive, NAV_ITEMS } from "@/lib/navigation";
-import { NotificationBell } from "./NotificationBell";
+import { NotificationBell, NotificationsProvider } from "./NotificationBell";
 
 function initials(name: string): string {
   return name
@@ -25,7 +26,7 @@ function initials(name: string): string {
     .join("");
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { role, profile, user, signOut } = useAuth();
   const { t } = useI18n();
@@ -52,6 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <NotificationBell />
+            <ThemeToggle />
             <LanguageSwitcher compact />
             <Button variant="ghost" size="sm" onClick={() => void signOut()} aria-label={t("common.signOut")}>
               <Icon name="log-out" />
@@ -131,5 +133,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <ChatBot />
     </div>
+  );
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <NotificationsProvider>
+      <Shell>{children}</Shell>
+    </NotificationsProvider>
   );
 }

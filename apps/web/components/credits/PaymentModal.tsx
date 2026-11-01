@@ -99,7 +99,7 @@ function PaymentSession({ plan, onPaid }: { plan: PlanSummary; onPaid: (credits:
   if (!payment) return <Spinner />;
   return (
     <>
-      <Elements stripe={getStripe()} options={{ clientSecret: payment.clientSecret, locale }}>
+      <Elements stripe={getStripe()} options={{ clientSecret: payment.clientSecret, locale, appearance: { theme: document.documentElement.dataset.theme === "dark" ? "night" : "stripe" } }}>
         <CardForm plan={plan} paymentIntentId={payment.paymentIntentId} onPaid={onPaid} />
       </Elements>
     </>

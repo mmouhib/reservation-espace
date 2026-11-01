@@ -56,7 +56,10 @@ export {
   updateTeam,
   deleteTeam,
 } from "./api/reference";
-export { listMyBookings, listMyUpcomingBookings, listBookingsInRange } from "./api/bookings-read";
+export { listMyBookings, listMyBookingsInRange, listMyUpcomingBookings, listBookingsInRange } from "./api/bookings-read";
+
+// Calendar
+export { createEvent, deleteEvent, listMyEvents, updateEvent } from "./calendar/events";
 export { listMyAbsences } from "./api/absences";
 export { listMyNotifications, markNotificationRead, markAllNotificationsRead } from "./api/notifications";
 export { listUsers } from "./api/admin-users";

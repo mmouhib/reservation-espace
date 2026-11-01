@@ -1,4 +1,5 @@
 import {
+  calendarRangeInput,
   listBookingsInRangeInput,
   listMyBookingsInput,
   listMyUpcomingBookingsInput,
@@ -25,6 +26,19 @@ export const listMyUpcomingBookings = secureCall(
       .find({ userId: uid, status: "confirmed", date: { $gte: data.fromDate } })
       .sort({ date: 1, from: 1 })
       .limit(10)
+      .toArray();
+    return docs.map(toBookingSummary);
+  },
+);
+
+/** The signed-in user's confirmed bookings whose day is in the range, past or future (the calendar). */
+export const listMyBookingsInRange = secureCall(
+  { name: "listMyBookingsInRange", schema: calendarRangeInput, rateLimit: { limit: 60, windowSec: 60 } },
+  async ({ uid, data }): Promise<BookingSummary[]> => {
+    const docs = await (await bookings())
+      .find({ userId: uid, status: "confirmed", date: { $gte: data.from, $lte: data.to } })
+      .sort({ date: 1, from: 1 })
+      .limit(500)
       .toArray();
     return docs.map(toBookingSummary);
   },

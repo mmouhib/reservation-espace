@@ -20,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", labelKey: "nav.home", descriptionKey: null, icon: "home", minRole: "user", mobile: true },
   { href: "/reserver", labelKey: "nav.reserve", descriptionKey: "home.shortcuts.reserve", icon: "calendar-plus", minRole: "user", mobile: true },
   { href: "/mes-reservations", labelKey: "nav.myBookings", shortLabelKey: "nav.myBookingsShort", descriptionKey: "home.shortcuts.myBookings", icon: "list", minRole: "user", mobile: true },
+  { href: "/calendrier", labelKey: "nav.calendar", descriptionKey: "home.shortcuts.calendar", icon: "calendar", minRole: "user", mobile: false },
   { href: "/equipe", labelKey: "nav.team", descriptionKey: "home.shortcuts.team", icon: "users", minRole: "manager", mobile: false },
   { href: "/credits", labelKey: "nav.credits", descriptionKey: "home.shortcuts.credits", icon: "wallet", minRole: "user", mobile: true },
   { href: "/support", labelKey: "nav.support", descriptionKey: "home.shortcuts.support", icon: "lifebuoy", minRole: "user", mobile: false },

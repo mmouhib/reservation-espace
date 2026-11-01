@@ -46,6 +46,12 @@
     "fr": "Français",
     "en": "English"
   },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
   "roles": {
     "user": "Employee",
     "manager": "Manager",
@@ -74,6 +80,7 @@
     "credits": "Credits",
     "support": "Support",
     "notifications": "Notifications",
+    "calendar": "Calendar",
     "myBookingsShort": "Bookings",
     "visitors": "Visitors"
   },
@@ -83,6 +90,7 @@
     "subtitle": "What would you like to do today?",
     "shortcuts": {
       "reserve": "Find an available desk, room or coworking space.",
+      "calendar": "Your bookings and events, by day, week or month.",
       "myBookings": "View, change or cancel your bookings, even offline.",
       "profile": "Your details and notification preferences.",
       "admin": "Spaces, users, moderation and statistics.",
@@ -515,6 +523,7 @@
     "subscriptionNotFound": "Subscription not found.",
     "paymentFailed": "The payment did not go through.",
     "paymentUnavailable": "Payments are unavailable right now. Please try again later.",
+    "eventNotFound": "This event no longer exists.",
     "assistantUnavailable": "The AI assistant is temporarily unavailable.",
     "visitNotFound": "Visit not found.",
     "invalidVisitStatus": "This visit can no longer be changed."
@@ -628,6 +637,43 @@
     "noBooking": "No booking that day",
     "team": "Team"
   },
+  "calendar": {
+    "title": "Calendar",
+    "description": "Your past and upcoming bookings, and your own events.",
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next",
+    "views": { "day": "Day", "week": "Week", "month": "Month" },
+    "addEvent": "Add an event",
+    "bookSpace": "Book a space",
+    "openDay": "Open the day",
+    "allDay": "All day",
+    "more": "+{count} more",
+    "legend": "Legend",
+    "legendBooking": "Booking",
+    "legendEvent": "Event",
+    "loadFailed": "The calendar could not be loaded. Check your connection.",
+    "event": {
+      "newTitle": "New event",
+      "editTitle": "Edit the event",
+      "title": "Title",
+      "date": "Date",
+      "from": "From",
+      "to": "To",
+      "note": "Note",
+      "delete": "Delete",
+      "deleteText": "“{title}” will be removed from your calendar.",
+      "saved": "Event saved.",
+      "deleted": "Event deleted.",
+      "endBeforeStart": "The end must be after the start."
+    },
+    "booking": {
+      "details": "Booking",
+      "attendees_one": "{count} person",
+      "attendees_other": "{count} people",
+      "manage": "Manage my bookings"
+    }
+  },
   "credits": {
     "title": "Credits",
     "description": "Your balance, plans and transaction history.",
@@ -703,7 +749,6 @@
   },
   "notifications": {
     "title": "Notifications",
-    "description": "Your confirmations, reminders and alerts.",
     "empty": "No notifications.",
     "markAllRead": "Mark all as read"
   },

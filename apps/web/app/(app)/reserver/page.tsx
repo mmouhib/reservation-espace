@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -11,7 +12,10 @@ export default function ReserverPage() {
     <>
       <DocumentTitle titleKey="nav.reserve" />
       <PageHeader title={t("reserve.title")} description={t("reserve.description")} />
-      <BookingSearch />
+      {/* useSearchParams needs a Suspense boundary in a statically exported page. */}
+      <Suspense>
+        <BookingSearch />
+      </Suspense>
     </>
   );
 }

@@ -23,7 +23,7 @@ import {
   type UserStatus,
   type VisitStatus,
 } from "./models";
-import { isDateString } from "./time";
+import { daysBetween, isDateString } from "./time";
 import { ROLES, type Role } from "./roles";
 
 /** Input schemas for the server's endpoints. Validated on the server, reused for client forms. */
@@ -621,4 +621,47 @@ export interface HoursPerCategory {
 export interface TopSpace {
   name: string;
   count: number;
+}
+
+// ---------- Calendar ----------
+
+const eventFields = {
+  title: z.string().trim().min(1).max(120),
+  note: z.string().trim().max(1000).default(""),
+  date: dateString,
+  allDay: z.boolean().default(false),
+  from: minuteOfDay.default(0),
+  to: minuteOfDay.default(24 * 60),
+};
+const hasValidTimes = (event: { allDay: boolean; from: number; to: number }) => event.allDay || event.to > event.from;
+const INVALID_TIMES = "an event must end after it starts";
+
+export const createEventInput = z.object(eventFields).strict().refine(hasValidTimes, INVALID_TIMES);
+export type CreateEventInput = z.input<typeof createEventInput>;
+
+export const updateEventInput = z
+  .object({ eventId: z.string().min(1).max(64), ...eventFields })
+  .strict()
+  .refine(hasValidTimes, INVALID_TIMES);
+export type UpdateEventInput = z.input<typeof updateEventInput>;
+
+export const deleteEventInput = z.object({ eventId: z.string().min(1).max(64) }).strict();
+export type DeleteEventInput = z.infer<typeof deleteEventInput>;
+
+/** The days a calendar screen shows: a month view with the days around it is at most 42 days. */
+const MAX_CALENDAR_DAYS = 70;
+export const calendarRangeInput = z
+  .object({ from: dateString, to: dateString })
+  .strict()
+  .refine((range) => range.to >= range.from && daysBetween(range.from, range.to) <= MAX_CALENDAR_DAYS, "invalid range");
+export type CalendarRangeInput = z.infer<typeof calendarRangeInput>;
+
+export interface EventSummary {
+  id: string;
+  title: string;
+  note: string;
+  date: string;
+  allDay: boolean;
+  from: number;
+  to: number;
 }

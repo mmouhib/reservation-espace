@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   },
 };
 
+// Runs before the first paint, so a dark page never flashes white. ThemeProvider takes over afterwards.
+const THEME_SCRIPT = `try{var m=localStorage.getItem("theme");var d=m==="dark"||(m!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}`;
+
 export const viewport: Viewport = {
   themeColor: APP.themeColor,
   width: "device-width",
@@ -31,7 +34,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // `lang` is updated at runtime by I18nProvider.
-    <html lang={DEFAULT_LOCALE} dir="ltr" className={inter.variable}>
+    <html lang={DEFAULT_LOCALE} dir="ltr" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-dvh font-sans">
         <Providers>{children}</Providers>
       </body>

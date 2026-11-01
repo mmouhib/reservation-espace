@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import {
   EQUIPMENT,
   SPACE_CATEGORIES,
   addDays,
   formatMinutes,
+  isDateString,
   isErrorReason,
   type ErrorReason,
   type SearchSpacesInput,
@@ -33,6 +34,21 @@ const DEFAULT_TO = 17 * 60;
 /** Refusal reasons that apply to every space at once, unlike e.g. `slotTaken`. */
 const USER_REASONS: ReadonlySet<string> = new Set(["alreadyBooked", "absent", "pastSlot", "tooFarAhead", "invalidSlot"]);
 
+/** A slot given in the address, e.g. /reserver?date=2026-05-12&from=540&to=600 (the calendar links here). */
+function slotFromAddress(params: Pick<URLSearchParams, "get" | "has">): { date?: string; from?: number; to?: number } {
+  const minute = (name: string) => {
+    const value = Number(params.get(name));
+    return params.has(name) && Number.isInteger(value) && value >= 0 && value <= 24 * 60 && value % 30 === 0 ? value : undefined;
+  };
+  const date = params.get("date");
+  const from = minute("from");
+  const to = minute("to");
+  return {
+    date: date && isDateString(date) ? date : undefined,
+    ...(from !== undefined && to !== undefined && to > from ? { from, to } : {}),
+  };
+}
+
 /** Search form, availability results and the confirmation step of a booking. */
 export function BookingSearch() {
   const router = useRouter();
@@ -43,10 +59,14 @@ export function BookingSearch() {
 
   // Search form
   const [siteChoice, setSiteChoice] = useState("");
-  const [from, setFrom] = useState(DEFAULT_FROM);
-  const [to, setTo] = useState(DEFAULT_TO);
+  // The address is read through Next (not window.location): after a click on a link it is only up to date there.
+  const searchParams = useSearchParams();
+  const [initial] = useState(() => slotFromAddress(searchParams));
+  const [from, setFrom] = useState(initial.from ?? DEFAULT_FROM);
+  const [to, setTo] = useState(initial.to ?? DEFAULT_TO);
   // Once today's default slot is over, searching today can only return unavailable spaces.
   const [date, setDate] = useState(() => {
+    if (initial.date) return initial.date;
     const now = new Date();
     const pastDefaultSlot = now.getHours() * 60 + now.getMinutes() >= DEFAULT_TO;
     return nextWorkday(pastDefaultSlot ? addDays(todayLocal(), 1) : todayLocal());

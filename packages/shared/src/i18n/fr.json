@@ -46,6 +46,12 @@
     "fr": "Français",
     "en": "English"
   },
+  "theme": {
+    "label": "Thème",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
+  },
   "roles": {
     "user": "Collaborateur",
     "manager": "Manager",
@@ -74,6 +80,7 @@
     "credits": "Crédits",
     "support": "Assistance",
     "notifications": "Notifications",
+    "calendar": "Calendrier",
     "myBookingsShort": "Réservations",
     "visitors": "Visiteurs"
   },
@@ -83,6 +90,7 @@
     "subtitle": "Que souhaitez-vous faire aujourd'hui ?",
     "shortcuts": {
       "reserve": "Trouvez un poste, une salle ou un espace de coworking disponible.",
+      "calendar": "Vos réservations et vos événements, par jour, semaine ou mois.",
       "myBookings": "Consultez, modifiez ou annulez vos réservations, même hors ligne.",
       "profile": "Vos informations et vos préférences de notification.",
       "admin": "Espaces, utilisateurs, modération et statistiques.",
@@ -515,6 +523,7 @@
     "subscriptionNotFound": "Abonnement introuvable.",
     "paymentFailed": "Le paiement n'a pas abouti.",
     "paymentUnavailable": "Les paiements sont indisponibles pour le moment. Réessayez plus tard.",
+    "eventNotFound": "Cet événement n'existe plus.",
     "assistantUnavailable": "L'assistant IA est momentanément indisponible.",
     "visitNotFound": "Visite introuvable.",
     "invalidVisitStatus": "Cette visite ne peut plus être modifiée."
@@ -628,6 +637,43 @@
     "noBooking": "Aucune réservation ce jour-là",
     "team": "Équipe"
   },
+  "calendar": {
+    "title": "Calendrier",
+    "description": "Vos réservations passées et à venir, et vos propres événements.",
+    "today": "Aujourd'hui",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "views": { "day": "Jour", "week": "Semaine", "month": "Mois" },
+    "addEvent": "Ajouter un événement",
+    "bookSpace": "Réserver un espace",
+    "openDay": "Ouvrir le jour",
+    "allDay": "Toute la journée",
+    "more": "+{count} de plus",
+    "legend": "Légende",
+    "legendBooking": "Réservation",
+    "legendEvent": "Événement",
+    "loadFailed": "Impossible de charger le calendrier. Vérifiez votre connexion.",
+    "event": {
+      "newTitle": "Nouvel événement",
+      "editTitle": "Modifier l'événement",
+      "title": "Titre",
+      "date": "Date",
+      "from": "De",
+      "to": "À",
+      "note": "Note",
+      "delete": "Supprimer",
+      "deleteText": "« {title} » sera retiré de votre calendrier.",
+      "saved": "Événement enregistré.",
+      "deleted": "Événement supprimé.",
+      "endBeforeStart": "La fin doit être après le début."
+    },
+    "booking": {
+      "details": "Réservation",
+      "attendees_one": "{count} personne",
+      "attendees_other": "{count} personnes",
+      "manage": "Gérer mes réservations"
+    }
+  },
   "credits": {
     "title": "Crédits",
     "description": "Votre solde, vos formules et l'historique des mouvements.",
@@ -703,7 +749,6 @@
   },
   "notifications": {
     "title": "Notifications",
-    "description": "Vos confirmations, rappels et alertes.",
     "empty": "Aucune notification.",
     "markAllRead": "Tout marquer comme lu"
   },

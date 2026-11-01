@@ -21,6 +21,14 @@ export default defineConfig({
       },
       {
         test: {
+          name: "web",
+          root: "./apps/web",
+          include: ["lib/**/*.test.ts"],
+          environment: "node",
+        },
+      },
+      {
+        test: {
           name: "api",
           root: "./tests/api",
           // Starts the built server (server/dist) on its own port for the whole run.

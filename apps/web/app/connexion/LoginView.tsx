@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DEMO_ACCOUNTS } from "@reservation/shared";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { Icon, type IconName } from "@/components/ui/Icon";
@@ -48,17 +49,17 @@ export function LoginView() {
 
   return (
     <main className="grid min-h-dvh grid-rows-[auto_1fr] lg:grid-cols-2 lg:grid-rows-1">
-      <section className="flex flex-col justify-center gap-8 bg-gradient-to-br from-brand-700 to-brand-900 px-6 py-10 text-white sm:px-12 lg:px-16">
+      <section className="flex flex-col justify-center gap-8 bg-gradient-to-br from-[#1d4ed8] to-[#1e3a8a] px-6 py-10 text-[#ffffff] sm:px-12 lg:px-16">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- static export, tiny icon */}
-          <img src="/icons/icon-192.png" alt="" width={48} height={48} className="rounded-xl bg-white/10" />
+          <img src="/icons/icon-192.png" alt="" width={48} height={48} className="rounded-xl bg-[#ffffff]/10" />
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("app.name")}</h1>
         </div>
-        <p className="max-w-md text-lg text-brand-100">{t("app.description")}</p>
+        <p className="max-w-md text-lg text-[#dbeafe]">{t("app.description")}</p>
         <ul className="hidden space-y-3 sm:block">
           {FEATURES.map((feature) => (
-            <li key={feature.key} className="flex items-center gap-3 text-brand-50">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-white/10">
+            <li key={feature.key} className="flex items-center gap-3 text-[#eff6ff]">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-[#ffffff]/10">
                 <Icon name={feature.icon} />
               </span>
               {t(feature.key)}
@@ -119,7 +120,10 @@ export function LoginView() {
             </section>
           )}
         </div>
-        <LanguageSwitcher />
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
       </section>
     </main>
   );

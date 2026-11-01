@@ -405,3 +405,53 @@ describe("paying for credits with Stripe", () => {
     expect(await balance("demo-user")).toBe(before + 10);
   });
 });
+
+describe("calendar", () => {
+  const range = { from: addDays(today, -30), to: addDays(today, 40) };
+  let eventId: string;
+
+  it("shows each person their own bookings in a range, in the past and in the future", async () => {
+    const mine = await call("listMyBookingsInRange", lea, range);
+    expect(Array.isArray(mine.result)).toBe(true);
+    expect(mine.result.length).toBeGreaterThan(0);
+    expect(mine.result.every((b: { userId: string; status: string }) => b.userId === "demo-user" && b.status === "confirmed")).toBe(true);
+    const manager = await call("listMyBookingsInRange", hugo, range);
+    expect(manager.result.every((b: { userId: string }) => b.userId === "demo-manager")).toBe(true);
+  });
+
+  it("refuses a range that is backwards or too long", async () => {
+    expect((await call("listMyBookingsInRange", lea, { from: range.to, to: range.from })).error).toBe("invalidInput");
+    expect((await call("listMyEvents", lea, { from: "2026-01-01", to: "2026-12-31" })).error).toBe("invalidInput");
+  });
+
+  it("adds, lists, changes and deletes a personal event", async () => {
+    const created = await call("createEvent", lea, { title: "Dentist", date: DAY, from: 600, to: 660, note: "Bring the card" });
+    eventId = created.result.eventId;
+    expect(eventId).toBeTruthy();
+
+    const listed = await call("listMyEvents", lea, { from: DAY, to: DAY });
+    expect(listed.result).toEqual([{ id: eventId, title: "Dentist", note: "Bring the card", date: DAY, allDay: false, from: 600, to: 660 }]);
+
+    expect((await call("updateEvent", lea, { eventId, title: "Dentist (moved)", date: addDays(DAY, 1), allDay: true })).result?.updated).toBe(true);
+    const moved = await call("listMyEvents", lea, { from: addDays(DAY, 1), to: addDays(DAY, 1) });
+    expect(moved.result[0]).toMatchObject({ title: "Dentist (moved)", allDay: true, from: 0, to: 1440 });
+    expect((await call("listMyEvents", lea, { from: DAY, to: DAY })).result).toEqual([]);
+
+    expect((await call("deleteEvent", lea, { eventId })).result?.deleted).toBe(true);
+    expect((await call("listMyEvents", lea, { from: addDays(DAY, 1), to: addDays(DAY, 1) })).result).toEqual([]);
+    expect((await call("deleteEvent", lea, { eventId })).error).toBe("eventNotFound");
+  });
+
+  it("keeps events private and checks their data", async () => {
+    const created = await call("createEvent", lea, { title: "Private", date: DAY, allDay: true });
+    const id = created.result.eventId;
+    expect((await call("listMyEvents", hugo, { from: DAY, to: DAY })).result.some((e: { id: string }) => e.id === id)).toBe(false);
+    expect((await call("updateEvent", hugo, { eventId: id, title: "Mine now", date: DAY, allDay: true })).error).toBe("eventNotFound");
+    expect((await call("deleteEvent", hugo, { eventId: id })).error).toBe("eventNotFound");
+
+    expect((await call("createEvent", lea, { title: "  ", date: DAY, allDay: true })).error).toBe("invalidInput");
+    expect((await call("createEvent", lea, { title: "Backwards", date: DAY, from: 700, to: 600 })).error).toBe("invalidInput");
+    expect((await call("createEvent", lea, { title: "Bad day", date: "2026-13-45", allDay: true })).error).toBe("invalidInput");
+    await call("deleteEvent", lea, { eventId: id });
+  });
+});

@@ -19,6 +19,7 @@ export const COL = {
   rateLimits: "_rateLimits",
   locks: "_locks", // one document per booking day of a space or a user, see server/src/lib/locks.ts
   visits: "visits",
+  events: "events", // personal calendar events
   payments: "payments", // one document per Stripe payment that was turned into credits
   jobRuns: "_jobRuns", // one document per run of a scheduled job, see server/src/lib/jobs.ts
   photos: "incidentPhotos", // GridFS bucket (files and chunks): photos attached to incidents

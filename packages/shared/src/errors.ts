@@ -38,6 +38,7 @@ export const ERROR_REASONS = [
   "assistantUnavailable",
   // Visitors
   "visitNotFound",
+  "eventNotFound",
   "invalidVisitStatus",
 ] as const;
 export type ErrorReason = (typeof ERROR_REASONS)[number];

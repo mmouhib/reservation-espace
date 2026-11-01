@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useNotificationPanel } from "@/components/layout/NotificationBell";
 import { formatMinutes, hasRole } from "@reservation/shared";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
@@ -15,6 +16,7 @@ import { NAV_ITEMS } from "@/lib/navigation";
 
 export function HomeView() {
   const { profile, role } = useAuth();
+  const { setOpen: openNotifications } = useNotificationPanel();
   const { t, locale } = useI18n();
   const today = todayLocal();
   const firstName = profile?.displayName.split(" ")[0];
@@ -32,14 +34,15 @@ export function HomeView() {
   return (
     <>
       <DocumentTitle />
-      <section className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 to-brand-900 p-6 text-white shadow-sm sm:p-8">
+      {/* Fixed colors on purpose: this banner stays deep blue in dark mode, where the palette names are remapped. */}
+      <section className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1d4ed8] to-[#1e3a8a] p-6 text-[#ffffff] shadow-sm sm:p-8">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           {firstName ? t("home.greetingName", { name: firstName }) : t("home.greeting")}
         </h1>
-        <p className="mt-1 text-brand-100">{t("home.subtitle")}</p>
+        <p className="mt-1 text-[#dbeafe]">{t("home.subtitle")}</p>
         <Link
           href="/reserver"
-          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-brand-800 hover:bg-brand-50"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#ffffff] px-4 text-sm font-semibold text-[#1e40af] hover:bg-[#eff6ff]"
         >
           <Icon name="calendar-plus" />
           {t("nav.reserve")}
@@ -59,9 +62,9 @@ export function HomeView() {
           label={t("nav.notifications")}
           value={unread.length}
           hint={
-            <Link href="/notifications" className="underline">
+            <button type="button" className="underline" onClick={() => openNotifications(true)}>
               {unread.length > 0 ? t("home.unread", { count: unread.length }) : t("home.allRead")}
-            </Link>
+            </button>
           }
         />
       </div>

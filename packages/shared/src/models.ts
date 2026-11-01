@@ -283,3 +283,20 @@ export interface EquipmentRequest<T = unknown> {
 
 export const VISIT_STATUSES = ["expected", "checkedIn", "checkedOut", "cancelled"] as const;
 export type VisitStatus = (typeof VISIT_STATUSES)[number];
+
+// ---------- Calendar ----------
+
+/** A private entry of a person's calendar (a meeting, a reminder...), shown next to their bookings. */
+export interface CalendarEvent<T = unknown> {
+  userId: string;
+  title: string;
+  note: string;
+  /** The day, YYYY-MM-DD. */
+  date: string;
+  /** An event that lasts the whole day has no time: `from` is 0 and `to` is 1440. */
+  allDay: boolean;
+  from: number;
+  to: number;
+  createdAt: T;
+  updatedAt: T;
+}

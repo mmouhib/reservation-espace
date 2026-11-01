@@ -256,7 +256,7 @@ async function main() {
 
   // ---------- Credits, plans, bookings and support requests ----------
   // wallets/creditTransactions/plans/subscriptions live in MongoDB (see functions/src/lib/credits.ts).
-  // Deterministic string _ids (matching the old Firestore doc-id convention) keep reruns idempotent.
+  // Deterministic string _ids keep reruns idempotent.
   const mongoOps: Promise<unknown>[] = [];
   for (const [id, plan] of Object.entries(PLANS)) {
     mongoOps.push(mdb.collection(COL.plans).replaceOne({ _id: id }, { _id: id, ...plan }, { upsert: true }));
@@ -359,7 +359,7 @@ async function main() {
     createdAt: now,
   });
 
-  // Notifications were users/{uid}/notifications on Firestore; now a top-level collection keyed by userId.
+  // Notifications are a top-level collection keyed by userId.
   stage(COL.notifications, "seed-notification-1", {
     userId: demoUser.uid,
     type: "bookingConfirmed",

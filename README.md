@@ -99,11 +99,8 @@ Owns `visits`. Screens: `/visiteurs`, `/admin/visiteurs`.
 - ✅ Reception view of a day's expected guests, with check-in and check-out.
 - ✅ The host is notified in-app the moment their guest checks in.
 - ✅ Cancelling an invite before the visit, by the host or an administrator.
-- 🟡 Stored in **MongoDB**, the only module whose data isn't in Firestore. It's the first module built on the Mongo
-  stack being introduced for the rest of the app (see `functions/src/lib/mongo.ts`, `packages/shared/src/entities.ts`);
-  it still reads the Firestore `users`/`sites` collections for display names, since those modules haven't migrated yet.
-  No `firestore.rules` block or rules test exists for it — authorization is enforced entirely in the callables
-  (`functions/src/visitors/visits.ts`) via `secureCall`'s role check and ownership checks.
+- ✅ Authorization is enforced entirely in the callables (`functions/src/visitors/visits.ts`): the role check of
+  `secureCall` and ownership checks (a host sees only their own invites; check-in and check-out are for administrators).
 
 ### Shared platform (not owned by a single module)
 

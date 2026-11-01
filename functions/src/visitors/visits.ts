@@ -38,7 +38,7 @@ async function visits() {
   return mongo.collection<Visit>(COL.visits);
 }
 
-/** Invites an external guest to a site. The host is denormalized from the current Firestore profile. */
+/** Invites an external guest to a site. The host name is copied from their current profile. */
 export const createVisit = secureCall(
   { name: "createVisit", schema: createVisitInput, rateLimit: { limit: 20, windowSec: 60 } },
   async ({ uid, data }) => {

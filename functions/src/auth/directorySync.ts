@@ -32,7 +32,6 @@ export async function runDirectorySync(actorId = "system"): Promise<DirectorySyn
     // Their upcoming bookings free the spaces, and the credits go back to their wallet.
     await cancelUpcomingBookings(user.uid, { uid: actorId, role: "system" }, "left_company");
     const db = await getDb();
-    // Upsert mirrors the Firestore `set(..., { merge: true })` this replaces.
     await db
       .collection<UserProfile<Date> & { _id: string }>(COL.users)
       .updateOne({ _id: user.uid }, { $set: { status: "disabled", disabledAt: new Date() } }, { upsert: true });

@@ -1,6 +1,6 @@
 /**
  * Drops the API-test database so every `npm run test:api` starts from the seed alone
- * (Mongo keeps its data between runs, unlike the old Firestore emulator).
+ * (MongoDB keeps its data between runs).
  * Refuses any database whose name doesn't end in `_test`, so it can't wipe dev data.
  */
 import { existsSync } from "node:fs";

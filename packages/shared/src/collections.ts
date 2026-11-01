@@ -1,4 +1,4 @@
-/** Firestore collection names, shared by the web app, Cloud Functions, rules tests and the seed script. */
+/** MongoDB collection names, shared by the web app, the Cloud Functions and the seed script. */
 export const COL = {
   users: "users",
   devices: "devices", // users/{uid}/devices
@@ -16,8 +16,7 @@ export const COL = {
   subscriptions: "subscriptions",
   incidents: "incidents",
   equipmentRequests: "equipmentRequests",
-  mail: "mail", // read by the Firebase "Trigger Email" extension
-  rateLimits: "_rateLimits", // MongoDB
-  locks: "_locks", // MongoDB: one document per booking day of a space or a user, see functions/src/lib/locks.ts
-  visits: "visits", // MongoDB (new module, never on Firestore)
+  rateLimits: "_rateLimits",
+  locks: "_locks", // one document per booking day of a space or a user, see functions/src/lib/locks.ts
+  visits: "visits",
 } as const;

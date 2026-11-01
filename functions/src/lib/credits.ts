@@ -142,7 +142,7 @@ export async function cancelSubscriptionById(subscriptionId: string, uid: string
   await subscriptions.updateOne({ _id: subscriptionId }, { $set: { status: "cancelled" as SubscriptionStatus, cancelledAt: new Date() } });
 }
 
-/** Best-effort, non-atomic fan-out — matches the Firestore `bulkWriter` semantics this replaces. */
+/** Best-effort fan-out over every matching subscription: not atomic. */
 export async function cancelActiveSubscriptionsForUser(uid: string): Promise<void> {
   await (await subscriptionsCol()).updateMany({ userId: uid, status: "active" }, { $set: { status: "cancelled", cancelledAt: new Date() } });
 }

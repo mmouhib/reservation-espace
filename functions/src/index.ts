@@ -36,7 +36,7 @@ export {
 // Visitors (first module built directly on MongoDB)
 export { cancelVisit, checkInVisit, checkOutVisit, createVisit, getMyVisits, listVisitsForDay } from "./visitors/visits";
 
-// Read and admin API used by the web app (replaces direct Firestore reads and writes)
+// Read and admin API used by the web app
 export { getMyProfile, updateMyProfile, registerDevice } from "./api/profile";
 export {
   listSites,

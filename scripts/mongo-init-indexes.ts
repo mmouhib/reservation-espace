@@ -1,14 +1,11 @@
 /**
- * Creates MongoDB compound indexes for the collections that have been migrated
- * off Firestore so far. Idempotent: safe to re-run (matching index specs are a
- * no-op). Run once per environment (local Docker, then once against Atlas).
+ * Creates the MongoDB indexes that the queries rely on. Idempotent: safe to re-run
+ * (matching index specs are a no-op). Run once per environment: the local Docker
+ * database, then once against Atlas (with MONGODB_URI pointing at it).
  *
  *   npm run mongo:init-indexes
  *
- * Collections are added here as each migration phase ports them — see
- * firebase/firestore.indexes.json for the Firestore-era equivalents being
- * ported, and the migration plan for the full target list (some indexes are
- * net-new: Firestore auto-indexes simple composite queries, Mongo does not).
+ * MongoDB does not create indexes by itself: add an entry here when a new query needs one.
  */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";

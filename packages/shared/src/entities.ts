@@ -4,14 +4,12 @@ import { ROLES } from "./roles";
 import { LOCALES } from "./i18n";
 
 /**
- * MongoDB document schemas, ported 1:1 from the Firestore shapes in `models.ts`.
- * Unlike Firestore, Mongo has no server timestamp type: all dates are stored as
- * native `Date` (BSON-native), and `_id` is explicit (matching today's doc-id
- * conventions, e.g. `users/{uid}` -> `_id: uid`, auto-id collections -> ObjectId hex string).
+ * MongoDB document schemas: the shapes of what is stored, built on the types in `models.ts`.
+ * All dates are stored as native `Date`, and `_id` is explicit: the user id for users and
+ * wallets, an ObjectId hex string for everything else.
  *
  * These are *document* shapes (what's stored), not callable *input* shapes
- * (what a client may send) — those stay in `schemas.ts`. Not yet wired into any
- * function; each collection adopts its schema when it's ported off Firestore.
+ * (what a client may send): those live in `schemas.ts`.
  */
 
 const timeRangeSchema = z.object({ from: z.number().int().min(0).max(24 * 60), to: z.number().int().min(0).max(24 * 60) });
@@ -209,11 +207,9 @@ export const equipmentRequestSchema = z.object({
 });
 
 /**
- * Net-new collection — unlike the rest of this file, `visits` never existed on
- * Firestore, so there's no 1:1 port to preserve. `hostName` is denormalized at
- * creation (server-read of the current Firestore `users/{hostUserId}` profile,
- * same pattern as `Booking.userName`), not looked up from the ID token, since a
- * profile edit in `ProfileView.tsx` updates Firestore without refreshing the token.
+ * A guest invited by an employee. `hostName` is copied at creation from the host's profile
+ * (same pattern as `Booking.userName`) rather than read from the ID token, because the token
+ * is not refreshed when the host edits their profile.
  */
 export const visitSchema = z.object({
   _id: z.string().min(1),

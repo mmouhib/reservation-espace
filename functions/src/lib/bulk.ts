@@ -5,12 +5,9 @@ export function updateOneOp<T extends Document>(filter: Filter<T>, update: Updat
 }
 
 /**
- * Applies several write operations in one round-trip. Pass a `session` for the
- * `db.batch()`-equivalent case (a known-size group of writes that must commit
- * atomically, run inside a `withTransaction` block); omit it for the
- * `db.bulkWriter()`-equivalent case (best-effort fan-out across however many
- * documents match a query, not required to be atomic — matching Firestore's
- * bulkWriter, which isn't transactional either).
+ * Applies several write operations in one round-trip. Pass a `session` for a known-size
+ * group of writes that must commit atomically (inside a `withTransaction` block); omit it
+ * for a best-effort fan-out across however many documents match a query, which is not atomic.
  */
 export async function bulkUpdate<T extends Document>(
   collection: Collection<T>,

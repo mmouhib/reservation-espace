@@ -278,9 +278,8 @@ export interface EquipmentRequest<T = unknown> {
 }
 
 // ---------- Visitors ----------
-// Unlike every entity above, this module was never on Firestore: it's stored
-// directly in MongoDB (see entities.ts's visitSchema), ahead of the users/bookings
-// slices it references by id.
+// A guest invited to a site by an employee, and checked in and out by reception
+// (see visitSchema in entities.ts).
 
 export const VISIT_STATUSES = ["expected", "checkedIn", "checkedOut", "cancelled"] as const;
 export type VisitStatus = (typeof VISIT_STATUSES)[number];

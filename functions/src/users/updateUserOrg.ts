@@ -1,33 +1,43 @@
-import { FieldValue } from "firebase-admin/firestore";
 import { COL, updateUserOrgInput, type UserProfile } from "@reservation/shared";
-import { db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
+import { bulkUpdate, updateOneOp } from "../lib/bulk";
 import { secureCall } from "../lib/callable";
 import { appError } from "../lib/errors";
+import { getDb } from "../lib/mongo";
+import { withTransaction } from "../lib/transaction";
+
+type UserDoc = UserProfile<Date> & { _id: string };
+type TeamDoc = { _id: string; memberIds: string[] };
 
 /**
  * Admin-only: puts a user in a department and in teams. The team documents list
- * their members too, so both sides are updated together.
+ * their members too, so both sides are updated together, atomically.
  */
 export const updateUserOrg = secureCall(
   { name: "updateUserOrg", schema: updateUserOrgInput, role: "admin", rateLimit: { limit: 30, windowSec: 60 } },
   async ({ uid: actorId, data }) => {
-    const userRef = db.collection(COL.users).doc(data.uid);
-    const user = (await userRef.get()).data() as UserProfile | undefined;
+    const db = await getDb();
+    const users = db.collection<UserDoc>(COL.users);
+    const teams = db.collection<TeamDoc>(COL.teams);
+
+    const user = await users.findOne({ _id: data.uid });
     if (!user) throw appError("not-found", "userNotFound", "User not found.");
 
     const previous = new Set(user.teamIds ?? []);
     const next = new Set(data.teamIds);
+    const teamOps = [
+      ...[...next]
+        .filter((teamId) => !previous.has(teamId))
+        .map((teamId) => updateOneOp<TeamDoc>({ _id: teamId }, { $addToSet: { memberIds: data.uid } })),
+      ...[...previous]
+        .filter((teamId) => !next.has(teamId))
+        .map((teamId) => updateOneOp<TeamDoc>({ _id: teamId }, { $pull: { memberIds: data.uid } })),
+    ];
 
-    const batch = db.batch();
-    batch.update(userRef, { departmentId: data.departmentId, teamIds: [...next] });
-    for (const teamId of next) {
-      if (!previous.has(teamId)) batch.update(db.collection(COL.teams).doc(teamId), { memberIds: FieldValue.arrayUnion(data.uid) });
-    }
-    for (const teamId of previous) {
-      if (!next.has(teamId)) batch.update(db.collection(COL.teams).doc(teamId), { memberIds: FieldValue.arrayRemove(data.uid) });
-    }
-    await batch.commit();
+    await withTransaction(async (session) => {
+      await users.updateOne({ _id: data.uid }, { $set: { departmentId: data.departmentId, teamIds: [...next] } }, { session });
+      await bulkUpdate(teams, teamOps, session);
+    });
 
     await writeAudit({
       actorId,

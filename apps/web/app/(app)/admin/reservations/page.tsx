@@ -1,8 +1,7 @@
 "use client";
 
-import { collection, orderBy, query, where, type Timestamp } from "firebase/firestore";
-import { useMemo, useState, type FormEvent } from "react";
-import { COL, addDays, formatMinutes, type Booking, type Site, type Space } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import { addDays, formatMinutes, type BookingSummary } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -14,13 +13,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Table, Td } from "@/components/ui/Table";
 import { TimeSelect } from "@/components/ui/TimeSelect";
 import { api } from "@/lib/api/functions";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, type WithId } from "@/lib/firebase/hooks";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, todayLocal } from "@/lib/format";
 import { useNow } from "@/lib/hooks/useNow";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
-type BookingRow = WithId<Booking<Timestamp>>;
+type BookingRow = BookingSummary;
 type StatusFilter = "all" | "confirmed" | "cancelled";
 
 export default function BookingsAdminPage() {
@@ -33,15 +31,13 @@ export default function BookingsAdminPage() {
   const [releasing, setReleasing] = useState<{ booking: BookingRow; reason: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const bookingsQuery = useMemo(
-    () => (from && to ? query(collection(getFirebase().db, COL.bookings), where("date", ">=", from), where("date", "<=", to), orderBy("date")) : null),
-    [from, to],
-  );
-  const spacesQuery = useMemo(() => query(collection(getFirebase().db, COL.spaces), orderBy("name")), []);
-  const sitesQuery = useMemo(() => query(collection(getFirebase().db, COL.sites), orderBy("name")), []);
-  const { data: bookings } = useCollection<Booking<Timestamp>>(bookingsQuery);
-  const { data: spaces } = useCollection<Space>(spacesQuery);
-  const { data: sites } = useCollection<Site>(sitesQuery);
+  // No range (an empty date) means nothing is loaded.
+  const bookingsQuery = useCallableQuery("listBookingsInRange", api.listBookingsInRange, from && to ? { from, to, limit: 5000 } : null);
+  const spacesQuery = useCallableQuery("listSpaces", api.listSpaces, {});
+  const sitesQuery = useCallableQuery("listSites", api.listSites, {});
+  const bookings = bookingsQuery.data ?? [];
+  const spaces = spacesQuery.data ?? [];
+  const sites = sitesQuery.data ?? [];
 
   const rows = bookings.filter((b) => status === "all" || b.status === status).sort((a, b) => a.date.localeCompare(b.date) || a.from - b.from);
   const now = useNow();
@@ -54,6 +50,7 @@ export default function BookingsAdminPage() {
       await api.updateBooking({ bookingId: moving.booking.id, spaceId: moving.spaceId, date: moving.date, from: moving.from, to: moving.to });
       flash.success("admin.bookings.moved");
       setMoving(null);
+      bookingsQuery.refetch();
     } catch (err) {
       flash.error(err);
     } finally {
@@ -69,6 +66,7 @@ export default function BookingsAdminPage() {
       await api.cancelBooking({ bookingId: releasing.booking.id, reason: releasing.reason.trim() || undefined });
       flash.success("admin.bookings.released");
       setReleasing(null);
+      bookingsQuery.refetch();
     } catch (err) {
       flash.error(err);
     } finally {
@@ -105,7 +103,7 @@ export default function BookingsAdminPage() {
           headers={[t("common.date"), t("admin.bookings.slot"), t("admin.bookings.space"), t("admin.bookings.user"), t("common.status"), ""]}
         >
           {rows.map((booking) => {
-            const upcoming = booking.status === "confirmed" && booking.startsAt.toMillis() > now;
+            const upcoming = booking.status === "confirmed" && new Date(booking.startsAt).getTime() > now;
             return (
               <tr key={booking.id}>
                 <Td className="whitespace-nowrap">{formatDate(booking.date, locale)}</Td>

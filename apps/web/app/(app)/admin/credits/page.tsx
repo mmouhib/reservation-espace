@@ -1,8 +1,7 @@
 "use client";
 
-import { addDoc, collection, deleteDoc, doc, limit, orderBy, query, updateDoc } from "firebase/firestore";
-import { useMemo, useState, type FormEvent } from "react";
-import { COL, PLAN_KINDS, type Plan, type PlanKind, type UserProfile } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import { PLAN_KINDS, type PlanKind, type PlanSummary } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,8 +11,7 @@ import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { api } from "@/lib/api/functions";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, type WithId } from "@/lib/firebase/hooks";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatPrice } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
@@ -31,15 +29,15 @@ export default function CreditsAdminPage() {
   const { t, locale } = useI18n();
   const flash = useFlash();
   const [draft, setDraft] = useState<PlanDraft | null>(null);
-  const [deleting, setDeleting] = useState<WithId<Plan> | null>(null);
+  const [deleting, setDeleting] = useState<PlanSummary | null>(null);
   const [adjusting, setAdjusting] = useState<{ uid: string; amount: number; label: string } | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const plansQuery = useMemo(() => query(collection(getFirebase().db, COL.plans), orderBy("priceCents")), []);
-  const usersQuery = useMemo(() => query(collection(getFirebase().db, COL.users), orderBy("displayName"), limit(300)), []);
-  const { data: plans } = useCollection<Plan>(plansQuery);
-  const { data: users } = useCollection<UserProfile>(usersQuery);
+  const plans = useCallableQuery("listAllPlans", api.listAllPlans, {});
+  const usersQuery = useCallableQuery("listUsers", api.listUsers, { limit: 300 });
+  const users = usersQuery.data?.users ?? [];
 
-  function edit(plan?: WithId<Plan>) {
+  function edit(plan?: PlanSummary) {
     setDraft({
       id: plan?.id ?? null,
       name: plan?.name ?? "",
@@ -54,7 +52,7 @@ export default function CreditsAdminPage() {
   async function savePlan(e: FormEvent) {
     e.preventDefault();
     if (!draft) return;
-    const plan: Plan = {
+    const fields = {
       name: draft.name.trim(),
       description: draft.description.trim(),
       kind: draft.kind,
@@ -63,22 +61,40 @@ export default function CreditsAdminPage() {
       active: draft.active,
     };
     try {
-      const { db } = getFirebase();
-      if (draft.id) await updateDoc(doc(db, COL.plans, draft.id), { ...plan });
-      else await addDoc(collection(db, COL.plans), plan);
+      if (draft.id) await api.updatePlan({ planId: draft.id, ...fields });
+      else await api.createPlan(fields);
       flash.success("common.saved");
       setDraft(null);
+      plans.refetch();
     } catch (err) {
       flash.error(err);
+    }
+  }
+
+  async function generateDescription() {
+    if (!draft) return;
+    if (!draft.name.trim()) {
+      flash.failure("admin.credits.generateDescriptionError");
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const { description } = await api.generatePlanDescription({ name: draft.name.trim(), locale });
+      setDraft((current) => (current ? { ...current, description } : current));
+    } catch (err) {
+      flash.error(err);
+    } finally {
+      setIsGenerating(false);
     }
   }
 
   async function removePlan() {
     if (!deleting) return;
     try {
-      await deleteDoc(doc(getFirebase().db, COL.plans, deleting.id));
+      await api.deletePlan({ planId: deleting.id });
       flash.success("common.deleted");
       setDeleting(null);
+      plans.refetch();
     } catch (err) {
       flash.error(err);
     }
@@ -118,11 +134,11 @@ export default function CreditsAdminPage() {
           </Button>
         }
       >
-        {plans.length === 0 ? (
+        {!plans.data || plans.data.length === 0 ? (
           <EmptyState icon="package">{t("admin.credits.noPlans")}</EmptyState>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {plans.map((plan) => (
+            {plans.data.map((plan) => (
               <li key={plan.id} className="flex flex-col gap-2 rounded-xl border border-slate-200 p-4">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-semibold">{plan.name}</h3>
@@ -158,9 +174,15 @@ export default function CreditsAdminPage() {
             <Field label={t("admin.credits.planName")}>
               <Input required maxLength={80} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </Field>
-            <Field label={t("common.description")}>
+            <div>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="block text-sm font-medium text-slate-800">{t("common.description")}</span>
+                <Button size="sm" variant="secondary" disabled={isGenerating} onClick={() => void generateDescription()}>
+                  {isGenerating ? t("admin.credits.generatingDescription") : t("admin.credits.generateDescription")}
+                </Button>
+              </div>
               <Textarea rows={2} maxLength={300} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
-            </Field>
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <Field label={t("admin.credits.planKind")}>
                 <Select value={draft.kind} onChange={(e) => setDraft({ ...draft, kind: e.target.value as PlanKind })}>

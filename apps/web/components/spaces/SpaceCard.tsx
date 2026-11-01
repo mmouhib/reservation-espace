@@ -1,13 +1,11 @@
 "use client";
 
-import type { Timestamp } from "firebase/firestore";
-import { formatMinutes, isErrorReason, isEquipment, isSpaceTag, type Site, type Space, type SpaceSlotStatus } from "@reservation/shared";
+import { formatMinutes, isErrorReason, isEquipment, isSpaceTag, type SiteSummary, type SpaceSlotStatus, type SpaceSummary } from "@reservation/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { cn } from "@/lib/cn";
-import type { WithId } from "@/lib/firebase/hooks";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 /** One space of the search results: what it is, what it offers and whether it can be booked. */
@@ -17,8 +15,8 @@ export function SpaceCard({
   status,
   onBook,
 }: {
-  space: WithId<Space<Timestamp>>;
-  site: Site | undefined;
+  space: SpaceSummary;
+  site: SiteSummary | undefined;
   status: SpaceSlotStatus;
   onBook: () => void;
 }) {

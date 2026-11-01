@@ -1,8 +1,6 @@
 "use client";
 
-import { collection, doc, limit, orderBy, query, where, type Timestamp } from "firebase/firestore";
-import { useMemo, useState } from "react";
-import { COL, type CreditTransaction, type Plan, type Subscription, type Wallet } from "@reservation/shared";
+import { useState } from "react";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,44 +9,32 @@ import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { api } from "@/lib/api/functions";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, useDocument } from "@/lib/firebase/hooks";
-import { formatDate, formatDateTime, formatPrice } from "@/lib/format";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
+import { formatDate, formatIsoDateTime, formatPrice } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export default function CreditsPage() {
-  const { user } = useAuth();
   const { t, locale } = useI18n();
   const flash = useFlash();
   const online = useOnlineStatus();
-  const uid = user?.uid;
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
-  const walletRef = useMemo(() => (uid ? doc(getFirebase().db, COL.wallets, uid) : null), [uid]);
-  const plansQuery = useMemo(() => query(collection(getFirebase().db, COL.plans), where("active", "==", true)), []);
-  const subscriptionQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.subscriptions), where("userId", "==", uid), where("status", "==", "active"), limit(1)) : null),
-    [uid],
-  );
-  const historyQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.creditTransactions), where("userId", "==", uid), orderBy("createdAt", "desc"), limit(50)) : null),
-    [uid],
-  );
-
-  const { data: wallet } = useDocument<Wallet>(walletRef);
-  const { data: plans } = useCollection<Plan>(plansQuery);
-  const { data: subscriptions } = useCollection<Subscription<Timestamp>>(subscriptionQuery);
-  const { data: history } = useCollection<CreditTransaction<Timestamp>>(historyQuery);
-  const subscription = subscriptions[0];
+  const wallet = useCallableQuery("getMyWallet", api.getMyWallet, {}, { pollMs: 30_000 });
+  const plans = useCallableQuery("listPlans", api.listPlans, {});
+  const subscription = useCallableQuery("getMySubscription", api.getMySubscription, {}, { pollMs: 30_000 });
+  const history = useCallableQuery("getMyCreditHistory", api.getMyCreditHistory, {}, { pollMs: 30_000 });
+  const sub = subscription.data;
 
   async function buy(planId: string) {
     setBusyPlan(planId);
     try {
       const { credits } = await api.purchasePlan({ planId });
       flash.success("credits.purchased", { count: credits });
+      wallet.refetch();
+      history.refetch();
+      subscription.refetch();
     } catch (err) {
       flash.error(err);
     } finally {
@@ -57,11 +43,12 @@ export default function CreditsPage() {
   }
 
   async function cancelSubscription() {
-    if (!subscription) return;
+    if (!sub) return;
     try {
-      await api.cancelSubscription({ subscriptionId: subscription.id });
+      await api.cancelSubscription({ subscriptionId: sub.id });
       flash.success("credits.subscriptionCancelled");
       setCancelling(false);
+      subscription.refetch();
     } catch (err) {
       flash.error(err);
     }
@@ -73,15 +60,15 @@ export default function CreditsPage() {
       <PageHeader title={t("credits.title")} description={t("credits.description")} />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        <StatCard icon="wallet" label={t("credits.balance")} value={wallet?.balance ?? 0} />
-        {subscription && (
+        <StatCard icon="wallet" label={t("credits.balance")} value={wallet.data?.balance ?? 0} />
+        {sub && (
           <StatCard
             icon="check"
             label={t("credits.subscription")}
-            value={subscription.planName}
+            value={sub.planName}
             hint={
               <>
-                {t("credits.renewsOn", { date: formatDate(subscription.nextRenewalAt.toDate().toISOString().slice(0, 10), locale) })}
+                {t("credits.renewsOn", { date: formatDate(sub.nextRenewalAt.slice(0, 10), locale) })}
                 {" · "}
                 <button type="button" className="underline" onClick={() => setCancelling(true)}>
                   {t("credits.cancelSubscription")}
@@ -94,11 +81,11 @@ export default function CreditsPage() {
 
       <div className="space-y-6">
         <Section title={t("credits.plans")} icon="package">
-          {plans.length === 0 ? (
+          {!plans.data || plans.data.length === 0 ? (
             <p className="text-sm text-slate-600">{t("credits.noPlans")}</p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {plans
+              {[...plans.data]
                 .sort((a, b) => a.priceCents - b.priceCents)
                 .map((plan) => (
                   <li key={plan.id} className="flex flex-col gap-2 rounded-xl border border-slate-200 p-4">
@@ -117,7 +104,7 @@ export default function CreditsPage() {
                     <Button
                       className="mt-auto"
                       onClick={() => void buy(plan.id)}
-                      disabled={!online || busyPlan !== null || (plan.kind === "subscription" && subscription !== undefined)}
+                      disabled={!online || busyPlan !== null || (plan.kind === "subscription" && sub !== null)}
                     >
                       {plan.kind === "subscription" ? t("credits.subscribe") : t("credits.buy")}
                     </Button>
@@ -129,17 +116,17 @@ export default function CreditsPage() {
         </Section>
 
         <Section title={t("credits.history")} icon="list">
-          {history.length === 0 ? (
+          {!history.data || history.data.length === 0 ? (
             <EmptyState icon="wallet">{t("credits.noHistory")}</EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {history.map((entry) => (
+              {history.data.map((entry) => (
                 <li key={entry.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0">
                     <p className="font-medium">{t(`credits.types.${entry.type}`)}</p>
                     <p className="truncate text-slate-600">
                       {entry.label && `${entry.label} · `}
-                      {formatDateTime(entry.createdAt, locale)}
+                      {formatIsoDateTime(entry.createdAt, locale)}
                     </p>
                   </div>
                   <div className="text-right">
@@ -164,7 +151,7 @@ export default function CreditsPage() {
         confirmLabel={t("credits.cancelSubscription")}
         danger
       >
-        {subscription?.planName}
+        {sub?.planName}
       </ConfirmModal>
     </>
   );

@@ -1,12 +1,12 @@
-import { FieldValue, type Timestamp } from "firebase-admin/firestore";
+import type { Filter } from "mongodb";
 import { cancelBookingInput, formatMinutes, type Booking, type Role } from "@reservation/shared";
-import { db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
-import { readBalance, writeCredits } from "../lib/credits";
+import { applyCredit } from "../lib/credits";
 import { appError } from "../lib/errors";
 import { notifyUser } from "../lib/notify";
-import { bookings, startsInThePast } from "./common";
+import { withTransaction } from "../lib/transaction";
+import { bookings, startsInThePast, type BookingDoc } from "./common";
 
 export interface Actor {
   uid: string;
@@ -18,13 +18,11 @@ export interface Actor {
  * Cancels a booking and refunds its credits. Owners can cancel bookings that have
  * not started; administrators and the system can cancel any confirmed booking.
  */
-export async function cancelBookingById(bookingId: string, actor: Actor, reason?: string): Promise<Booking<Timestamp>> {
-  const ref = bookings().doc(bookingId);
-
-  const booking = await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) throw appError("not-found", "bookingNotFound", "Booking not found.");
-    const booking = snap.data() as Booking<Timestamp>;
+export async function cancelBookingById(bookingId: string, actor: Actor, reason?: string): Promise<Booking<Date>> {
+  const booking = await withTransaction(async (session) => {
+    const col = await bookings();
+    const booking = await col.findOne({ _id: bookingId }, { session });
+    if (!booking) throw appError("not-found", "bookingNotFound", "Booking not found.");
 
     const privileged = actor.role === "admin" || actor.role === "system";
     if (booking.userId !== actor.uid && !privileged) throw appError("permission-denied", "forbidden", "Not your booking.");
@@ -32,13 +30,19 @@ export async function cancelBookingById(bookingId: string, actor: Actor, reason?
       throw appError("failed-precondition", "bookingNotCancellable", "Booking can no longer be cancelled.");
     }
 
-    const balance = await readBalance(tx, booking.userId);
-    tx.update(ref, { status: "cancelled", cancelledBy: actor.uid, cancelReason: reason ?? null, updatedAt: FieldValue.serverTimestamp() });
-    if (booking.credits > 0) {
-      writeCredits(tx, booking.userId, balance, { amount: booking.credits, type: "refund", label: booking.spaceName, bookingId });
-    }
+    await col.updateOne(
+      { _id: bookingId },
+      { $set: { status: "cancelled", cancelledBy: actor.uid, cancelReason: reason ?? null, updatedAt: new Date() } },
+      { session },
+    );
     return booking;
   });
+
+  // A refund can never fail the "not enough credits" check (it only adds), so this
+  // can safely run after the cancellation commits, same trade-off as the charge.
+  if (booking.credits > 0) {
+    await applyCredit(booking.userId, { amount: booking.credits, type: "refund", label: booking.spaceName, bookingId });
+  }
 
   await writeAudit({
     actorId: actor.uid,
@@ -70,14 +74,14 @@ export async function cancelUpcomingBookings(
   reason: string,
   range?: { from: string; to: string },
 ): Promise<number> {
-  let query = bookings().where("userId", "==", userId).where("status", "==", "confirmed");
-  if (range) query = query.where("date", ">=", range.from).where("date", "<=", range.to);
-  const snap = await query.get();
+  const filter: Filter<BookingDoc> = { userId, status: "confirmed" };
+  if (range) filter.date = { $gte: range.from, $lte: range.to };
+  const docs = await (await bookings()).find(filter).toArray();
 
   let cancelled = 0;
-  for (const doc of snap.docs) {
-    if (startsInThePast(doc.data() as Booking<Timestamp>)) continue;
-    await cancelBookingById(doc.id, actor, reason);
+  for (const doc of docs) {
+    if (startsInThePast(doc)) continue;
+    await cancelBookingById(doc._id, actor, reason);
     cancelled += 1;
   }
   return cancelled;
@@ -90,4 +94,3 @@ export const cancelBooking = secureCall(
     return { cancelled: true };
   },
 );
-

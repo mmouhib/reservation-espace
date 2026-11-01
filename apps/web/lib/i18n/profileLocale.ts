@@ -1,6 +1,5 @@
-import { doc, updateDoc } from "firebase/firestore";
-import { COL, type Locale } from "@reservation/shared";
-import { getFirebase } from "@/lib/firebase/client";
+import type { Locale } from "@reservation/shared";
+import { api } from "@/lib/api/functions";
 
 /**
  * When signed in, the profile holds the language (it follows the user across
@@ -30,9 +29,7 @@ export function takeSignedOutChoice(): boolean {
   }
 }
 
-/** Saves the language on the profile; queued by Firestore when offline. */
-export function saveProfileLocale(uid: string, locale: Locale): void {
-  updateDoc(doc(getFirebase().db, COL.users, uid), { locale }).catch((err) =>
-    console.warn("Could not save the language preference", err),
-  );
+/** Saves the language on the signed-in user's profile. The uid argument is kept for existing callers. */
+export function saveProfileLocale(_uid: string, locale: Locale): void {
+  api.updateMyProfile({ locale }).catch((err) => console.warn("Could not save the language preference", err));
 }

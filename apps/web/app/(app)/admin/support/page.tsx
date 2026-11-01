@@ -1,15 +1,13 @@
 "use client";
 
-import { collection, doc, limit, orderBy, query, serverTimestamp, updateDoc, type Timestamp } from "firebase/firestore";
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
-  COL,
   EQUIPMENT_REQUEST_STATUSES,
   INCIDENT_STATUSES,
-  type EquipmentRequest,
   type EquipmentRequestStatus,
-  type Incident,
+  type EquipmentRequestSummary,
   type IncidentStatus,
+  type IncidentSummary,
 } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { IncidentPhotos } from "@/components/support/IncidentPhotos";
@@ -20,35 +18,36 @@ import { Field, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, type WithId } from "@/lib/firebase/hooks";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type Handling =
-  | { kind: "incident"; item: WithId<Incident<Timestamp>>; status: IncidentStatus; note: string }
-  | { kind: "request"; item: WithId<EquipmentRequest<Timestamp>>; status: EquipmentRequestStatus; note: string };
+  | { kind: "incident"; item: IncidentSummary; status: IncidentStatus; note: string }
+  | { kind: "request"; item: EquipmentRequestSummary; status: EquipmentRequestStatus; note: string };
 
 export default function SupportAdminPage() {
   const { t, locale } = useI18n();
   const flash = useFlash();
   const [handling, setHandling] = useState<Handling | null>(null);
 
-  const incidentsQuery = useMemo(() => query(collection(getFirebase().db, COL.incidents), orderBy("createdAt", "desc"), limit(100)), []);
-  const requestsQuery = useMemo(() => query(collection(getFirebase().db, COL.equipmentRequests), orderBy("createdAt", "desc"), limit(100)), []);
-  const { data: incidents } = useCollection<Incident<Timestamp>>(incidentsQuery);
-  const { data: requests } = useCollection<EquipmentRequest<Timestamp>>(requestsQuery);
+  const incidentsQuery = useCallableQuery("listAllIncidents", api.listAllIncidents, {});
+  const requestsQuery = useCallableQuery("listAllEquipmentRequests", api.listAllEquipmentRequests, {});
+  const incidents = incidentsQuery.data ?? [];
+  const requests = requestsQuery.data ?? [];
 
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!handling) return;
-    const collectionName = handling.kind === "incident" ? COL.incidents : COL.equipmentRequests;
     try {
-      await updateDoc(doc(getFirebase().db, collectionName, handling.item.id), {
-        status: handling.status,
-        adminNote: handling.note.trim(),
-        updatedAt: serverTimestamp(),
-      });
+      if (handling.kind === "incident") {
+        await api.updateIncidentStatus({ incidentId: handling.item.id, status: handling.status, adminNote: handling.note.trim() });
+        incidentsQuery.refetch();
+      } else {
+        await api.updateEquipmentRequestStatus({ requestId: handling.item.id, status: handling.status, adminNote: handling.note.trim() });
+        requestsQuery.refetch();
+      }
       flash.success("admin.support.updated");
       setHandling(null);
     } catch (err) {

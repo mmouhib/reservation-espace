@@ -1,25 +1,25 @@
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import {
-  COL,
-  adjustCreditsInput,
-  cancelSubscriptionInput,
-  purchasePlanInput,
-  type Plan,
-  type Subscription,
-} from "@reservation/shared";
-import { db } from "../lib/admin";
+import { adjustCreditsInput, cancelSubscriptionInput, purchasePlanInput } from "@reservation/shared";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
 import { REGION } from "../lib/config";
-import { readBalance, writeCredits } from "../lib/credits";
+import {
+  applyCredit,
+  cancelSubscriptionById,
+  createSubscription,
+  getActiveSubscription,
+  getPlan,
+  listDueSubscriptions,
+  setNextRenewal,
+} from "../lib/credits";
 import { appError } from "../lib/errors";
 import { notifyUser } from "../lib/notify";
+import { withTransaction } from "../lib/transaction";
 
-function inOneMonth(from = new Date()): Timestamp {
+function inOneMonth(from = new Date()): Date {
   const next = new Date(from);
   next.setUTCMonth(next.getUTCMonth() + 1);
-  return Timestamp.fromDate(next);
+  return next;
 }
 
 /**
@@ -29,31 +29,30 @@ function inOneMonth(from = new Date()): Timestamp {
 export const purchasePlan = secureCall(
   { name: "purchasePlan", schema: purchasePlanInput, rateLimit: { limit: 10, windowSec: 60 } },
   async ({ uid, role, data }) => {
-    const planSnap = await db.collection(COL.plans).doc(data.planId).get();
-    const plan = planSnap.data() as Plan | undefined;
+    const plan = await getPlan(data.planId);
     if (!plan || !plan.active) throw appError("not-found", "planNotFound", "Plan not found.");
 
     const isSubscription = plan.kind === "subscription";
-    if (isSubscription) {
-      const active = await db.collection(COL.subscriptions).where("userId", "==", uid).where("status", "==", "active").limit(1).get();
-      if (!active.empty) throw appError("failed-precondition", "alreadySubscribed", "User already has a subscription.");
+    if (isSubscription && (await getActiveSubscription(uid))) {
+      throw appError("failed-precondition", "alreadySubscribed", "User already has a subscription.");
     }
 
-    await db.runTransaction(async (tx) => {
-      const balance = await readBalance(tx, uid);
-      writeCredits(tx, uid, balance, { amount: plan.credits, type: isSubscription ? "subscription" : "purchase", label: plan.name });
+    await withTransaction(async (session) => {
+      await applyCredit(uid, { amount: plan.credits, type: isSubscription ? "subscription" : "purchase", label: plan.name }, session);
       if (isSubscription) {
-        const subscription: Subscription<FieldValue | Timestamp | null> = {
-          userId: uid,
-          planId: data.planId,
-          planName: plan.name,
-          credits: plan.credits,
-          status: "active",
-          nextRenewalAt: inOneMonth(),
-          createdAt: FieldValue.serverTimestamp(),
-          cancelledAt: null,
-        };
-        tx.create(db.collection(COL.subscriptions).doc(), subscription);
+        await createSubscription(
+          {
+            userId: uid,
+            planId: data.planId,
+            planName: plan.name,
+            credits: plan.credits,
+            status: "active",
+            nextRenewalAt: inOneMonth(),
+            createdAt: new Date(),
+            cancelledAt: null,
+          },
+          session,
+        );
       }
     });
 
@@ -67,13 +66,8 @@ export const purchasePlan = secureCall(
 export const cancelSubscription = secureCall(
   { name: "cancelSubscription", schema: cancelSubscriptionInput, rateLimit: { limit: 10, windowSec: 60 } },
   async ({ uid, role, data }) => {
-    const ref = db.collection(COL.subscriptions).doc(data.subscriptionId);
-    const subscription = (await ref.get()).data() as Subscription | undefined;
-    if (!subscription || subscription.status !== "active") throw appError("not-found", "subscriptionNotFound", "Subscription not found.");
-    if (subscription.userId !== uid && role !== "admin") throw appError("permission-denied", "forbidden", "Not your subscription.");
-
-    await ref.update({ status: "cancelled", cancelledAt: FieldValue.serverTimestamp() });
-    await writeAudit({ actorId: uid, actorRole: role ?? "user", action: "subscription.cancelled", targetType: "subscription", targetId: ref.id });
+    await cancelSubscriptionById(data.subscriptionId, uid, role === "admin");
+    await writeAudit({ actorId: uid, actorRole: role ?? "user", action: "subscription.cancelled", targetType: "subscription", targetId: data.subscriptionId });
     return { cancelled: true };
   },
 );
@@ -82,10 +76,7 @@ export const cancelSubscription = secureCall(
 export const adjustCredits = secureCall(
   { name: "adjustCredits", schema: adjustCreditsInput, role: "admin", rateLimit: { limit: 20, windowSec: 60 } },
   async ({ uid: actorId, data }) => {
-    await db.runTransaction(async (tx) => {
-      const balance = await readBalance(tx, data.uid);
-      writeCredits(tx, data.uid, balance, { amount: data.amount, type: "adjustment", label: data.label });
-    });
+    await applyCredit(data.uid, { amount: data.amount, type: "adjustment", label: data.label });
     await writeAudit({
       actorId,
       actorRole: "admin",
@@ -103,18 +94,12 @@ export const adjustCredits = secureCall(
 
 /** Every night: gives the monthly credits of the subscriptions that are due. */
 export const renewSubscriptions = onSchedule({ schedule: "every day 03:00", timeZone: "Europe/Paris", region: REGION }, async () => {
-  const due = await db
-    .collection(COL.subscriptions)
-    .where("status", "==", "active")
-    .where("nextRenewalAt", "<=", Timestamp.now())
-    .get();
+  const due = await listDueSubscriptions(new Date());
 
-  for (const doc of due.docs) {
-    const subscription = doc.data() as Subscription<Timestamp>;
-    await db.runTransaction(async (tx) => {
-      const balance = await readBalance(tx, subscription.userId);
-      writeCredits(tx, subscription.userId, balance, { amount: subscription.credits, type: "subscription", label: subscription.planName });
-      tx.update(doc.ref, { nextRenewalAt: inOneMonth(subscription.nextRenewalAt.toDate()) });
+  for (const subscription of due) {
+    await withTransaction(async (session) => {
+      await applyCredit(subscription.userId, { amount: subscription.credits, type: "subscription", label: subscription.planName }, session);
+      await setNextRenewal(subscription._id, inOneMonth(subscription.nextRenewalAt), session);
     });
     await notifyUser(subscription.userId, {
       type: "subscriptionRenewed",

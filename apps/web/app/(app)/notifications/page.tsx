@@ -1,45 +1,44 @@
 "use client";
 
-import { collection, doc, limit, orderBy, query, serverTimestamp, writeBatch, type Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
-import { COL, type AppNotification } from "@reservation/shared";
+import type { NotificationSummary } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Button } from "@/components/ui/Button";
 import { Card, EmptyState } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { cn } from "@/lib/cn";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, type WithId } from "@/lib/firebase/hooks";
 import { formatDateTime } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const { t, locale } = useI18n();
-  const uid = user?.uid;
 
-  const notificationsQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.users, uid, COL.notifications), orderBy("createdAt", "desc"), limit(50)) : null),
-    [uid],
-  );
-  const { data: notifications, loading } = useCollection<AppNotification<Timestamp>>(notificationsQuery);
+  const { data, loading, refetch } = useCallableQuery("listMyNotifications", api.listMyNotifications, { limit: 50 });
+  const notifications: NotificationSummary[] = data ?? [];
   const unread = notifications.filter((n) => n.readAt === null);
 
-  const refOf = (id: string) => doc(getFirebase().db, COL.users, uid!, COL.notifications, id);
-
-  async function open(notification: WithId<AppNotification<Timestamp>>) {
-    if (notification.readAt === null) await writeBatch(getFirebase().db).update(refOf(notification.id), { readAt: serverTimestamp() }).commit();
+  async function open(notification: NotificationSummary) {
+    if (notification.readAt === null) {
+      try {
+        await api.markNotificationRead({ notificationId: notification.id });
+      } catch (err) {
+        console.warn("Could not mark the notification as read", err);
+      }
+      refetch();
+    }
     router.push(notification.link);
   }
 
   async function markAllRead() {
-    const batch = writeBatch(getFirebase().db);
-    for (const n of unread) batch.update(refOf(n.id), { readAt: serverTimestamp() });
-    await batch.commit();
+    try {
+      await api.markAllNotificationsRead({});
+    } finally {
+      refetch();
+    }
   }
 
   return (

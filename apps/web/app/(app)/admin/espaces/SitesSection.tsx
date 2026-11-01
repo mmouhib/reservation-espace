@@ -1,16 +1,14 @@
 "use client";
 
-import { addDoc, collection, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { useMemo, useState, type FormEvent } from "react";
-import { COL, formatMinutes, type Floor, type OpeningHours, type Site, type Space } from "@reservation/shared";
+import { formatMinutes, type Floor, type OpeningHours, type SiteSummary } from "@reservation/shared";
 import { OpeningHoursEditor } from "@/components/spaces/OpeningHoursEditor";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, Section } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
-import { getFirebase } from "@/lib/firebase/client";
-import type { WithId } from "@/lib/firebase/hooks";
+import { api } from "@/lib/api/functions";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const OFFICE_HOURS: OpeningHours = {
@@ -62,14 +60,14 @@ function hoursSummary(hours: OpeningHours): string {
   return first ? `${formatMinutes(first.from)}–${formatMinutes(first.to)} · ${days.length}/7` : "—";
 }
 
-export function SitesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces: WithId<Space>[] }) {
+export function SitesSection({ sites, onChanged }: { sites: SiteSummary[]; onChanged: () => void }) {
   const { t } = useI18n();
   const flash = useFlash();
   const zones = useMemo(() => timeZones(), []);
   const [draft, setDraft] = useState<SiteDraft | null>(null);
-  const [deleting, setDeleting] = useState<WithId<Site> | null>(null);
+  const [deleting, setDeleting] = useState<SiteSummary | null>(null);
 
-  function edit(site?: WithId<Site>) {
+  function edit(site?: SiteSummary) {
     setDraft({
       id: site?.id ?? null,
       name: site?.name ?? "",
@@ -84,7 +82,7 @@ export function SitesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces:
   async function save(e: FormEvent) {
     e.preventDefault();
     if (!draft) return;
-    const site: Site = {
+    const site = {
       name: draft.name.trim(),
       address: draft.address.trim(),
       timeZone: draft.timeZone,
@@ -92,11 +90,11 @@ export function SitesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces:
       defaultOpeningHours: draft.hours,
     };
     try {
-      const { db } = getFirebase();
-      if (draft.id) await updateDoc(doc(db, COL.sites, draft.id), { ...site });
-      else await addDoc(collection(db, COL.sites), site);
+      if (draft.id) await api.updateSite({ siteId: draft.id, ...site });
+      else await api.createSite(site);
       flash.success("common.saved");
       setDraft(null);
+      onChanged();
     } catch (err) {
       flash.error(err);
     }
@@ -104,15 +102,12 @@ export function SitesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces:
 
   async function remove() {
     if (!deleting) return;
-    if (spaces.some((s) => s.siteId === deleting.id)) {
-      flash.failure("admin.spaces.siteInUse");
-      setDeleting(null);
-      return;
-    }
     try {
-      await deleteDoc(doc(getFirebase().db, COL.sites, deleting.id));
+      // The server refuses while spaces still use the site; its error is shown as is.
+      await api.deleteSite({ siteId: deleting.id });
       flash.success("common.deleted");
       setDeleting(null);
+      onChanged();
     } catch (err) {
       flash.error(err);
     }
@@ -131,7 +126,7 @@ export function SitesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces:
       {sites.length === 0 ? (
         <EmptyState icon="building">{t("admin.spaces.noSites")}</EmptyState>
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {sites.map((site) => (
             <li key={site.id} className="rounded-xl border border-slate-200 p-4">
               <div className="flex items-start justify-between gap-2">

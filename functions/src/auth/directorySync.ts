@@ -1,13 +1,13 @@
-import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { z } from "zod";
-import { COL } from "@reservation/shared";
+import { COL, type UserProfile } from "@reservation/shared";
 import { cancelUpcomingBookings } from "../bookings/cancelBooking";
-import { auth, db } from "../lib/admin";
+import { auth } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
 import { REGION } from "../lib/config";
+import { getDb } from "../lib/mongo";
 import { getDirectoryProvider } from "./directory";
 
 export interface DirectorySyncResult {
@@ -31,10 +31,11 @@ export async function runDirectorySync(actorId = "system"): Promise<DirectorySyn
     await auth.revokeRefreshTokens(user.uid);
     // Their upcoming bookings free the spaces, and the credits go back to their wallet.
     await cancelUpcomingBookings(user.uid, { uid: actorId, role: "system" }, "left_company");
+    const db = await getDb();
+    // Upsert mirrors the Firestore `set(..., { merge: true })` this replaces.
     await db
-      .collection(COL.users)
-      .doc(user.uid)
-      .set({ status: "disabled", disabledAt: FieldValue.serverTimestamp() }, { merge: true });
+      .collection<UserProfile<Date> & { _id: string }>(COL.users)
+      .updateOne({ _id: user.uid }, { $set: { status: "disabled", disabledAt: new Date() } }, { upsert: true });
     await writeAudit({
       actorId,
       actorRole: actorId === "system" ? "system" : "admin",
@@ -57,7 +58,7 @@ export const directorySyncScheduled = onSchedule(
   },
 );
 
-/** Admin-only manual trigger (scheduled functions don't fire in the emulator). */
+/** Admin-only manual trigger (scheduled functions do not fire in the emulator). */
 export const runDirectorySyncNow = secureCall(
   { name: "runDirectorySyncNow", schema: z.object({}).strict(), role: "admin", rateLimit: { limit: 5, windowSec: 60 } },
   async ({ uid }) => runDirectorySync(uid),

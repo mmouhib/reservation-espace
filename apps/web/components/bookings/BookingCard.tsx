@@ -1,17 +1,15 @@
 "use client";
 
-import type { Timestamp } from "firebase/firestore";
 import type { ReactNode } from "react";
-import { formatMinutes, type Booking } from "@reservation/shared";
+import { formatMinutes, type BookingSummary } from "@reservation/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
-import type { WithId } from "@/lib/firebase/hooks";
 import { formatDate } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 /** One booking: a date tile, the space, the time range and the price, with optional action buttons. */
-export function BookingCard({ booking, actions }: { booking: WithId<Booking<Timestamp>>; actions?: ReactNode }) {
+export function BookingCard({ booking, actions }: { booking: BookingSummary; actions?: ReactNode }) {
   const { t, locale } = useI18n();
   const cancelled = booking.status === "cancelled";
   const month = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(new Date(`${booking.date}T00:00:00Z`));

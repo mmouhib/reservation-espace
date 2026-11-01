@@ -1,4 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
 import { addDays, type Locale } from "@reservation/shared";
 
 /** "Tue 12 May" for "2026-05-12". Dates are calendar days, so no time zone is involved. */
@@ -6,9 +5,15 @@ export function formatDate(date: string, locale: Locale): string {
   return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
 }
 
-export function formatDateTime(value: Timestamp | null | undefined, locale: Locale): string {
+/** Date and time of an ISO string (callable results serialize dates this way). */
+export function formatDateTime(value: string | null | undefined, locale: Locale): string {
   if (!value) return "";
-  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(value.toDate());
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+/** Same as formatDateTime. Kept for existing callers. */
+export function formatIsoDateTime(value: string | null | undefined, locale: Locale): string {
+  return formatDateTime(value, locale);
 }
 
 export function formatPrice(cents: number, locale: Locale): string {

@@ -1,8 +1,7 @@
 "use client";
 
-import { collection, limit, orderBy, query, where, type Timestamp } from "firebase/firestore";
-import { useMemo, useState, type FormEvent } from "react";
-import { COL, formatMinutes, type Absence, type Booking, type Locale } from "@reservation/shared";
+import { useState, type FormEvent } from "react";
+import { formatMinutes, type BookingSummary, type Locale } from "@reservation/shared";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, Section } from "@/components/ui/Card";
@@ -13,32 +12,26 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Tabs } from "@/components/ui/Tabs";
 import { TimeSelect } from "@/components/ui/TimeSelect";
 import { api } from "@/lib/api/functions";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, type WithId } from "@/lib/firebase/hooks";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, todayLocal } from "@/lib/format";
 import { useNow } from "@/lib/hooks/useNow";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
-type BookingRow = WithId<Booking<Timestamp>>;
+type BookingRow = BookingSummary;
 type View = "upcoming" | "past";
 
 export function MyBookings() {
-  const { user } = useAuth();
   const { t, locale } = useI18n();
-  const uid = user?.uid;
   const [view, setView] = useState<View>("upcoming");
 
-  const bookingsQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.bookings), where("userId", "==", uid), orderBy("date", "desc"), limit(100)) : null),
-    [uid],
-  );
-  const { data: bookings, loading } = useCollection<Booking<Timestamp>>(bookingsQuery);
+  const bookingsQuery = useCallableQuery("listMyBookings", api.listMyBookings, { limit: 100 });
+  const bookings = bookingsQuery.data ?? [];
+  const loading = bookingsQuery.loading;
 
   // A booking is upcoming until it starts, and only if it was not cancelled.
   const now = useNow();
-  const isUpcoming = (b: BookingRow) => b.status === "confirmed" && b.startsAt.toMillis() > now;
+  const isUpcoming = (b: BookingRow) => b.status === "confirmed" && Date.parse(b.startsAt) > now;
   const upcoming = bookings.filter(isUpcoming).sort((a, b) => a.date.localeCompare(b.date) || a.from - b.from);
   const past = bookings.filter((b) => !isUpcoming(b)).sort((a, b) => b.date.localeCompare(a.date) || b.from - a.from);
   const shown = view === "upcoming" ? upcoming : past;
@@ -86,15 +79,15 @@ export function MyBookings() {
         )}
       </div>
 
-      <Absences />
+      <Absences onChanged={bookingsQuery.refetch} />
 
-      <ChangeBookingModal booking={changing} onClose={() => setChanging(null)} />
-      <CancelBookingModal booking={cancelling} onClose={() => setCancelling(null)} locale={locale} />
+      <ChangeBookingModal booking={changing} onClose={() => setChanging(null)} onSaved={bookingsQuery.refetch} />
+      <CancelBookingModal booking={cancelling} onClose={() => setCancelling(null)} onCancelled={bookingsQuery.refetch} locale={locale} />
     </div>
   );
 }
 
-function ChangeBookingModal({ booking, onClose }: { booking: BookingRow | null; onClose: () => void }) {
+function ChangeBookingModal({ booking, onClose, onSaved }: { booking: BookingRow | null; onClose: () => void; onSaved: () => void }) {
   const { t } = useI18n();
   const flash = useFlash();
   const online = useOnlineStatus();
@@ -110,6 +103,7 @@ function ChangeBookingModal({ booking, onClose }: { booking: BookingRow | null; 
     try {
       await api.updateBooking({ bookingId: form.id, date: form.date, from: form.from, to: form.to, attendees: form.attendees });
       flash.success("myBookings.updated");
+      onSaved();
       onClose();
     } catch (err) {
       flash.error(err);
@@ -151,7 +145,17 @@ function ChangeBookingModal({ booking, onClose }: { booking: BookingRow | null; 
   );
 }
 
-function CancelBookingModal({ booking, onClose, locale }: { booking: BookingRow | null; onClose: () => void; locale: Locale }) {
+function CancelBookingModal({
+  booking,
+  onClose,
+  onCancelled,
+  locale,
+}: {
+  booking: BookingRow | null;
+  onClose: () => void;
+  onCancelled: () => void;
+  locale: Locale;
+}) {
   const { t } = useI18n();
   const flash = useFlash();
   const [busy, setBusy] = useState(false);
@@ -162,6 +166,7 @@ function CancelBookingModal({ booking, onClose, locale }: { booking: BookingRow 
     try {
       await api.cancelBooking({ bookingId: booking.id });
       flash.success("myBookings.cancelled");
+      onCancelled();
       onClose();
     } catch (err) {
       flash.error(err);
@@ -171,7 +176,7 @@ function CancelBookingModal({ booking, onClose, locale }: { booking: BookingRow 
   }
 
   return (
-    <ConfirmModal open={booking !== null} onClose={onClose} onConfirm={() => void confirm()} title={t("myBookings.cancelTitle")} confirmLabel={t("myBookings.cancel")} danger busy={busy}>
+    <ConfirmModal open={booking !== null} onClose={onClose} onConfirm={() => void confirm()} title={t("myBookings.cancelTitle")} confirmLabel={t("myBookings.cancelTitle")} danger busy={busy}>
       {booking && (
         <>
           <strong>{booking.spaceName}</strong> · {formatDate(booking.date, locale)} · {formatMinutes(booking.from)} – {formatMinutes(booking.to)}
@@ -184,15 +189,11 @@ function CancelBookingModal({ booking, onClose, locale }: { booking: BookingRow 
 }
 
 /** Periods when the user is away. Declaring one cancels the bookings inside it. */
-function Absences() {
-  const { user } = useAuth();
+function Absences({ onChanged }: { onChanged: () => void }) {
   const { t, locale } = useI18n();
   const flash = useFlash();
-  const uid = user?.uid;
-
-  const absencesQuery = useMemo(() => (uid ? query(collection(getFirebase().db, COL.absences), where("userId", "==", uid)) : null), [uid]);
-  const { data } = useCollection<Absence<Timestamp>>(absencesQuery);
-  const absences = [...data].sort((a, b) => b.from.localeCompare(a.from));
+  const { data } = useCallableQuery("listMyAbsences", api.listMyAbsences, {});
+  const absences = [...(data ?? [])].sort((a, b) => b.from.localeCompare(a.from));
 
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState(todayLocal());
@@ -208,6 +209,7 @@ function Absences() {
       flash.success("myBookings.absenceDeclared", { count: cancelled });
       setOpen(false);
       setNote("");
+      onChanged();
     } catch (err) {
       flash.error(err);
     } finally {
@@ -219,6 +221,7 @@ function Absences() {
     try {
       await api.removeAbsence({ absenceId });
       flash.success("myBookings.absenceRemoved");
+      onChanged();
     } catch (err) {
       flash.error(err);
     }

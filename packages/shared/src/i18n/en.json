@@ -74,7 +74,8 @@
     "credits": "Credits",
     "support": "Support",
     "notifications": "Notifications",
-    "myBookingsShort": "Bookings"
+    "myBookingsShort": "Bookings",
+    "visitors": "Visitors"
   },
   "home": {
     "greeting": "Hello",
@@ -87,7 +88,8 @@
       "admin": "Spaces, users, moderation and statistics.",
       "team": "The bookings of your team members.",
       "credits": "Your balance, plans and history.",
-      "support": "Report a problem or request equipment."
+      "support": "Report a problem or request equipment.",
+      "visitors": "Invite an external guest and track your invitations."
     },
     "upcoming": "Upcoming bookings",
     "noUpcoming": "No upcoming bookings.",
@@ -230,6 +232,10 @@
         "title": "Reports and equipment",
         "text": "Incidents and equipment requests."
       },
+      "visitors": {
+        "title": "Visitors",
+        "text": "Reception: who's expected, check guests in or out."
+      },
       "statistics": {
         "title": "Statistics",
         "text": "Occupancy, usage and exports."
@@ -346,6 +352,9 @@
       "newPlan": "New plan",
       "editPlan": "Edit plan",
       "planName": "Name",
+      "generateDescription": "✨ Generate with AI",
+      "generatingDescription": "Generating…",
+      "generateDescriptionError": "Please enter the plan name first.",
       "planKind": "Type",
       "planCredits": "Credits",
       "planPrice": "Price (€)",
@@ -369,6 +378,14 @@
       "updated": "Updated.",
       "noIncidents": "No reports.",
       "noRequests": "No requests."
+    },
+    "visitors": {
+      "title": "Visitors",
+      "description": "The guests expected on the selected day.",
+      "host": "Invited by {name}",
+      "checkIn": "Check in",
+      "checkOut": "Check out",
+      "noVisits": "No guests expected that day."
     },
     "statistics": {
       "title": "Statistics",
@@ -451,7 +468,9 @@
   "offline": {
     "title": "Offline",
     "heading": "You're offline",
-    "text": "This page isn't available without a connection. Bookings you've already viewed are still accessible."
+    "text": "This page isn't available without a connection. Bookings you've already viewed are still accessible.",
+    "notCached": "This data hasn't been loaded with a connection yet: it will be available offline after a first visit.",
+    "staleSince": "Offline data from {date}."
   },
   "notFound": {
     "title": "Page not found",
@@ -490,7 +509,10 @@
     "notEnoughCredits": "Not enough credits.",
     "planNotFound": "Plan not found.",
     "alreadySubscribed": "You already have an active subscription.",
-    "subscriptionNotFound": "Subscription not found."
+    "subscriptionNotFound": "Subscription not found.",
+    "assistantUnavailable": "The AI assistant is temporarily unavailable.",
+    "visitNotFound": "Visit not found.",
+    "invalidVisitStatus": "This visit can no longer be changed."
   },
   "incidentStatus": {
     "open": "Open",
@@ -501,6 +523,12 @@
     "pending": "Pending",
     "approved": "Approved",
     "rejected": "Rejected"
+  },
+  "visitStatus": {
+    "expected": "Expected",
+    "checkedIn": "Checked in",
+    "checkedOut": "Checked out",
+    "cancelled": "Cancelled"
   },
   "items": {
     "screen": "Screen",
@@ -558,6 +586,10 @@
     "equipmentUpdated": {
       "title": "Equipment request updated",
       "body": "Your request ({item}) is now: {status}"
+    },
+    "visitorArrived": {
+      "title": "Your guest has arrived",
+      "body": "{guest} has arrived at reception."
     }
   },
   "weekdays": {
@@ -645,10 +677,35 @@
     "myRequests": "My requests",
     "noRequests": "No requests."
   },
+  "visitors": {
+    "title": "Visitors",
+    "description": "Invite an external guest and track your invitations.",
+    "newVisit": "Invite a guest",
+    "site": "Site",
+    "guestName": "Guest name",
+    "guestEmail": "Guest email",
+    "guestCompany": "Company",
+    "send": "Send the invitation",
+    "sending": "Sending…",
+    "sent": "Invitation sent.",
+    "myVisits": "My invitations",
+    "noVisits": "No invitations.",
+    "cancelled": "Invitation cancelled."
+  },
   "notifications": {
     "title": "Notifications",
     "description": "Your confirmations, reminders and alerts.",
     "empty": "No notifications.",
     "markAllRead": "Mark all as read"
+  },
+  "assistant": {
+    "openLabel": "Open the assistant",
+    "closeLabel": "Close the assistant",
+    "title": "Booking assistant",
+    "greeting": "👋 Hi! Ask me anything about booking a space.",
+    "placeholder": "Ask a question…",
+    "send": "Send",
+    "typing": "The assistant is typing…",
+    "error": "Sorry, something went wrong. Please try again shortly."
   }
 }

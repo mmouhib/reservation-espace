@@ -1,6 +1,5 @@
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { ObjectId } from "mongodb";
 import {
-  COL,
   bookingCost,
   createBookingInput,
   findBookingProblem,
@@ -9,33 +8,36 @@ import {
   nowIn,
   overlaps,
   zonedTimeToUtc,
-  type Booking,
-  type UserProfile,
 } from "@reservation/shared";
-import { db } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { secureCall } from "../lib/callable";
-import { readBalance, writeCredits } from "../lib/credits";
+import { applyCredit, getBalance } from "../lib/credits";
 import { appError } from "../lib/errors";
 import { notifyUser } from "../lib/notify";
-import { absencesOf, bookings, loadSpace, spaceDayQuery, toBookedSlot, userAbsencesQuery, userDayQuery } from "./common";
+import { withTransaction } from "../lib/transaction";
+import { absences, bookings, loadSpace, spaceDayFilter, toBookedSlot, userAbsencesFilter, userDayFilter, users, type BookingDoc } from "./common";
 
-/** Books a space for the signed-in user, charging credits. Every rule is checked in one transaction. */
+/**
+ * Books a space for the signed-in user, charging credits. The checks and the booking
+ * insert run in one Mongo transaction; the charge is a separate operation applied right
+ * after it commits (credits live in Mongo, see functions/src/lib/credits.ts). The
+ * balance is read inside the transaction to reject "not enough credits" early; the
+ * authoritative check happens in `applyCredit`, and if that rare race still fails,
+ * the just-created booking is deleted to avoid an unpaid "ghost" booking.
+ */
 export const createBooking = secureCall(
   { name: "createBooking", schema: createBookingInput, rateLimit: { limit: 20, windowSec: 60 } },
   async ({ uid, role, data }) => {
     const slot = { from: data.from, to: data.to };
-    const ref = bookings().doc();
+    const bookingId = new ObjectId().toHexString();
 
-    const space = await db.runTransaction(async (tx) => {
-      const { space, site } = await loadSpace(tx, data.spaceId);
-      const userSnap = await tx.get(db.collection(COL.users).doc(uid));
-      const sameSpace = await tx.get(spaceDayQuery(data.spaceId, data.date));
-      const mine = await tx.get(userDayQuery(uid, data.date));
-      const absences = await tx.get(userAbsencesQuery(uid));
-      const balance = await readBalance(tx, uid);
+    const { space, cost } = await withTransaction(async (session) => {
+      const { space, site } = await loadSpace(session, data.spaceId);
+      const user = await (await users()).findOne({ _id: uid }, { session });
+      const sameSpace = await (await bookings()).find(spaceDayFilter(data.spaceId, data.date), { session }).toArray();
+      const mine = await (await bookings()).find(userDayFilter(uid, data.date), { session }).toArray();
+      const myAbsences = await (await absences()).find(userAbsencesFilter(uid), { session }).toArray();
 
-      const user = userSnap.data() as UserProfile | undefined;
       if (!user || user.status !== "active") throw appError("permission-denied", "forbidden", "Account is not active.");
 
       const problem = findBookingProblem({
@@ -43,17 +45,21 @@ export const createBooking = secureCall(
         date: data.date,
         slot,
         attendees: data.attendees,
-        existing: sameSpace.docs.map(toBookedSlot),
+        existing: sameSpace.map(toBookedSlot),
         now: nowIn(site.timeZone),
       });
       if (problem) throw appError("failed-precondition", problem, `Booking refused: ${problem}`);
-      if (isWithinRanges(data.date, absencesOf(absences.docs))) throw appError("failed-precondition", "absent", "User is absent.");
-      if (mine.docs.some((d) => overlaps(d.data() as Booking, slot))) {
+      if (isWithinRanges(data.date, myAbsences)) throw appError("failed-precondition", "absent", "User is absent.");
+      if (mine.some((b) => overlaps(b, slot))) {
         throw appError("failed-precondition", "alreadyBooked", "User already has a booking at that time.");
       }
 
       const cost = bookingCost(space.creditsPerHour ?? 0, slot);
-      const booking: Booking<FieldValue | Timestamp> = {
+      if (cost > 0 && (await getBalance(uid, session)) < cost) throw appError("failed-precondition", "notEnoughCredits", "Not enough credits.");
+
+      const now = new Date();
+      const booking: BookingDoc = {
+        _id: bookingId,
         userId: uid,
         userName: user.displayName,
         teamIds: user.teamIds ?? [],
@@ -64,26 +70,34 @@ export const createBooking = secureCall(
         from: data.from,
         to: data.to,
         attendees: data.attendees,
-        startsAt: Timestamp.fromDate(zonedTimeToUtc(data.date, data.from, site.timeZone)),
+        startsAt: zonedTimeToUtc(data.date, data.from, site.timeZone),
         status: "confirmed",
         credits: cost,
         cancelledBy: null,
         cancelReason: null,
         reminderSent: false,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: now,
+        updatedAt: now,
       };
-      tx.create(ref, booking);
-      if (cost > 0) writeCredits(tx, uid, balance, { amount: -cost, type: "booking", label: space.name, bookingId: ref.id });
-      return space;
+      await (await bookings()).insertOne(booking, { session });
+      return { space, cost };
     });
+
+    if (cost > 0) {
+      try {
+        await applyCredit(uid, { amount: -cost, type: "booking", label: space.name, bookingId });
+      } catch (err) {
+        await (await bookings()).deleteOne({ _id: bookingId });
+        throw err;
+      }
+    }
 
     await writeAudit({
       actorId: uid,
       actorRole: role ?? "user",
       action: "booking.created",
       targetType: "booking",
-      targetId: ref.id,
+      targetId: bookingId,
       details: { spaceId: data.spaceId, date: data.date },
     });
     await notifyUser(uid, {
@@ -91,6 +105,6 @@ export const createBooking = secureCall(
       values: { space: space.name, date: data.date, from: formatMinutes(data.from), to: formatMinutes(data.to) },
       link: "/mes-reservations",
     });
-    return { bookingId: ref.id };
+    return { bookingId };
   },
 );

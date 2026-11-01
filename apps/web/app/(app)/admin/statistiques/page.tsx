@@ -1,15 +1,15 @@
 "use client";
 
-import { collection, orderBy, query, where, type Timestamp } from "firebase/firestore";
-import { useMemo, useState } from "react";
-import { COL, SPACE_CATEGORIES, addDays, formatMinutes, type Booking, type Space } from "@reservation/shared";
+import { useState } from "react";
+import { SPACE_CATEGORIES, addDays, formatMinutes, type SpaceCategory } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, Section, StatCard } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
+import { useFlash } from "@/components/ui/Flash";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection } from "@/lib/firebase/hooks";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { downloadFile, formatDate, todayLocal } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
@@ -37,48 +37,37 @@ function csvCell(value: string | number): string {
 
 export default function StatisticsPage() {
   const { t, locale } = useI18n();
+  const flash = useFlash();
+  const [exporting, setExporting] = useState(false);
   // Two weeks back and two weeks ahead: past usage and what is already booked.
   const [from, setFrom] = useState(addDays(todayLocal(), -14));
   const [to, setTo] = useState(addDays(todayLocal(), 14));
 
-  const bookingsQuery = useMemo(
-    () => (from && to ? query(collection(getFirebase().db, COL.bookings), where("date", ">=", from), where("date", "<=", to), orderBy("date")) : null),
-    [from, to],
-  );
-  const spacesQuery = useMemo(() => query(collection(getFirebase().db, COL.spaces)), []);
-  const { data: bookings } = useCollection<Booking<Timestamp>>(bookingsQuery);
-  const { data: spaces } = useCollection<Space>(spacesQuery);
+  const range = from && to ? { from, to } : null;
+  const totals = useCallableQuery("getBookingTotals", api.getBookingTotals, range);
+  const perDay = useCallableQuery("getBookingsPerDay", api.getBookingsPerDay, range);
+  const perCategory = useCallableQuery("getHoursPerCategory", api.getHoursPerCategory, range);
+  const topSpaces = useCallableQuery("getTopSpaces", api.getTopSpaces, range);
 
-  const stats = useMemo(() => {
-    const confirmed = bookings.filter((b) => b.status === "confirmed");
-    const hoursOf = (b: { from: number; to: number }) => (b.to - b.from) / 60;
+  const confirmed = totals.data?.confirmed ?? 0;
+  const cancelled = totals.data?.cancelled ?? 0;
+  const hoursByCategory = new Map<SpaceCategory, number>((perCategory.data ?? []).map((c) => [c.category, c.hours] as const));
+  const dayRows = [...(perDay.data ?? [])].sort((a, b) => a.date.localeCompare(b.date));
 
-    const perDay = new Map<string, number>();
-    const hoursPerCategory = new Map<string, number>();
-    const perSpace = new Map<string, number>();
-    for (const b of confirmed) {
-      perDay.set(b.date, (perDay.get(b.date) ?? 0) + 1);
-      const category = spaces.find((s) => s.id === b.spaceId)?.category;
-      if (category) hoursPerCategory.set(category, (hoursPerCategory.get(category) ?? 0) + hoursOf(b));
-      perSpace.set(b.spaceName, (perSpace.get(b.spaceName) ?? 0) + 1);
+  async function exportCsv() {
+    if (!from || !to) return;
+    setExporting(true);
+    try {
+      const bookings = await api.listBookingsInRange({ from, to, limit: 5000 });
+      const header = [t("common.date"), t("reserve.start"), t("reserve.end"), t("admin.bookings.space"), t("admin.bookings.user"), t("common.status"), t("credits.title")];
+      const lines = bookings.map((b) => [b.date, formatMinutes(b.from), formatMinutes(b.to), b.spaceName, b.userName, b.status, b.credits]);
+      const csv = [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n");
+      downloadFile(`bookings-${from}-${to}.csv`, `﻿${csv}`, "text/csv;charset=utf-8");
+    } catch (err) {
+      flash.error(err);
+    } finally {
+      setExporting(false);
     }
-    return {
-      confirmed: confirmed.length,
-      cancelled: bookings.length - confirmed.length,
-      hours: confirmed.reduce((sum, b) => sum + hoursOf(b), 0),
-      credits: confirmed.reduce((sum, b) => sum + b.credits, 0),
-      users: new Set(confirmed.map((b) => b.userId)).size,
-      perDay: [...perDay.entries()].sort(([a], [b]) => a.localeCompare(b)),
-      hoursPerCategory,
-      topSpaces: [...perSpace.entries()].sort(([, a], [, b]) => b - a).slice(0, 5),
-    };
-  }, [bookings, spaces]);
-
-  function exportCsv() {
-    const header = [t("common.date"), t("reserve.start"), t("reserve.end"), t("admin.bookings.space"), t("admin.bookings.user"), t("common.status"), t("credits.title")];
-    const lines = bookings.map((b) => [b.date, formatMinutes(b.from), formatMinutes(b.to), b.spaceName, b.userName, b.status, b.credits]);
-    const csv = [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n");
-    downloadFile(`bookings-${from}-${to}.csv`, `﻿${csv}`, "text/csv;charset=utf-8");
   }
 
   return (
@@ -88,7 +77,7 @@ export default function StatisticsPage() {
         title={t("admin.statistics.title")}
         description={t("admin.statistics.description")}
         actions={
-          <Button variant="secondary" onClick={exportCsv} disabled={bookings.length === 0}>
+          <Button variant="secondary" onClick={() => void exportCsv()} disabled={exporting || confirmed + cancelled === 0}>
             {t("admin.statistics.export")}
           </Button>
         }
@@ -104,31 +93,31 @@ export default function StatisticsPage() {
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard icon="list" label={t("admin.statistics.bookings")} value={stats.confirmed} />
-        <StatCard icon="x" label={t("admin.statistics.cancelled")} value={stats.cancelled} />
-        <StatCard icon="clock" label={t("admin.statistics.hours")} value={Math.round(stats.hours * 10) / 10} />
-        <StatCard icon="wallet" label={t("admin.statistics.creditsSpent")} value={stats.credits} />
-        <StatCard icon="users" label={t("admin.statistics.activeUsers")} value={stats.users} />
+        <StatCard icon="list" label={t("admin.statistics.bookings")} value={confirmed} />
+        <StatCard icon="x" label={t("admin.statistics.cancelled")} value={cancelled} />
+        <StatCard icon="clock" label={t("admin.statistics.hours")} value={Math.round((totals.data?.hours ?? 0) * 10) / 10} />
+        <StatCard icon="wallet" label={t("admin.statistics.creditsSpent")} value={totals.data?.credits ?? 0} />
+        <StatCard icon="users" label={t("admin.statistics.activeUsers")} value={totals.data?.users ?? 0} />
       </div>
 
-      {stats.confirmed === 0 ? (
+      {confirmed === 0 ? (
         <EmptyState icon="chart">{t("admin.statistics.noData")}</EmptyState>
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
           <Section title={t("admin.statistics.byDay")} icon="chart" className="xl:col-span-2">
-            <Bars items={stats.perDay.map(([date, count]) => ({ label: formatDate(date, locale), value: count, display: String(count) }))} />
+            <Bars items={dayRows.map((d) => ({ label: formatDate(d.date, locale), value: d.count, display: String(d.count) }))} />
           </Section>
           <Section title={t("admin.statistics.byCategory")} icon="layers">
             <Bars
-              items={SPACE_CATEGORIES.filter((c) => stats.hoursPerCategory.has(c)).map((c) => ({
+              items={SPACE_CATEGORIES.filter((c: SpaceCategory) => hoursByCategory.has(c)).map((c) => ({
                 label: t(`spaceCategories.${c}`),
-                value: stats.hoursPerCategory.get(c) ?? 0,
-                display: t("admin.statistics.hoursShort", { count: Math.round(stats.hoursPerCategory.get(c) ?? 0) }),
+                value: hoursByCategory.get(c) ?? 0,
+                display: t("admin.statistics.hoursShort", { count: Math.round(hoursByCategory.get(c) ?? 0) }),
               }))}
             />
           </Section>
           <Section title={t("admin.statistics.topSpaces")} icon="building">
-            <Bars items={stats.topSpaces.map(([name, count]) => ({ label: name, value: count, display: String(count) }))} />
+            <Bars items={(topSpaces.data ?? []).map((s) => ({ label: s.name, value: s.count, display: String(s.count) }))} />
           </Section>
         </div>
       )}

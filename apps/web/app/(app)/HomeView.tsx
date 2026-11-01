@@ -1,52 +1,31 @@
 "use client";
 
-import { collection, doc, limit, orderBy, query, where, type Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import { useMemo } from "react";
-import { COL, formatMinutes, hasRole, type AppNotification, type Booking, type Wallet } from "@reservation/shared";
+import { formatMinutes, hasRole } from "@reservation/shared";
 import { BookingCard } from "@/components/bookings/BookingCard";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { EmptyState, StatCard } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
+import { api } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection, useDocument } from "@/lib/firebase/hooks";
 import { formatDate, todayLocal } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { NAV_ITEMS } from "@/lib/navigation";
 
 export function HomeView() {
-  const { profile, role, user } = useAuth();
+  const { profile, role } = useAuth();
   const { t, locale } = useI18n();
-  const uid = user?.uid;
   const today = todayLocal();
   const firstName = profile?.displayName.split(" ")[0];
   const shortcuts = NAV_ITEMS.filter((i) => i.href !== "/" && role && hasRole(role, i.minRole));
 
-  const upcomingQuery = useMemo(
-    () =>
-      uid
-        ? query(
-            collection(getFirebase().db, COL.bookings),
-            where("userId", "==", uid),
-            where("status", "==", "confirmed"),
-            where("date", ">=", today),
-            orderBy("date"),
-            limit(10),
-          )
-        : null,
-    [uid, today],
-  );
-  const walletRef = useMemo(() => (uid ? doc(getFirebase().db, COL.wallets, uid) : null), [uid]);
-  const unreadQuery = useMemo(
-    () => (uid ? query(collection(getFirebase().db, COL.users, uid, COL.notifications), where("readAt", "==", null), limit(50)) : null),
-    [uid],
-  );
+  const { data: bookingsData } = useCallableQuery("listMyUpcomingBookings", api.listMyUpcomingBookings, { fromDate: today });
+  const wallet = useCallableQuery("getMyWallet", api.getMyWallet, {}, { pollMs: 30_000 });
+  const { data: unreadData } = useCallableQuery("listMyNotifications", api.listMyNotifications, { unreadOnly: true, limit: 50 });
 
-  const { data: bookings } = useCollection<Booking<Timestamp>>(upcomingQuery);
-  const { data: wallet } = useDocument<Wallet>(walletRef);
-  const { data: unread } = useCollection<AppNotification>(unreadQuery);
-
+  const bookings = bookingsData ?? [];
+  const unread = unreadData ?? [];
   const upcoming = [...bookings].sort((a, b) => a.date.localeCompare(b.date) || a.from - b.from).slice(0, 3);
   const next = upcoming[0];
 
@@ -74,7 +53,7 @@ export function HomeView() {
           value={next ? formatDate(next.date, locale) : t("home.noNextBooking")}
           hint={next ? `${next.spaceName} · ${formatMinutes(next.from)}` : undefined}
         />
-        <StatCard icon="wallet" label={t("home.balance")} value={wallet?.balance ?? 0} hint={<Link href="/credits" className="underline">{t("nav.credits")}</Link>} />
+        <StatCard icon="wallet" label={t("home.balance")} value={wallet.data?.balance ?? 0} hint={<Link href="/credits" className="underline">{t("nav.credits")}</Link>} />
         <StatCard
           icon="bell"
           label={t("nav.notifications")}

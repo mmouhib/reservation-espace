@@ -1,39 +1,56 @@
-import type { QueryDocumentSnapshot, Timestamp, Transaction } from "firebase-admin/firestore";
-import { COL, type Absence, type BookedSlot, type Booking, type Site, type Space } from "@reservation/shared";
-import { db } from "../lib/admin";
+import type { ClientSession, Filter } from "mongodb";
+import { COL, type Absence, type BookedSlot, type Booking, type Site, type Space, type UserProfile } from "@reservation/shared";
 import { appError } from "../lib/errors";
+import { getDb } from "../lib/mongo";
 
-export const bookings = () => db.collection(COL.bookings);
+export type BookingDoc = Booking<Date> & { _id: string };
+export type SpaceDoc = Space<Date> & { _id: string };
+export type SiteDoc = Site & { _id: string };
+export type AbsenceDoc = Absence<Date> & { _id: string };
+export type UserDoc = UserProfile<Date> & { _id: string };
+
+export async function bookings() {
+  return (await getDb()).collection<BookingDoc>(COL.bookings);
+}
+
+export async function absences() {
+  return (await getDb()).collection<AbsenceDoc>(COL.absences);
+}
+
+export async function spaces() {
+  return (await getDb()).collection<SpaceDoc>(COL.spaces);
+}
+
+export async function sites() {
+  return (await getDb()).collection<SiteDoc>(COL.sites);
+}
+
+export async function users() {
+  return (await getDb()).collection<UserDoc>(COL.users);
+}
 
 /** Confirmed bookings of one space on one day. */
-export const spaceDayQuery = (spaceId: string, date: string) =>
-  bookings().where("spaceId", "==", spaceId).where("date", "==", date).where("status", "==", "confirmed");
+export const spaceDayFilter = (spaceId: string, date: string): Filter<BookingDoc> => ({ spaceId, date, status: "confirmed" });
 
 /** Confirmed bookings of one user on one day. */
-export const userDayQuery = (userId: string, date: string) =>
-  bookings().where("userId", "==", userId).where("date", "==", date).where("status", "==", "confirmed");
+export const userDayFilter = (userId: string, date: string): Filter<BookingDoc> => ({ userId, date, status: "confirmed" });
 
-export const userAbsencesQuery = (userId: string) => db.collection(COL.absences).where("userId", "==", userId);
+export const userAbsencesFilter = (userId: string): Filter<AbsenceDoc> => ({ userId });
 
-export function toBookedSlot(doc: QueryDocumentSnapshot): BookedSlot {
-  const { from, to, attendees } = doc.data() as Booking;
+export function toBookedSlot(booking: BookingDoc): BookedSlot {
+  const { from, to, attendees } = booking;
   return { from, to, attendees };
 }
 
-export function absencesOf(docs: QueryDocumentSnapshot[]): Absence[] {
-  return docs.map((d) => d.data() as Absence);
+/** Reads a space and its site, inside the caller's transaction session. */
+export async function loadSpace(session: ClientSession, spaceId: string): Promise<{ space: SpaceDoc; site: SiteDoc }> {
+  const space = await (await spaces()).findOne({ _id: spaceId }, { session });
+  if (!space) throw appError("not-found", "spaceNotFound", "Space not found.");
+  const site = await (await sites()).findOne({ _id: space.siteId }, { session });
+  if (!site) throw appError("not-found", "spaceNotFound", "Site not found.");
+  return { space, site };
 }
 
-/** Reads a space and its site in a transaction. */
-export async function loadSpace(tx: Transaction, spaceId: string): Promise<{ space: Space; site: Site }> {
-  const spaceSnap = await tx.get(db.collection(COL.spaces).doc(spaceId));
-  if (!spaceSnap.exists) throw appError("not-found", "spaceNotFound", "Space not found.");
-  const space = spaceSnap.data() as Space;
-  const siteSnap = await tx.get(db.collection(COL.sites).doc(space.siteId));
-  if (!siteSnap.exists) throw appError("not-found", "spaceNotFound", "Site not found.");
-  return { space, site: siteSnap.data() as Site };
-}
-
-export function startsInThePast(booking: Booking<Timestamp>): boolean {
-  return booking.startsAt.toMillis() <= Date.now();
+export function startsInThePast(booking: Booking<Date>): boolean {
+  return booking.startsAt.getTime() <= Date.now();
 }

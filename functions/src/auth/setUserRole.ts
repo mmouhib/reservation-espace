@@ -1,9 +1,10 @@
-import { FieldValue } from "firebase-admin/firestore";
-import { COL, setUserRoleInput } from "@reservation/shared";
-import { auth, db } from "../lib/admin";
+import { COL, setUserRoleInput, type UserProfile } from "@reservation/shared";
+import { auth } from "../lib/admin";
 import { writeAudit } from "../lib/audit";
 import { appError } from "../lib/errors";
 import { secureCall } from "../lib/callable";
+import { getDb } from "../lib/mongo";
+import { withTransaction } from "../lib/transaction";
 
 /** Admin-only: changes a user's role claim and mirrors it on the profile document. */
 export const setUserRole = secureCall(
@@ -20,11 +21,12 @@ export const setUserRole = secureCall(
     if (previousRole === data.role) return { changed: false };
 
     await auth.setCustomUserClaims(data.uid, { ...target.customClaims, role: data.role });
-    await db.runTransaction(async (tx) => {
-      tx.update(db.collection(COL.users).doc(data.uid), {
-        role: data.role,
-        claimsUpdatedAt: FieldValue.serverTimestamp(),
-      });
+    const db = await getDb();
+    await withTransaction(async (session) => {
+      const res = await db
+        .collection<UserProfile<Date> & { _id: string }>(COL.users)
+        .updateOne({ _id: data.uid }, { $set: { role: data.role, claimsUpdatedAt: new Date() } }, { session });
+      if (res.matchedCount === 0) throw appError("not-found", "userNotFound", "User not found.");
       await writeAudit(
         {
           actorId,
@@ -34,7 +36,7 @@ export const setUserRole = secureCall(
           targetId: data.uid,
           details: { from: previousRole, to: data.role },
         },
-        tx,
+        session,
       );
     });
     return { changed: true };

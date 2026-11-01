@@ -64,10 +64,6 @@ beforeEach(async () => {
     await setDoc(doc(db, "spaces/s1"), space);
     await setDoc(doc(db, "bookings/b-alice"), booking("alice"));
     await setDoc(doc(db, "bookings/b-bob"), booking("bob"));
-    await setDoc(doc(db, "wallets/alice"), { balance: 10 });
-    await setDoc(doc(db, "creditTransactions/t-alice"), { userId: "alice", amount: 10 });
-    await setDoc(doc(db, "creditTransactions/t-bob"), { userId: "bob", amount: 5 });
-    await setDoc(doc(db, "plans/pack-10"), { name: "Pack", kind: "pack", credits: 10, priceCents: 900, active: true });
     await setDoc(doc(db, "incidents/i-alice"), { ...incident("alice"), createdAt: new Date(), updatedAt: new Date() });
     await setDoc(doc(db, "equipmentRequests/r-alice"), { ...equipmentRequest("alice"), createdAt: new Date(), updatedAt: new Date() });
   });
@@ -110,28 +106,10 @@ describe("bookings and absences", () => {
   });
 });
 
-describe("credits", () => {
-  it("users read their own wallet and transactions only", async () => {
-    const alice = dbAs(env, "alice", "user");
-    await assertSucceeds(getDoc(doc(alice, "wallets/alice")));
-    await assertFails(getDoc(doc(dbAs(env, "bob", "user"), "wallets/alice")));
-    await assertSucceeds(getDocs(query(collection(alice, "creditTransactions"), where("userId", "==", "alice"))));
-    await assertFails(getDocs(query(collection(alice, "creditTransactions"), where("userId", "==", "bob"))));
-  });
-
-  it("nobody edits a balance from the client", async () => {
-    await assertFails(setDoc(doc(dbAs(env, "alice", "user"), "wallets/alice"), { balance: 9999 }));
-    await assertFails(setDoc(doc(dbAs(env, "root", "admin"), "wallets/alice"), { balance: 9999 }));
-  });
-
-  it("members read plans, only admins write valid ones", async () => {
-    await assertSucceeds(getDoc(doc(dbAs(env, "alice", "user"), "plans/pack-10")));
-    const admin = dbAs(env, "root", "admin");
-    await assertSucceeds(setDoc(doc(admin, "plans/pack-20"), { name: "Pack 20", description: "", kind: "pack", credits: 20, priceCents: 1600, active: true }));
-    await assertFails(setDoc(doc(admin, "plans/bad"), { name: "Bad", kind: "pack", credits: 0, priceCents: 100, active: true }));
-    await assertFails(setDoc(doc(dbAs(env, "alice", "user"), "plans/mine"), { name: "Mine", kind: "pack", credits: 5, priceCents: 0, active: true }));
-  });
-});
+// Credits & subscriptions moved to MongoDB (functions/src/lib/credits.ts) — there is
+// no Firestore path left to test here. Authorization now lives entirely in the
+// credits callables' `secureCall` role/ownership checks (functions/src/credits/),
+// which this emulator-rules suite can't exercise; no replacement test exists yet.
 
 describe("incidents", () => {
   it("a user reports an incident as themselves, with status open", async () => {

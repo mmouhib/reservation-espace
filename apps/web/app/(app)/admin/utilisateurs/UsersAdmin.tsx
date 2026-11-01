@@ -1,19 +1,7 @@
 "use client";
 
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  startAfter,
-  where,
-  type QueryConstraint,
-  type QueryDocumentSnapshot,
-  type Timestamp,
-} from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { COL, ROLES, type Department, type Role, type Team, type Translator, type UserProfile } from "@reservation/shared";
+import { useCallback, useEffect, useState } from "react";
+import { ROLES, type Role, type Translator, type UserSummary } from "@reservation/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Field, Select } from "@/components/ui/Field";
@@ -22,14 +10,15 @@ import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { Table, Td } from "@/components/ui/Table";
 import { api, errorKey } from "@/lib/api/functions";
+import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
-import { useCollection } from "@/lib/firebase/hooks";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const PAGE_SIZE = 20;
 
-type Row = UserProfile<Timestamp> & { id: string };
+type Row = UserSummary;
+/** Position of the last user of the previous page, as the server returns it. */
+type Cursor = { displayName: string; id: string } | null;
 
 /** Built at render time, so the text follows a language switch. */
 type Notice = { kind: "ok" | "error"; text: (t: Translator["t"]) => string };
@@ -40,7 +29,7 @@ export function UsersAdmin() {
   const flash = useFlash();
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [rows, setRows] = useState<Row[]>([]);
-  const [cursor, setCursor] = useState<QueryDocumentSnapshot | null>(null);
+  const [cursor, setCursor] = useState<Cursor>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busyUid, setBusyUid] = useState<string | null>(null);
@@ -48,24 +37,23 @@ export function UsersAdmin() {
   const [editing, setEditing] = useState<Row | null>(null);
   const [deleting, setDeleting] = useState<Row | null>(null);
 
-  const departmentsQuery = useMemo(() => query(collection(getFirebase().db, COL.departments), orderBy("name")), []);
-  const teamsQuery = useMemo(() => query(collection(getFirebase().db, COL.teams), orderBy("name")), []);
-  const { data: departments } = useCollection<Department>(departmentsQuery);
-  const { data: teams } = useCollection<Team>(teamsQuery);
+  const departmentsQuery = useCallableQuery("listDepartments", api.listDepartments, {});
+  const teamsQuery = useCallableQuery("listTeams", api.listTeams, {});
+  const departments = departmentsQuery.data ?? [];
+  const teams = teamsQuery.data ?? [];
 
   const load = useCallback(
-    async (after: QueryDocumentSnapshot | null) => {
+    async (after: Cursor) => {
       setLoading(true);
-      const constraints: QueryConstraint[] = [];
-      if (roleFilter !== "all") constraints.push(where("role", "==", roleFilter));
-      constraints.push(orderBy("displayName"), limit(PAGE_SIZE));
-      if (after) constraints.push(startAfter(after));
       try {
-        const snap = await getDocs(query(collection(getFirebase().db, COL.users), ...constraints));
-        const page = snap.docs.map((d) => ({ id: d.id, ...(d.data() as UserProfile<Timestamp>) }));
-        setRows((prev) => (after ? [...prev, ...page] : page));
-        setCursor(snap.docs.at(-1) ?? null);
-        setHasMore(snap.size === PAGE_SIZE);
+        const page = await api.listUsers({
+          ...(roleFilter === "all" ? {} : { roles: [roleFilter] }),
+          limit: PAGE_SIZE,
+          after,
+        });
+        setRows((prev) => (after ? [...prev, ...page.users] : page.users));
+        setCursor(page.next);
+        setHasMore(page.next !== null);
       } catch (err) {
         setNotice({ kind: "error", text: (t) => t(errorKey(err)) });
       } finally {

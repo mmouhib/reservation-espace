@@ -74,7 +74,8 @@
     "credits": "Crédits",
     "support": "Assistance",
     "notifications": "Notifications",
-    "myBookingsShort": "Réservations"
+    "myBookingsShort": "Réservations",
+    "visitors": "Visiteurs"
   },
   "home": {
     "greeting": "Bonjour",
@@ -87,7 +88,8 @@
       "admin": "Espaces, utilisateurs, modération et statistiques.",
       "team": "Les réservations des membres de votre équipe.",
       "credits": "Votre solde, vos formules et l'historique.",
-      "support": "Signalez un problème ou demandez du matériel."
+      "support": "Signalez un problème ou demandez du matériel.",
+      "visitors": "Invitez un visiteur externe et suivez vos invitations."
     },
     "upcoming": "Prochaines réservations",
     "noUpcoming": "Aucune réservation à venir.",
@@ -230,6 +232,10 @@
         "title": "Signalements et matériel",
         "text": "Incidents et demandes de matériel."
       },
+      "visitors": {
+        "title": "Visiteurs",
+        "text": "Accueil : qui est attendu, enregistrer une arrivée ou un départ."
+      },
       "statistics": {
         "title": "Statistiques",
         "text": "Occupation, utilisation et exports."
@@ -346,6 +352,9 @@
       "newPlan": "Nouvelle formule",
       "editPlan": "Modifier la formule",
       "planName": "Nom",
+      "generateDescription": "✨ Générer avec l'IA",
+      "generatingDescription": "Génération…",
+      "generateDescriptionError": "Veuillez d'abord saisir le nom de la formule.",
       "planKind": "Type",
       "planCredits": "Crédits",
       "planPrice": "Prix (€)",
@@ -369,6 +378,14 @@
       "updated": "Mis à jour.",
       "noIncidents": "Aucun signalement.",
       "noRequests": "Aucune demande."
+    },
+    "visitors": {
+      "title": "Visiteurs",
+      "description": "Les visiteurs attendus pour la journée sélectionnée.",
+      "host": "Invité par {name}",
+      "checkIn": "Enregistrer l'arrivée",
+      "checkOut": "Enregistrer le départ",
+      "noVisits": "Aucun visiteur attendu ce jour-là."
     },
     "statistics": {
       "title": "Statistiques",
@@ -451,7 +468,9 @@
   "offline": {
     "title": "Hors ligne",
     "heading": "Vous êtes hors ligne",
-    "text": "Cette page n'est pas disponible sans connexion. Vos réservations déjà consultées restent accessibles."
+    "text": "Cette page n'est pas disponible sans connexion. Vos réservations déjà consultées restent accessibles.",
+    "notCached": "Ces données n'ont pas encore été consultées avec une connexion : elles seront disponibles hors ligne après une première visite.",
+    "staleSince": "Données hors ligne du {date}."
   },
   "notFound": {
     "title": "Page introuvable",
@@ -490,7 +509,10 @@
     "notEnoughCredits": "Crédits insuffisants.",
     "planNotFound": "Formule introuvable.",
     "alreadySubscribed": "Vous avez déjà un abonnement actif.",
-    "subscriptionNotFound": "Abonnement introuvable."
+    "subscriptionNotFound": "Abonnement introuvable.",
+    "assistantUnavailable": "L'assistant IA est momentanément indisponible.",
+    "visitNotFound": "Visite introuvable.",
+    "invalidVisitStatus": "Cette visite ne peut plus être modifiée."
   },
   "incidentStatus": {
     "open": "Ouvert",
@@ -501,6 +523,12 @@
     "pending": "En attente",
     "approved": "Approuvée",
     "rejected": "Refusée"
+  },
+  "visitStatus": {
+    "expected": "Attendu",
+    "checkedIn": "Arrivé",
+    "checkedOut": "Parti",
+    "cancelled": "Annulé"
   },
   "items": {
     "screen": "Écran",
@@ -558,6 +586,10 @@
     "equipmentUpdated": {
       "title": "Demande de matériel mise à jour",
       "body": "Votre demande ({item}) est maintenant : {status}"
+    },
+    "visitorArrived": {
+      "title": "Votre invité est arrivé",
+      "body": "{guest} est arrivé(e) à l'accueil."
     }
   },
   "weekdays": {
@@ -645,10 +677,35 @@
     "myRequests": "Mes demandes",
     "noRequests": "Aucune demande."
   },
+  "visitors": {
+    "title": "Visiteurs",
+    "description": "Invitez un visiteur externe et suivez vos invitations.",
+    "newVisit": "Inviter un visiteur",
+    "site": "Site",
+    "guestName": "Nom du visiteur",
+    "guestEmail": "E-mail du visiteur",
+    "guestCompany": "Société",
+    "send": "Envoyer l'invitation",
+    "sending": "Envoi…",
+    "sent": "Invitation envoyée.",
+    "myVisits": "Mes invitations",
+    "noVisits": "Aucune invitation.",
+    "cancelled": "Invitation annulée."
+  },
   "notifications": {
     "title": "Notifications",
     "description": "Vos confirmations, rappels et alertes.",
     "empty": "Aucune notification.",
     "markAllRead": "Tout marquer comme lu"
+  },
+  "assistant": {
+    "openLabel": "Ouvrir l'assistant",
+    "closeLabel": "Fermer l'assistant",
+    "title": "Assistant de réservation",
+    "greeting": "👋 Bonjour ! Posez-moi vos questions sur la réservation des espaces.",
+    "placeholder": "Posez une question…",
+    "send": "Envoyer",
+    "typing": "L'assistant écrit…",
+    "error": "Désolé, une erreur est survenue. Réessayez dans un instant."
   }
 }

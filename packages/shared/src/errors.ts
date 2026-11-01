@@ -32,6 +32,11 @@ export const ERROR_REASONS = [
   "planNotFound",
   "alreadySubscribed",
   "subscriptionNotFound",
+  // AI assistant
+  "assistantUnavailable",
+  // Visitors
+  "visitNotFound",
+  "invalidVisitStatus",
 ] as const;
 export type ErrorReason = (typeof ERROR_REASONS)[number];
 

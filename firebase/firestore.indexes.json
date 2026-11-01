@@ -60,22 +60,6 @@
       ]
     },
     {
-      "collectionGroup": "creditTransactions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "subscriptions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "nextRenewalAt", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "incidents",
       "queryScope": "COLLECTION",
       "fields": [

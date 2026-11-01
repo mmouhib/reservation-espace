@@ -1,17 +1,15 @@
 "use client";
 
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc, type FieldValue, type Timestamp } from "firebase/firestore";
 import { useState, type FormEvent } from "react";
 import {
-  COL,
   EQUIPMENT,
   SPACE_CATEGORIES,
   SPACE_TAGS,
   type Closure,
   type OpeningHours,
-  type Site,
-  type Space,
+  type SiteSummary,
   type SpaceCategory,
+  type SpaceSummary,
 } from "@reservation/shared";
 import { OpeningHoursEditor } from "@/components/spaces/OpeningHoursEditor";
 import { Badge } from "@/components/ui/Badge";
@@ -21,11 +19,10 @@ import { Checkbox, Field, Input, Select } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { Table, Td } from "@/components/ui/Table";
-import { getFirebase } from "@/lib/firebase/client";
-import type { WithId } from "@/lib/firebase/hooks";
+import { api } from "@/lib/api/functions";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
-type SpaceRow = WithId<Space<Timestamp>>;
+type SpaceRow = SpaceSummary;
 
 interface SpaceDraft {
   id: string | null;
@@ -43,7 +40,7 @@ interface SpaceDraft {
   closures: Closure[];
 }
 
-function newDraft(site: WithId<Site>): SpaceDraft {
+function newDraft(site: SiteSummary): SpaceDraft {
   return {
     id: null,
     siteId: site.id,
@@ -65,7 +62,7 @@ function toggle(list: string[], value: string, on: boolean): string[] {
   return on ? [...list, value] : list.filter((v) => v !== value);
 }
 
-export function SpacesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces: SpaceRow[] }) {
+export function SpacesSection({ sites, spaces, onChanged }: { sites: SiteSummary[]; spaces: SpaceRow[]; onChanged: () => void }) {
   const { t } = useI18n();
   const flash = useFlash();
   const [siteFilter, setSiteFilter] = useState("");
@@ -112,14 +109,11 @@ export function SpacesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces
       closures: draft.closures,
     };
     try {
-      const { db } = getFirebase();
-      if (draft.id) await updateDoc(doc(db, COL.spaces, draft.id), { ...fields, updatedAt: serverTimestamp() });
-      else {
-        const space: Space<FieldValue> = { ...fields, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-        await addDoc(collection(db, COL.spaces), space);
-      }
+      if (draft.id) await api.updateSpace({ spaceId: draft.id, ...fields });
+      else await api.createSpace(fields);
       flash.success("common.saved");
       setDraft(null);
+      onChanged();
     } catch (err) {
       flash.error(err);
     }
@@ -128,9 +122,10 @@ export function SpacesSection({ sites, spaces }: { sites: WithId<Site>[]; spaces
   async function remove() {
     if (!deleting) return;
     try {
-      await deleteDoc(doc(getFirebase().db, COL.spaces, deleting.id));
+      await api.deleteSpace({ spaceId: deleting.id });
       flash.success("common.deleted");
       setDeleting(null);
+      onChanged();
     } catch (err) {
       flash.error(err);
     }

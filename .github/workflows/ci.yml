@@ -23,9 +23,9 @@ jobs:
       - run: npm run lint
       - name: Unit tests
         run: npm test
-      # Starts MongoDB with Docker Compose (a one-node replica set, needed for transactions),
-      # then the Auth and Functions emulators, seeds the demo data and calls the functions.
-      - name: API tests (Cloud Functions on the emulators, MongoDB in Docker)
+      # Starts MongoDB with Docker Compose (a one-node replica set, needed for transactions) and the
+      # Auth emulator, starts the built server, seeds the demo data and calls the API as real users.
+      - name: API tests (server, Auth emulator, MongoDB in Docker)
         run: npm run test:api
         env:
           NEXT_PUBLIC_DEMO_PASSWORD: ci-demo-password
@@ -36,5 +36,4 @@ jobs:
           NEXT_PUBLIC_FIREBASE_API_KEY: demo-api-key
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-reservation-espace.firebaseapp.com
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-reservation-espace
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo-reservation-espace.appspot.com
           NEXT_PUBLIC_USE_EMULATORS: "true"

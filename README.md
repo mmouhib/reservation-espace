@@ -2,7 +2,7 @@
 
 Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces. The UI is available in French and English.
 
-**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Firebase (Auth, Cloud Functions, Storage, Hosting) · MongoDB · Serwist (service worker) · Vitest.
+**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Node server (Express) · MongoDB (data and photos) · Firebase Auth (Google sign-in only) · Serwist (service worker) · Vitest.
 
 ## Modules and progress
 
@@ -57,12 +57,13 @@ Owns `bookings` and `absences`. Screens: `/reserver`, `/mes-reservations`, `/adm
 
 ### 4. Notifications
 
-Owns `users/{uid}/notifications`, `users/{uid}/devices` and the `mail` queue. Screen: `/notifications` (bell in the header).
+Owns the `notifications` and `devices` collections. Screen: `/notifications` (bell in the header).
 
 - ✅ In-app inbox with read / unread, written in the user's language.
 - ✅ Sent for: booking confirmed, cancelled, moved, 24 h reminder, weekly digest, credits added, subscription renewed, incident updates.
-- 🟡 Push (FCM): code and device registration are in place, but FCM is not emulated, so it needs a real Firebase project with a VAPID key.
-- 🟡 Email: messages are written to the `mail` collection, which the Firebase "Trigger Email" extension sends. Install and configure the extension to send them.
+- 🟡 Push (Web Push): the server sends it with VAPID keys and the service worker shows it. It needs HTTPS and a real browser, so it is not tested automatically. On iPhone the app must be installed first.
+- ✅ Email through Resend (set `RESEND_API_KEY`; without it, emails are skipped).
+- ✅ The reminders (every hour) and the weekly digest (Monday 07:00) run inside the server.
 
 ### 5. Credits & Subscriptions
 
@@ -72,13 +73,13 @@ Owns `wallets`, `creditTransactions`, `plans`, `subscriptions`. Screens: `/credi
 - ✅ Plans: credit packs and monthly subscriptions, created and priced by an administrator.
 - ✅ Subscriptions renew every month (scheduled function) and can be cancelled.
 - ✅ Administrators adjust balances. Optional welcome credits for new accounts (`WELCOME_CREDITS`).
-- 🟡 Payment is simulated: connect a payment provider in `functions/src/credits/credits.ts` before charging real money.
+- 🟡 Payment is simulated: connect a payment provider in `server/src/credits/credits.ts` before charging real money.
 
 ### 6. Incidents & Equipment
 
 Owns `incidents`, `equipmentRequests`. Screens: `/support`, `/admin/support`.
 
-- ✅ Report an incident with up to 3 photos (Storage), optionally linked to a space.
+- ✅ Report an incident with up to 3 photos (stored in MongoDB), optionally linked to a space.
 - ✅ Equipment requests (item, quantity, date needed).
 - ✅ Administrators set the status and answer; the requester is notified.
 
@@ -99,15 +100,15 @@ Owns `visits`. Screens: `/visiteurs`, `/admin/visiteurs`.
 - ✅ Reception view of a day's expected guests, with check-in and check-out.
 - ✅ The host is notified in-app the moment their guest checks in.
 - ✅ Cancelling an invite before the visit, by the host or an administrator.
-- ✅ Authorization is enforced entirely in the callables (`functions/src/visitors/visits.ts`): the role check of
+- ✅ Authorization is enforced entirely in the callables (`server/src/visitors/visits.ts`): the role check of
   `secureCall` and ownership checks (a host sees only their own invites; check-in and check-out are for administrators).
 
 ### Shared platform (not owned by a single module)
 
 Already built and used by every module. Change it through a pull request that the whole team can see.
 
-- **Auth and roles:** the sign-in flow, the `secureCall` wrapper for Cloud Functions (authentication, role check, rate limiting, input validation) and the role helpers in `packages/shared`.
-- **Access control:** done in the Cloud Functions, not in the database. `secureCall` requires a company role on every function (at least `user`), and each function checks what the caller may touch.
+- **Auth and roles:** the sign-in flow, the `secureCall` wrapper of the server's endpoints (authentication, role check, rate limiting, input validation) and the role helpers in `packages/shared`.
+- **Access control:** done in the server, not in the database. `secureCall` requires a company role on every endpoint (at least `user`), and each endpoint checks what the caller may touch.
 - **Translations:** `fr.json` and `en.json`. Each module adds its keys under its own namespace.
 - **PWA shell:** install prompt, offline support, update message, navigation, page layout.
 - **Quality:** typecheck, lint, unit tests, API tests and GitHub Actions CI.
@@ -117,10 +118,10 @@ Already built and used by every module. Change it through a pull request that th
 | Part | Where |
 |---|---|
 | Screens | `apps/web/app/(app)/<module>/` |
-| Cloud Functions | `functions/src/<module>/`, exported from `functions/src/index.ts` |
+| Server endpoints | `server/src/<module>/`, exported from `server/src/endpoints.ts` |
 | Types, schemas | `packages/shared/src/` (one file per module) |
-| Access control | the role and ownership checks of the module's functions |
-| API tests | `tests/api/`: call the module's functions as real users |
+| Access control | the role and ownership checks of the module's endpoints |
+| API tests | `tests/api/`: call the module's endpoints as real users |
 | Translations | `packages/shared/src/i18n/{fr,en}.json`, under the module's namespace |
 | Demo data | a section in `scripts/seed.ts` |
 
@@ -128,31 +129,38 @@ Already built and used by every module. Change it through a pull request that th
 
 ```
 apps/web/          Next.js app (PWA)
-functions/         Cloud Functions (Node 22)
+server/            Node server: the API (`/api/<name>`), the scheduled jobs and the web app's files
 packages/shared/   Types, zod schemas, roles, translations (fr.json / en.json)
-firebase/          Storage rules (incident photos)
-tests/api/         Cloud Functions tests (emulators and MongoDB)
-scripts/           seed.ts (demo data), generate-icons.mjs
+tests/api/         API tests (the built server, the Auth emulator and MongoDB)
+scripts/           seed.ts (demo data), production-check.mjs, generate-icons.mjs
 ```
+
+## How it fits together
+
+```
+ browser (PWA) ──► Node server ──► MongoDB (data, incident photos)
+      │               │   ├─ serves the web app (apps/web/out)
+      │               │   ├─ POST /api/<name>  (74 endpoints)
+      │               │   └─ scheduled jobs (reminders, weekly digest, renewals, directory sync)
+      └─ Google sign-in ──► Firebase Auth (the only Firebase service used)
+```
+
+The browser signs in with Google through Firebase Auth and sends the Firebase ID token with every request. The server
+checks the token, reads the person's role from it and does everything else itself. Firebase stores nothing else: the
+profile, bookings, credits and photos are in MongoDB.
 
 ## Requirements
 
 | Tool | Version | Why |
 |---|---|---|
-| Node.js | **22 or later** (see `.nvmrc`) | Next.js 16 and Cloud Functions |
+| Node.js | **22 or later** (see `.nvmrc`) | Next.js 16 and the server |
 | npm | 10 or later (comes with Node 22) | Workspaces |
-| Java (JDK) | **21 or later** | Required by the Storage emulator (firebase-tools 15) |
 | MongoDB | a replica set: **Docker** (local) or a **MongoDB Atlas** cluster | All the data lives in MongoDB, and its transactions need a replica set |
 
-No Firebase account is needed for development: sign-in, the Cloud Functions and the file storage run on the local
-Firebase emulators. The data is stored in MongoDB: Docker Compose starts a local one-node replica set, or you can
-point the app at an Atlas cluster.
-
-Check your versions:
+No Firebase account is needed for development: sign-in runs on the local Firebase Auth emulator (it needs no Java).
 
 ```bash
 node -v
-java -version
 docker --version   # only for the local MongoDB
 ```
 
@@ -168,53 +176,48 @@ npm install
 
 ```bash
 cp apps/web/.env.example apps/web/.env.local
-cp functions/.env.example functions/.env.local
+cp server/.env.example server/.env.local
 ```
 
 On Windows (PowerShell):
 
 ```powershell
 Copy-Item apps/web/.env.example apps/web/.env.local
-Copy-Item functions/.env.example functions/.env.local
+Copy-Item server/.env.example server/.env.local
 ```
 
-`functions/.env.local` holds `MONGODB_URI`. The default points at the local Docker MongoDB. To use Atlas instead, put its
+`server/.env.local` holds `MONGODB_URI`. The default points at the local Docker MongoDB. To use Atlas instead, put its
 connection string there and add `MONGODB_DB_NAME=reservation_dev`, so that the demo data goes into a development
 database and never into the production one. You can also change `NEXT_PUBLIC_DEMO_PASSWORD` in `apps/web/.env.local`
-(the password of the demo accounts, at least 6 characters).
+(the password of the demo accounts, at least 6 characters). Both files explain every setting.
 
-### 3. Start MongoDB, the emulators and the app
+### 3. Start MongoDB and the app
 
 With Docker:
+
+```bash
+npm run dev:docker
+```
+
+With Atlas, or a MongoDB you already run:
 
 ```bash
 npm run dev
 ```
 
-This starts MongoDB with Docker Compose, builds the functions, starts the Firebase emulators and runs the Next.js dev
-server. The emulator data (the demo sign-in accounts) is kept in `.emulator-data/` between runs.
-
-With Atlas, without Docker, in two terminals:
-
-```bash
-npm run build -w functions
-npx cross-env FUNCTIONS_DISCOVERY_TIMEOUT=60 firebase emulators:start
-```
-
-```bash
-npm run dev -w apps/web
-```
+This starts the Firebase Auth emulator, the server (restarts when you change a file) and the Next.js dev server.
+The emulator data (the demo sign-in accounts) is kept in `.emulator-data/` between runs.
 
 | Service | URL |
 |---|---|
 | App (Next.js) | http://localhost:3000 |
-| Emulator UI | http://127.0.0.1:4000 |
-| Auth / Functions / Storage | ports 9099 / 5001 / 9199 |
+| Server (API) | http://localhost:8080 |
+| Auth emulator / its UI | ports 9099 / http://127.0.0.1:4000 |
 | MongoDB (Docker) | port 27017 |
 
 ### 4. Create the indexes and load the demo data
 
-In a second terminal, once the emulators are ready:
+In a second terminal, once the emulator is ready:
 
 ```bash
 npm run mongo:init-indexes
@@ -246,27 +249,32 @@ The password is the value of `NEXT_PUBLIC_DEMO_PASSWORD` in `apps/web/.env.local
 ```bash
 npm run build
 npm run emulators
+npm start
 ```
 
-The emulators serve the static build (`apps/web/out`) on **http://localhost:5050**, with the service worker enabled.
+The server serves the built app (`apps/web/out`) and the API on **http://localhost:8080**, with the service worker
+enabled. Run `npm run emulators` in its own terminal: it is the Auth emulator the demo accounts sign in with.
 After a new `npm run build`, reload the page: the "A new version is available" message appears.
-Without Docker, start the emulators with the `firebase emulators:start` command of step 3 instead of `npm run emulators`.
+If you created `apps/web/.env.production.local` for a deployment, rename it first: the build would use it instead of the emulator.
 
 ## Useful commands
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Local MongoDB (Docker), emulators and dev server |
-| `npm run emulators` | Local MongoDB (Docker) and emulators (sign-in accounts kept in `.emulator-data/`) |
+| `npm run dev` | Auth emulator, server and dev server |
+| `npm run dev:docker` | The same, after starting the local MongoDB (Docker) |
+| `npm run emulators` | The Auth emulator alone (sign-in accounts kept in `.emulator-data/`) |
 | `npm run emulators:clean` | The same, with no import or export of the emulator data |
 | `npm run mongo:up` / `mongo:down` | Start / stop the local MongoDB (Docker Compose, one-node replica set) |
 | `npm run mongo:init-indexes` | Create the MongoDB indexes (run once per database, including Atlas) |
 | `npm run seed` | Load the demo accounts and data |
-| `npm run build` | Build the functions and the app (`apps/web/out`) |
+| `npm run build` | Build the server and the app (`server/dist`, `apps/web/out`) |
+| `npm start` | Run the built server, which also serves the built app |
 | `npm run typecheck` | TypeScript check of every workspace |
 | `npm run lint` | ESLint |
-| `npm test` | Unit tests (shared and functions) |
-| `npm run test:api` | Cloud Functions tests: starts MongoDB (Docker) and the emulators, seeds a `reservation_test` database and calls the functions as real users |
+| `npm test` | Unit tests (shared and server) |
+| `npm run test:api` | API tests: starts MongoDB (Docker) and the Auth emulator, seeds a `reservation_test` database, starts the built server and calls it as real users |
+| `npm run check:prod` | Checks the production configuration (see Deployment) |
 | `npm run icons` | Regenerate the PWA icons (`apps/web/public/icons`) |
 
 ## Translations
@@ -277,24 +285,50 @@ The tests check that both files have exactly the same keys and the same variable
 
 ## Troubleshooting
 
-- **`firebase-tools no longer supports Java version before 21`**: the Storage emulator needs JDK 21 or later. Check `java -version`.
 - **Node version error**: use Node 22 (`nvm use` reads `.nvmrc`).
-- **`docker` is not found when running `npm run dev`**: install Docker, or use MongoDB Atlas and the two-terminal start of step 3.
-- **`MONGODB_URI is not set`**: add it to `functions/.env.local` (the example file has the local Docker value).
-- **Port already in use**: a previous emulator is still running. Stop it, or free ports 4000, 5001, 5050, 9099 and 9199.
+- **`docker` is not found when running `npm run dev:docker`**: install Docker, or use MongoDB Atlas with `npm run dev`.
+- **`MONGODB_URI is not set`**: add it to `server/.env.local` (the example file has the local Docker value).
+- **`FIREBASE_PROJECT_ID is not set`** or every request answers "sign in required": the server and the web app must use the same project. In development, keep `FIREBASE_AUTH_EMULATOR_HOST` and the `demo-` project id of the example files.
+- **Port already in use**: a previous run is still going. Stop it, or free ports 3000, 4000, 8080 and 9099.
 - **On Windows, `next build` fails with `EBUSY`**: no terminal should be open inside `apps/web/out`.
-- **A page stays on "Loading…"**: check that the emulators are running and that `NEXT_PUBLIC_USE_EMULATORS=true`.
-- **No demo users, or empty screens**: run `npm run mongo:init-indexes` and `npm run seed` while the emulators are running.
+- **A page stays on "Loading…"**: check that the server and the Auth emulator are running and that `NEXT_PUBLIC_USE_EMULATORS=true`.
+- **No demo users, or empty screens**: run `npm run mongo:init-indexes` and `npm run seed` while the Auth emulator is running.
 - **Connection refused or timeout with Atlas**: your IP address must be allowed in Atlas under Network Access.
 
-## Deployment (overview)
+## Deployment
 
-1. Create a Firebase project (Blaze plan, needed for Cloud Functions) and enable Authentication and Storage.
-2. Create a MongoDB Atlas cluster (a replica set), a database user, and allow the Cloud Functions to connect
-   (Network Access). Run `npm run mongo:init-indexes` once with `MONGODB_URI` pointing at it.
-3. Set the three secrets, which every function needs before it can be deployed:
-   `firebase functions:secrets:set MONGODB_URI`, `RESEND_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY`.
-4. Fill in `.firebaserc`, `apps/web/.env.local` (values from the Firebase console, `NEXT_PUBLIC_USE_EMULATORS=false`)
-   and `functions/.env.<projectId>`.
-5. Set `ALLOWED_EMAIL_DOMAINS` and `BOOTSTRAP_ADMIN_EMAILS`, and set `ENFORCE_APP_CHECK=true`.
-6. Run `npm run build`, then `npx firebase deploy`.
+The server is one Node process: it serves the built app, the API and the scheduled jobs, so a single host runs
+everything. Any host that runs Node 22 or a Docker image works (Render, Fly.io, Railway, Cloud Run, a VPS...).
+The host must provide HTTPS: sign-in and installing the app on a phone both require it.
+
+1. **Firebase (sign-in only).** Create a Firebase project. The free Spark plan is enough: no Functions, Hosting or Storage.
+   In the console, enable Authentication with the Google provider, and add your host's domain under
+   Authentication > Settings > Authorized domains. Register a web app (Project settings > Your apps) to get the web keys.
+   Under Project settings > Service accounts, generate a private key: the server needs it to give people their role.
+2. **MongoDB Atlas.** Create a cluster, a database user, and allow your host to connect (Network Access). Create the
+   indexes once: `MONGODB_URI=<your Atlas URI> npm run mongo:init-indexes`.
+3. **Web build.** Copy `apps/web/.env.production.example` to `apps/web/.env.production.local`, fill in the Firebase web
+   keys (leave `NEXT_PUBLIC_API_URL` empty), then run `npm run build`. Next.js reads this file before `.env.local`, so
+   development keeps using the emulator. With Docker, give the same values as build arguments instead (see the `Dockerfile`).
+4. **Server settings.** Set these as environment variables on the host (never in a file in the repository):
+
+   | Variable | Value |
+   |---|---|
+   | `FIREBASE_PROJECT_ID` | your Firebase project id |
+   | `FIREBASE_SERVICE_ACCOUNT` | the service account key, the whole JSON on one line |
+   | `MONGODB_URI` | the Atlas connection string |
+   | `ALLOWED_EMAIL_DOMAINS` | your company domain(s), comma separated: empty would let any Google account in |
+   | `BOOTSTRAP_ADMIN_EMAILS` | the email(s) that become administrator on their first sign-in |
+   | `GOOGLE_GENERATIVE_AI_API_KEY` | optional: the AI assistant |
+   | `RESEND_API_KEY`, `RESEND_FROM` | optional: notification emails |
+   | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | optional: push (`npx web-push generate-vapid-keys`; the public key is also `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in the web build) |
+
+   `server/.env.example` lists every setting. Do not set `FIREBASE_AUTH_EMULATOR_HOST` in production.
+5. **Check, then start.** `node --env-file=server/.env.production.local scripts/production-check.mjs` checks steps 3 and 4
+   (no demo project, not built for the emulator, sign-in limited to your domain, a first administrator, not the
+   development database...). Put the server settings in that git-ignored file to check them, or run the script where
+   the variables are set. It cannot see the host, Atlas or the Firebase console, so it lists those too.
+   Then start the server with `npm start` (or the Docker image).
+
+Run a single instance, or several: each scheduled job claims its run in MongoDB, so two instances never send the
+same reminders twice.

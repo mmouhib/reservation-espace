@@ -20,6 +20,7 @@ const FUNCTIONS_HOST = process.env.FUNCTIONS_EMULATOR_HOST ?? "127.0.0.1:5001";
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FUNCTIONS = `http://${FUNCTIONS_HOST}/demo-reservation-espace/europe-west1`;
 const AUTH = `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo`;
+const SIGN_UP = `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo`;
 const mongo = new MongoClient(process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/reservation?replicaSet=rs0");
 afterAll(() => mongo.close());
 
@@ -45,6 +46,11 @@ async function call(name: string, token: string | null, data: object = {}): Prom
 async function balance(uid: string): Promise<number> {
   const wallet = await mongo.db(process.env.MONGODB_DB_NAME || undefined).collection<{ _id: string; balance: number }>(COL.wallets).findOne({ _id: uid });
   return wallet?.balance ?? 0;
+}
+
+/** How many bookings match, straight from the database (the API only shows a user their own). */
+async function countBookings(filter: object): Promise<number> {
+  return mongo.db(process.env.MONGODB_DB_NAME || undefined).collection(COL.bookings).countDocuments(filter);
 }
 
 /** The first date, from `fromDay` on, that falls on the given weekday. */
@@ -153,5 +159,63 @@ describe("credits and access", () => {
 
   it("refuses calls without authentication", async () => {
     expect((await call("searchSpaces", null, { siteId: "paris", date: DAY, from: 540, to: 600 })).error).toBe("authRequired");
+  });
+});
+
+describe("payment", () => {
+  it("leaves no booking behind when the user cannot pay", async () => {
+    // The "cannot pay" test above tried an 8 hour room booking with too few credits.
+    expect(await countBookings({ userId: "demo-user", spaceId: "paris-salle-louvre", date: addDays(DAY, 1) })).toBe(0);
+  });
+});
+
+describe("simultaneous requests", () => {
+  it("confirms only one of several bookings for the same desk at the same moment", async () => {
+    const day = addDays(DAY, 7);
+    const results = await Promise.all([lea, hugo, camille].map((token) => call("createBooking", token, { spaceId: "paris-2B-05", date: day, from: 540, to: 600 })));
+
+    expect(results.filter((r) => r.result?.bookingId)).toHaveLength(1);
+    expect(results.filter((r) => r.error === "slotTaken")).toHaveLength(2);
+    expect(await countBookings({ spaceId: "paris-2B-05", date: day, status: "confirmed" })).toBe(1);
+  });
+
+  it("lets a user hold only one of two bookings made at the same moment", async () => {
+    const day = addDays(DAY, 14);
+    const results = await Promise.all(["paris-2B-01", "paris-2B-02"].map((spaceId) => call("createBooking", hugo, { spaceId, date: day, from: 540, to: 600 })));
+
+    expect(results.filter((r) => r.result?.bookingId)).toHaveLength(1);
+    expect(results.filter((r) => r.error === "alreadyBooked")).toHaveLength(1);
+    expect(await countBookings({ userId: "demo-manager", date: day, status: "confirmed" })).toBe(1);
+  });
+
+  it("lets exactly the allowed number of calls through, even all at once", async () => {
+    // getMyWallet allows 30 calls a minute per user, and nothing else in this suite calls it as Camille.
+    const results = await Promise.all(Array.from({ length: 40 }, () => call("getMyWallet", camille)));
+
+    expect(results.filter((r) => r.result)).toHaveLength(30);
+    expect(results.filter((r) => r.error === "rateLimited")).toHaveLength(10);
+  });
+});
+
+describe("accounts without a company role", () => {
+  it("can neither read company data nor buy credits", async () => {
+    const res = await fetch(SIGN_UP, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: `outsider-${Date.now()}@gmail.com`, password: "outsider-password", returnSecureToken: true }),
+    });
+    const { idToken } = (await res.json()) as { idToken: string };
+
+    // Signed in, but never given a role: only bootstrapProfile may be called.
+    for (const [name, data] of [
+      ["listSites", {}],
+      ["listSpaces", {}],
+      ["listPlans", {}],
+      ["searchSpaces", { siteId: "paris", date: DAY, from: 540, to: 600 }],
+      ["purchasePlan", { planId: "pack-10" }],
+    ] as const) {
+      expect((await call(name, idToken, data)).error, name).toBe("forbidden");
+    }
+    expect((await call("bootstrapProfile", idToken, {})).error).not.toBe("forbidden");
   });
 });

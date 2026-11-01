@@ -1,7 +1,7 @@
 node_modules/
 .next/
 out/
-functions/lib/
+server/dist/
 dist/
 coverage/
 *.tsbuildinfo
@@ -16,8 +16,7 @@ apps/web/public/swe-worker-*.js
 .env
 .env.local
 .env.*.local
-functions/.secret.local
-functions/.env.local
+server/.env.local
 
 # Firebase
 .firebase/
@@ -28,6 +27,7 @@ ui-debug.log
 database-debug.log
 pubsub-debug.log
 storage-debug.log
+auth-debug.log
 
 # Playwright
 test-results/

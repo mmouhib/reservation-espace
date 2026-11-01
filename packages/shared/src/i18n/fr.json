@@ -441,7 +441,6 @@
   "login": {
     "title": "Connexion",
     "withGoogle": "Se connecter avec Google",
-    "withSso": "Se connecter avec le SSO de l'entreprise",
     "demoAccounts": "Comptes de démonstration (émulateurs)",
     "feature1": "Postes, salles de réunion et espaces de coworking",
     "feature2": "Installable, et utilisable même hors ligne",

@@ -5,20 +5,19 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { COL, addDays, nowIn, weekdayOf } from "@reservation/shared";
 
 /**
- * Calls the Cloud Functions as real users, against the emulators with the demo data
+ * Calls the server's API as real users, against the Auth emulator and the demo data
  * (see `npm run test:api`). Each test builds on the previous ones, like a user session.
  */
 
-for (const file of ["../../apps/web/.env.local", "../../functions/.env.local"]) {
+for (const file of ["../../apps/web/.env.local", "../../server/.env.local"]) {
   const envFile = resolve(__dirname, file);
   if (existsSync(envFile)) process.loadEnvFile(envFile);
 }
 const password = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "";
 
-// Overridable so the suite can run on spare ports next to a running `npm run dev`.
-const FUNCTIONS_HOST = process.env.FUNCTIONS_EMULATOR_HOST ?? "127.0.0.1:5001";
+// The server is started by global-setup.ts. Ports are overridable so the suite can run next to `npm run dev`.
+const API = `http://127.0.0.1:${process.env.API_TEST_PORT ?? "8099"}/api`;
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
-const FUNCTIONS = `http://${FUNCTIONS_HOST}/demo-reservation-espace/europe-west1`;
 const AUTH = `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo`;
 const SIGN_UP = `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo`;
 const mongo = new MongoClient(process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/reservation?replicaSet=rs0");
@@ -38,9 +37,9 @@ type Outcome = { result?: any; error?: string };
 async function call(name: string, token: string | null, data: object = {}): Promise<Outcome> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${FUNCTIONS}/${name}`, { method: "POST", headers, body: JSON.stringify({ data }) });
-  const body = (await res.json()) as { result?: unknown; error?: { status: string; details?: { reason?: string } } };
-  return body.error ? { error: body.error.details?.reason ?? body.error.status } : { result: body.result };
+  const res = await fetch(`${API}/${name}`, { method: "POST", headers, body: JSON.stringify(data) });
+  const body = (await res.json()) as { data?: unknown; error?: { code: string; reason?: string } };
+  return body.error ? { error: body.error.reason ?? body.error.code } : { result: body.data };
 }
 
 async function balance(uid: string): Promise<number> {
@@ -217,5 +216,56 @@ describe("accounts without a company role", () => {
       expect((await call(name, idToken, data)).error, name).toBe("forbidden");
     }
     expect((await call("bootstrapProfile", idToken, {})).error).not.toBe("forbidden");
+  });
+});
+
+describe("requests without a valid sign-in", () => {
+  it("are refused, with or without a token", async () => {
+    expect((await call("listSites", null)).error).toBe("authRequired");
+    expect((await call("listSites", "not-a-token")).error).toBe("authRequired");
+    const unknown = await fetch(`${API}/doesNotExist`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    expect(unknown.status).toBe(404);
+  });
+});
+
+describe("incident photos", () => {
+  // A 1x1 PNG.
+  const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+  const upload = (token: string | null, body: Buffer | string, contentType = "image/png") =>
+    fetch(`${API}/uploads/photos`, { method: "POST", headers: { "Content-Type": contentType, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body });
+  const download = (token: string | null, id: string) =>
+    fetch(`${API}/uploads/photos/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  let photoId: string;
+
+  it("are uploaded by a signed-in user and only images are accepted", async () => {
+    expect((await upload(null, PNG)).status).toBe(401);
+    expect((await upload(lea, "<svg onload=alert(1)/>", "image/svg+xml")).status).toBe(400);
+    expect((await upload(lea, "just text", "text/plain")).status).toBe(400);
+    expect((await upload(lea, Buffer.alloc(6 * 1024 * 1024), "image/jpeg")).status).toBe(413);
+
+    const res = await upload(lea, PNG);
+    expect(res.status).toBe(200);
+    photoId = ((await res.json()) as { data: { photoId: string } }).data.photoId;
+    expect(photoId).toMatch(/^[0-9a-f]{24}$/);
+  });
+
+  it("can be read by their owner and an administrator, not by another employee", async () => {
+    const own = await download(lea, photoId);
+    expect(own.status).toBe(200);
+    expect(own.headers.get("content-type")).toBe("image/png");
+    expect(Buffer.from(await own.arrayBuffer()).equals(PNG)).toBe(true);
+    expect((await download(camille, photoId)).status).toBe(200);
+    expect((await download(hugo, photoId)).status).toBe(404);
+    expect((await download(null, photoId)).status).toBe(401);
+    expect((await download(lea, "not-an-id")).status).toBe(404);
+  });
+
+  it("can be attached to an incident only by the person who uploaded them", async () => {
+    expect((await call("createIncident", hugo, { title: "Screen broken", description: "", photoIds: [photoId] })).error).toBe("invalidInput");
+    expect((await call("createIncident", lea, { title: "Screen broken", description: "", photoIds: ["0".repeat(24)] })).error).toBe("invalidInput");
+    const incident = await call("createIncident", lea, { title: "Screen broken", description: "Flickers", photoIds: [photoId] });
+    expect(incident.result?.incidentId).toBeTruthy();
+    const mine = await call("listMyIncidents", lea);
+    expect(mine.result.find((i: { id: string }) => i.id === incident.result.incidentId).photoIds).toEqual([photoId]);
   });
 });

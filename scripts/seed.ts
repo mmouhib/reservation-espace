@@ -2,7 +2,7 @@
  * Seeds the Firebase Auth emulator and MongoDB with sample sites, spaces, departments, teams and users.
  * Idempotent: re-running replaces the same documents (bulkWrite upserts keyed by _id).
  *
- *   npm run emulators   (in another terminal)
+ *   npm run emulators   (the Auth emulator, in another terminal)
  *   npm run seed
  */
 import { existsSync } from "node:fs";
@@ -32,8 +32,8 @@ import {
 
 const envFile = resolve(import.meta.dirname, "../apps/web/.env.local");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
-const functionsEnvFile = resolve(import.meta.dirname, "../functions/.env.local");
-if (existsSync(functionsEnvFile)) process.loadEnvFile(functionsEnvFile);
+const serverEnvFile = resolve(import.meta.dirname, "../server/.env.local");
+if (existsSync(serverEnvFile)) process.loadEnvFile(serverEnvFile);
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "demo-reservation-espace";
 const password = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
@@ -41,7 +41,7 @@ if (!password || password.length < 6) {
   throw new Error("Set NEXT_PUBLIC_DEMO_PASSWORD (6+ characters) in apps/web/.env.local");
 }
 const mongoUri = process.env.MONGODB_URI;
-if (!mongoUri) throw new Error("Set MONGODB_URI in functions/.env.local");
+if (!mongoUri) throw new Error("Set MONGODB_URI in server/.env.local");
 
 // Always target the Auth emulator: the Admin SDK honours this variable and never reaches production.
 process.env.FIREBASE_AUTH_EMULATOR_HOST ??= "127.0.0.1:9099";
@@ -255,7 +255,7 @@ async function main() {
 
 
   // ---------- Credits, plans, bookings and support requests ----------
-  // wallets/creditTransactions/plans/subscriptions live in MongoDB (see functions/src/lib/credits.ts).
+  // wallets/creditTransactions/plans/subscriptions live in MongoDB (see server/src/lib/credits.ts).
   // Deterministic string _ids keep reruns idempotent.
   const mongoOps: Promise<unknown>[] = [];
   for (const [id, plan] of Object.entries(PLANS)) {
@@ -386,7 +386,7 @@ async function main() {
     spaceName: "Poste 1A-03",
     title: "Écran qui clignote",
     description: "L'écran du poste s'éteint de temps en temps depuis lundi.",
-    photoPaths: [],
+    photoIds: [],
     status: "in_progress",
     adminNote: "Un technicien passe demain matin.",
     createdAt: now,
@@ -399,7 +399,7 @@ async function main() {
     spaceName: "Salle Louvre",
     title: "Marqueurs du tableau blanc vides",
     description: "Il n'y a plus de marqueurs dans la salle.",
-    photoPaths: [],
+    photoIds: [],
     status: "open",
     adminNote: "",
     createdAt: now,

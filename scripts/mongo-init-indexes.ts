@@ -12,11 +12,11 @@ import { resolve } from "node:path";
 import { MongoClient, type IndexDescription } from "mongodb";
 import { COL } from "../packages/shared/src/index";
 
-const envFile = resolve(import.meta.dirname, "../functions/.env.local");
+const envFile = resolve(import.meta.dirname, "../server/.env.local");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const uri = process.env.MONGODB_URI;
-if (!uri) throw new Error("Set MONGODB_URI in functions/.env.local");
+if (!uri) throw new Error("Set MONGODB_URI in server/.env.local");
 
 /** Collection name -> index specs. Empty arrays are fine (no secondary index needed yet). */
 const INDEXES: Record<string, IndexDescription[]> = {
@@ -48,6 +48,8 @@ const INDEXES: Record<string, IndexDescription[]> = {
   [COL.devices]: [{ key: { userId: 1 } }],
   [COL.auditLogs]: [{ key: { createdAt: -1 } }, { key: { action: 1, createdAt: -1 } }],
   [COL.incidents]: [{ key: { reporterId: 1, createdAt: -1 } }, { key: { createdAt: -1 } }, { key: { reporterId: 1 } }],
+  [COL.jobRuns]: [{ key: { startedAt: 1 }, expireAfterSeconds: 30 * 24 * 3600 }], // run records are only needed to avoid double runs
+  [`${COL.photos}.files`]: [{ key: { "metadata.ownerId": 1 } }],
   [COL.equipmentRequests]: [{ key: { requesterId: 1, createdAt: -1 } }, { key: { createdAt: -1 } }, { key: { requesterId: 1 } }],
 };
 

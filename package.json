@@ -2,28 +2,31 @@
   "name": "reservation-espace",
   "private": true,
   "version": "0.1.0",
-  "description": "Application de Réservation d'Espace — PWA de réservation de postes, salles et espaces de coworking",
+  "description": "Application de RÃ©servation d'Espace â€” PWA de rÃ©servation de postes, salles et espaces de coworking",
   "workspaces": [
     "packages/shared",
-    "functions",
+    "server",
     "apps/web"
   ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "dev": "concurrently -k -n emu,web -c blue,green \"npm:emulators\" \"npm run dev -w apps/web\"",
-    "emulators": "npm run mongo:up && npm run build -w functions && cross-env FUNCTIONS_DISCOVERY_TIMEOUT=60 firebase emulators:start --import=./.emulator-data --export-on-exit=./.emulator-data",
-    "emulators:clean": "npm run mongo:up && npm run build -w functions && cross-env FUNCTIONS_DISCOVERY_TIMEOUT=60 firebase emulators:start",
+    "dev": "concurrently -k -n auth,api,web -c yellow,blue,green \"npm:emulators\" \"npm run dev -w server\" \"npm run dev -w apps/web\"",
+    "dev:docker": "npm run mongo:up && npm run dev",
+    "emulators": "firebase emulators:start --only auth --import=./.emulator-data --export-on-exit=./.emulator-data",
+    "emulators:clean": "firebase emulators:start --only auth",
+    "start": "npm start -w server",
     "mongo:up": "docker compose up -d && node scripts/mongo-rs-init.mjs",
     "mongo:down": "docker compose down",
     "mongo:init-indexes": "tsx scripts/mongo-init-indexes.ts",
     "seed": "tsx scripts/seed.ts",
-    "build": "npm run build -w functions && npm run build -w apps/web",
+    "build": "npm run build -w server && npm run build -w apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "vitest run --project shared --project functions",
-    "test:api": "npm run mongo:up && npm run build -w functions && cross-env FUNCTIONS_DISCOVERY_TIMEOUT=60 MONGODB_DB_NAME=reservation_test firebase emulators:exec --only auth,functions \"tsx scripts/mongo-reset-test-db.ts && npm run mongo:init-indexes && npm run seed && vitest run --project api\"",
+    "test": "vitest run --project shared --project server",
+    "test:api": "npm run mongo:up && npm run build -w server && cross-env MONGODB_DB_NAME=reservation_test firebase emulators:exec --only auth \"tsx scripts/mongo-reset-test-db.ts && npm run mongo:init-indexes && npm run seed && vitest run --project api\"",
+    "check:prod": "node scripts/production-check.mjs",
     "icons": "node scripts/generate-icons.mjs"
   },
   "devDependencies": {

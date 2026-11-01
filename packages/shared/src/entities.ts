@@ -8,7 +8,7 @@ import { LOCALES } from "./i18n";
  * All dates are stored as native `Date`, and `_id` is explicit: the user id for users and
  * wallets, an ObjectId hex string for everything else.
  *
- * These are *document* shapes (what's stored), not callable *input* shapes
+ * These are *document* shapes (what's stored), not API *input* shapes
  * (what a client may send): those live in `schemas.ts`.
  */
 
@@ -136,7 +136,9 @@ export const appNotificationSchema = z.object({
 export const deviceSchema = z.object({
   _id: z.string().min(1),
   userId: z.string(),
-  fcmToken: z.string().max(4096),
+  endpoint: z.string().max(2048),
+  p256dh: z.string().max(256),
+  auth: z.string().max(256),
   platform: z.string(),
   userAgent: z.string(),
   lastSeenAt: z.date(),
@@ -185,7 +187,7 @@ export const incidentSchema = z.object({
   spaceName: z.string().nullable(),
   title: z.string(),
   description: z.string(),
-  photoPaths: z.array(z.string()),
+  photoIds: z.array(z.string()),
   status: z.enum(INCIDENT_STATUSES),
   adminNote: z.string(),
   createdAt: z.date(),

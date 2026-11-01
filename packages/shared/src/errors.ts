@@ -1,5 +1,5 @@
 /**
- * Stable reasons attached to callable errors (`HttpsError.details.reason`).
+ * Stable reasons attached to API errors (`error.reason` in the response).
  * The server never sends user-facing text: the client translates
  * `errors.<reason>` in the user's language.
  */

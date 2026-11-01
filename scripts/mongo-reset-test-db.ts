@@ -7,12 +7,12 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { MongoClient } from "mongodb";
 
-const envFile = resolve(import.meta.dirname, "../functions/.env.local");
+const envFile = resolve(import.meta.dirname, "../server/.env.local");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const uri = process.env.MONGODB_URI;
 const name = process.env.MONGODB_DB_NAME;
-if (!uri) throw new Error("Set MONGODB_URI in functions/.env.local");
+if (!uri) throw new Error("Set MONGODB_URI in server/.env.local");
 if (!name?.endsWith("_test")) throw new Error(`Refusing to drop "${name ?? ""}": MONGODB_DB_NAME must end in _test`);
 
 async function main() {

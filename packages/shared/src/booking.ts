@@ -2,7 +2,7 @@ import type { ErrorReason } from "./errors";
 import type { Closure, MinuteOfDay, OpeningHours, Space, SpaceCategory } from "./models";
 import { addDays, daysBetween, weekdayOf } from "./time";
 
-/** Booking rules, shared by the Cloud Functions (which enforce them) and the web app. */
+/** Booking rules, shared by the server (which enforces them) and the web app. */
 
 export const SLOT_MINUTES = 30;
 export const MIN_DURATION = 30;

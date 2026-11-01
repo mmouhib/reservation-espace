@@ -21,7 +21,7 @@ export interface UserProfile<T = unknown> {
   departmentId: string | null;
   teamIds: string[];
   defaultSiteId: string | null;
-  /** Mirror of the `role` custom claim. Written by Cloud Functions only. */
+  /** Mirror of the `role` custom claim. Written by the server only. */
   role: Role;
   status: UserStatus;
   notificationPrefs: NotificationPrefs;
@@ -189,7 +189,7 @@ export interface AppNotification<T = unknown> {
 
 // ---------- Credits and subscriptions ----------
 
-/** The balance of a user, at wallets/{uid}. Written by Cloud Functions only. */
+/** The balance of a user, in the wallets collection (_id: the user id). Written by the server only. */
 export interface Wallet<T = unknown> {
   balance: number;
   updatedAt: T;
@@ -249,8 +249,8 @@ export interface Incident<T = unknown> {
   spaceName: string | null;
   title: string;
   description: string;
-  /** Storage paths under incidents/{uid}/. */
-  photoPaths: string[];
+  /** Ids of the photos stored on the server (see `/api/uploads/photos`). */
+  photoIds: string[];
   status: IncidentStatus;
   adminNote: string;
   createdAt: T;

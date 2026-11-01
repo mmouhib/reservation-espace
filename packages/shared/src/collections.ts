@@ -1,8 +1,8 @@
-/** MongoDB collection names, shared by the web app, the Cloud Functions and the seed script. */
+/** MongoDB collection names, shared by the web app, the server and the seed script. */
 export const COL = {
   users: "users",
-  devices: "devices", // users/{uid}/devices
-  notifications: "notifications", // users/{uid}/notifications
+  devices: "devices", // Web Push subscriptions
+  notifications: "notifications",
   departments: "departments",
   teams: "teams",
   sites: "sites",
@@ -17,6 +17,8 @@ export const COL = {
   incidents: "incidents",
   equipmentRequests: "equipmentRequests",
   rateLimits: "_rateLimits",
-  locks: "_locks", // one document per booking day of a space or a user, see functions/src/lib/locks.ts
+  locks: "_locks", // one document per booking day of a space or a user, see server/src/lib/locks.ts
   visits: "visits",
+  jobRuns: "_jobRuns", // one document per run of a scheduled job, see server/src/lib/jobs.ts
+  photos: "incidentPhotos", // GridFS bucket (files and chunks): photos attached to incidents
 } as const;

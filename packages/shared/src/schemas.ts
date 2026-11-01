@@ -26,7 +26,7 @@ import {
 import { isDateString } from "./time";
 import { ROLES, type Role } from "./roles";
 
-/** Input schemas for callable Cloud Functions. Validated on the server, reused for client forms. */
+/** Input schemas for the server's endpoints. Validated on the server, reused for client forms. */
 
 export const setUserRoleInput = z.object({
   uid: z.string().min(1).max(128),
@@ -272,8 +272,8 @@ export const createIncidentInput = z
     title: z.string().trim().min(1).max(120),
     description: z.string().trim().max(2000),
     spaceId: z.string().min(1).max(64).nullable().optional(),
-    /** Storage paths of photos the client uploaded first, under incidents/{uid}/ (checked by the handler). */
-    photoPaths: z.array(z.string().min(1).max(512)).max(3),
+    /** Ids of photos the client uploaded first (checked by the handler: they must be the reporter's own). */
+    photoIds: z.array(z.string().regex(/^[0-9a-f]{24}$/)).max(3),
   })
   .strict();
 export type CreateIncidentInput = z.input<typeof createIncidentInput>;
@@ -315,7 +315,7 @@ export interface IncidentSummary {
   spaceName: string | null;
   title: string;
   description: string;
-  photoPaths: string[];
+  photoIds: string[];
   status: IncidentStatus;
   adminNote: string;
   createdAt: string;
@@ -341,7 +341,7 @@ export interface EquipmentRequestSummary {
 
 export const emptyInput = z.object({}).strict();
 
-// ---------- Web reads and writes (functions/src/api) ----------
+// ---------- Web reads and writes (server/src/api) ----------
 
 const entityId = z.string().min(1).max(64);
 const timeRange = z.object({ from: minuteOfDay, to: minuteOfDay }).strict();
@@ -364,7 +364,8 @@ export type UpdateMyProfileInput = z.input<typeof updateMyProfileInput>;
 
 export const registerDeviceInput = z
   .object({
-    fcmToken: z.string().min(1).max(4096),
+    endpoint: z.url().max(2048),
+    keys: z.object({ p256dh: z.string().min(1).max(256), auth: z.string().min(1).max(256) }).strict(),
     platform: z.string().max(100),
     userAgent: z.string().max(200),
   })

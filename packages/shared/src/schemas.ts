@@ -133,8 +133,21 @@ export interface TeamBookingsResult {
 
 // ---------- Credits ----------
 
-export const purchasePlanInput = z.object({ planId: z.string().min(1).max(64) });
-export type PurchasePlanInput = z.infer<typeof purchasePlanInput>;
+export const createPaymentInput = z.object({ planId: z.string().min(1).max(64) });
+export type CreatePaymentInput = z.infer<typeof createPaymentInput>;
+
+/** What the browser needs to show the card form of Stripe for one payment. */
+export interface CreatePaymentResult {
+  paymentIntentId: string;
+  clientSecret: string;
+}
+
+export const confirmPaymentInput = z.object({ paymentIntentId: z.string().regex(/^pi_[A-Za-z0-9_]+$/).max(100) });
+export type ConfirmPaymentInput = z.infer<typeof confirmPaymentInput>;
+
+export interface ConfirmPaymentResult {
+  credits: number;
+}
 
 export const cancelSubscriptionInput = z.object({ subscriptionId: z.string().min(1).max(64) });
 export type CancelSubscriptionInput = z.infer<typeof cancelSubscriptionInput>;

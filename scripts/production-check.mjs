@@ -138,6 +138,21 @@ check(
   "Server: not pointed at a dev or test database",
   `MONGODB_DB_NAME is "${server("MONGODB_DB_NAME")}": a deployed app must use the real database.`,
 );
+const stripeSecret = server("STRIPE_SECRET_KEY");
+const stripePublic = webValue("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY");
+if (stripeSecret === "" || stripePublic === "") {
+  warnings.push("STRIPE_SECRET_KEY (server) and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (web) are not both set: nobody can buy credits.");
+} else {
+  const secretMode = stripeSecret.startsWith("sk_live_") ? "live" : "test";
+  const publicMode = stripePublic.startsWith("pk_live_") ? "live" : "test";
+  check(
+    secretMode === publicMode,
+    `Stripe: both keys are in ${secretMode} mode`,
+    `The Stripe keys are from different modes (the secret key is ${secretMode}, the publishable key is ${publicMode}): the card form would fail.`,
+  );
+  if (secretMode === "test") warnings.push("Stripe is in test mode: card payments are simulated and no real money moves (use sk_live_ and pk_live_ to charge for real).");
+  if (server("STRIPE_WEBHOOK_SECRET") === "") warnings.push("STRIPE_WEBHOOK_SECRET is not set: a buyer who closes the page right after paying only gets the credits when they come back.");
+}
 if (server("RESEND_API_KEY") === "") warnings.push("RESEND_API_KEY is not set: notification emails are skipped.");
 if (server("GOOGLE_GENERATIVE_AI_API_KEY") === "") warnings.push("GOOGLE_GENERATIVE_AI_API_KEY is not set: the AI assistant answers with an error.");
 if (server("VAPID_PUBLIC_KEY") === "" || server("VAPID_PRIVATE_KEY") === "") {

@@ -32,6 +32,8 @@ export const ERROR_REASONS = [
   "planNotFound",
   "alreadySubscribed",
   "subscriptionNotFound",
+  "paymentFailed",
+  "paymentUnavailable",
   // AI assistant
   "assistantUnavailable",
   // Visitors

@@ -18,7 +18,8 @@ export { teamBookings } from "./bookings/teamBookings";
 export { sendBookingReminders, sendWeeklyDigests } from "./bookings/reminders";
 
 // Credits and subscriptions
-export { adjustCredits, cancelSubscription, purchasePlan, renewSubscriptions } from "./credits/credits";
+export { adjustCredits, cancelSubscription, renewSubscriptions } from "./credits/credits";
+export { confirmPayment, createPayment } from "./credits/payments";
 export { createPlan, deletePlan, listAllPlans, listPlans, updatePlan } from "./credits/plans";
 export { getMyCreditHistory, getMySubscription, getMyWallet } from "./credits/queries";
 

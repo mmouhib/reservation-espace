@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { PlanSummary } from "@reservation/shared";
+import { PaymentModal, STRIPE_PUBLISHABLE_KEY } from "@/components/credits/PaymentModal";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +20,7 @@ export default function CreditsPage() {
   const { t, locale } = useI18n();
   const flash = useFlash();
   const online = useOnlineStatus();
-  const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [paying, setPaying] = useState<PlanSummary | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
   const wallet = useCallableQuery("getMyWallet", api.getMyWallet, {}, { pollMs: 30_000 });
@@ -27,19 +29,12 @@ export default function CreditsPage() {
   const history = useCallableQuery("getMyCreditHistory", api.getMyCreditHistory, {}, { pollMs: 30_000 });
   const sub = subscription.data;
 
-  async function buy(planId: string) {
-    setBusyPlan(planId);
-    try {
-      const { credits } = await api.purchasePlan({ planId });
-      flash.success("credits.purchased", { count: credits });
-      wallet.refetch();
-      history.refetch();
-      subscription.refetch();
-    } catch (err) {
-      flash.error(err);
-    } finally {
-      setBusyPlan(null);
-    }
+  function paid(credits: number) {
+    setPaying(null);
+    flash.success("credits.purchased", { count: credits });
+    wallet.refetch();
+    history.refetch();
+    subscription.refetch();
   }
 
   async function cancelSubscription() {
@@ -57,6 +52,7 @@ export default function CreditsPage() {
   return (
     <>
       <DocumentTitle titleKey="nav.credits" />
+      <PaymentModal plan={paying} onClose={() => setPaying(null)} onPaid={paid} />
       <PageHeader title={t("credits.title")} description={t("credits.description")} />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
@@ -103,8 +99,8 @@ export default function CreditsPage() {
                     </p>
                     <Button
                       className="mt-auto"
-                      onClick={() => void buy(plan.id)}
-                      disabled={!online || busyPlan !== null || (plan.kind === "subscription" && sub !== null)}
+                      onClick={() => setPaying(plan)}
+                      disabled={!online || !STRIPE_PUBLISHABLE_KEY || (plan.kind === "subscription" && sub !== null)}
                     >
                       {plan.kind === "subscription" ? t("credits.subscribe") : t("credits.buy")}
                     </Button>
@@ -112,7 +108,7 @@ export default function CreditsPage() {
                 ))}
             </ul>
           )}
-          <p className="mt-4 text-xs text-slate-500">{t("credits.simulated")}</p>
+          {!STRIPE_PUBLISHABLE_KEY && <p className="mt-4 text-xs text-slate-500">{t("credits.paymentsOff")}</p>}
         </Section>
 
         <Section title={t("credits.history")} icon="list">

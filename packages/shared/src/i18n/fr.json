@@ -513,6 +513,8 @@
     "planNotFound": "Formule introuvable.",
     "alreadySubscribed": "Vous avez déjà un abonnement actif.",
     "subscriptionNotFound": "Abonnement introuvable.",
+    "paymentFailed": "Le paiement n'a pas abouti.",
+    "paymentUnavailable": "Les paiements sont indisponibles pour le moment. Réessayez plus tard.",
     "assistantUnavailable": "L'assistant IA est momentanément indisponible.",
     "visitNotFound": "Visite introuvable.",
     "invalidVisitStatus": "Cette visite ne peut plus être modifiée."
@@ -643,7 +645,11 @@
     "subscriptionCancelled": "Abonnement résilié.",
     "purchased_one": "Achat effectué : {count} crédit ajouté.",
     "purchased_other": "Achat effectué : {count} crédits ajoutés.",
-    "simulated": "Le paiement est simulé dans cette version de l'application.",
+    "payTitle": "Payer {name}",
+    "pay": "Payer {price}",
+    "paymentReceived": "Votre paiement a abouti, mais les crédits n'ont pas encore été ajoutés.",
+    "checkPayment": "Vérifier mon paiement",
+    "paymentsOff": "Le paiement par carte n'est pas encore configuré.",
     "history": "Historique",
     "noHistory": "Aucun mouvement pour le moment.",
     "types": {

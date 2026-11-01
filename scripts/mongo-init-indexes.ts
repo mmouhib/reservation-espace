@@ -48,6 +48,7 @@ const INDEXES: Record<string, IndexDescription[]> = {
   [COL.devices]: [{ key: { userId: 1 } }],
   [COL.auditLogs]: [{ key: { createdAt: -1 } }, { key: { action: 1, createdAt: -1 } }],
   [COL.incidents]: [{ key: { reporterId: 1, createdAt: -1 } }, { key: { createdAt: -1 } }, { key: { reporterId: 1 } }],
+  [COL.payments]: [{ key: { userId: 1, createdAt: -1 } }],
   [COL.jobRuns]: [{ key: { startedAt: 1 }, expireAfterSeconds: 30 * 24 * 3600 }], // run records are only needed to avoid double runs
   [`${COL.photos}.files`]: [{ key: { "metadata.ownerId": 1 } }],
   [COL.equipmentRequests]: [{ key: { requesterId: 1, createdAt: -1 } }, { key: { createdAt: -1 } }, { key: { requesterId: 1 } }],

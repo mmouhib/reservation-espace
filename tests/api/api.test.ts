@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { MongoClient } from "mongodb";
+import Stripe from "stripe";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { COL, addDays, nowIn, weekdayOf } from "@reservation/shared";
 
@@ -141,8 +142,8 @@ describe("credits and access", () => {
   });
 
   it("refuses a second subscription and hidden plans", async () => {
-    expect((await call("purchasePlan", hugo, { planId: "monthly-20" })).error).toBe("alreadySubscribed");
-    expect((await call("purchasePlan", lea, { planId: "legacy-5" })).error).toBe("planNotFound");
+    expect((await call("createPayment", hugo, { planId: "monthly-20" })).error).toBe("alreadySubscribed");
+    expect((await call("createPayment", lea, { planId: "legacy-5" })).error).toBe("planNotFound");
   });
 
   it("shows the team view to managers only", async () => {
@@ -211,7 +212,7 @@ describe("accounts without a company role", () => {
       ["listSpaces", {}],
       ["listPlans", {}],
       ["searchSpaces", { siteId: "paris", date: DAY, from: 540, to: 600 }],
-      ["purchasePlan", { planId: "pack-10" }],
+      ["createPayment", { planId: "pack-10" }],
     ] as const) {
       expect((await call(name, idToken, data)).error, name).toBe("forbidden");
     }
@@ -315,5 +316,92 @@ describe("Google sign-up and roles", () => {
     expect((await call("setUserRole", camille, { uid, role: "manager" })).result?.changed).toBe(true);
     // Administrators are not changed from the app either.
     expect((await call("setUserRole", camille, { uid: "demo-admin", role: "user" })).error).toBe("cannotDemoteSelf");
+  });
+});
+
+describe("paying for credits with Stripe", () => {
+  const STRIPE = `http://127.0.0.1:${process.env.API_TEST_STRIPE_PORT ?? "8098"}`;
+  const WEBHOOK = `${API}/stripe/webhook`;
+  const webhookSecret = "whsec_test_secret";
+
+  /** What Stripe does once the card of the buyer was charged. */
+  const pay = async (paymentIntentId: string) => (await fetch(`${STRIPE}/__test/succeed/${paymentIntentId}`, { method: "POST" })).json();
+  const create = async (token: string, planId: string) => {
+    const outcome = await call("createPayment", token, { planId });
+    return outcome.result as { paymentIntentId: string; clientSecret: string };
+  };
+
+  it("refuses unknown and hidden plans, and a second subscription", async () => {
+    expect((await call("createPayment", lea, { planId: "nope" })).error).toBe("planNotFound");
+    expect((await call("createPayment", lea, { planId: "legacy-5" })).error).toBe("planNotFound");
+    expect((await call("createPayment", hugo, { planId: "monthly-20" })).error).toBe("alreadySubscribed");
+  });
+
+  it("is the only way to buy: the old free purchase endpoint is gone", async () => {
+    expect((await call("purchasePlan", lea, { planId: "pack-10" })).error).toBe("not-found");
+  });
+
+  it("gives the credits of a pack once it is paid, and only once", async () => {
+    const before = await balance("demo-user");
+    const payment = await create(lea, "pack-10");
+    expect(payment.clientSecret).toContain(payment.paymentIntentId);
+
+    // The card was not charged yet: no credits.
+    expect((await call("confirmPayment", lea, { paymentIntentId: payment.paymentIntentId })).error).toBe("paymentFailed");
+    expect(await balance("demo-user")).toBe(before);
+
+    await pay(payment.paymentIntentId);
+    expect((await call("confirmPayment", lea, { paymentIntentId: payment.paymentIntentId })).result).toEqual({ credits: 10 });
+    expect((await call("confirmPayment", lea, { paymentIntentId: payment.paymentIntentId })).result).toEqual({ credits: 10 });
+    expect(await balance("demo-user")).toBe(before + 10);
+  });
+
+  it("gives the credits once even when the browser and Stripe confirm at the same moment", async () => {
+    const before = await balance("demo-user");
+    const payment = await create(lea, "pack-10");
+    await pay(payment.paymentIntentId);
+    const results = await Promise.all(Array.from({ length: 6 }, () => call("confirmPayment", lea, { paymentIntentId: payment.paymentIntentId })));
+    expect(results.every((r) => r.result?.credits === 10)).toBe(true);
+    expect(await balance("demo-user")).toBe(before + 10);
+  });
+
+  it("does not let someone confirm another person's payment", async () => {
+    const payment = await create(lea, "pack-10");
+    await pay(payment.paymentIntentId);
+    expect((await call("confirmPayment", hugo, { paymentIntentId: payment.paymentIntentId })).error).toBe("forbidden");
+    expect((await call("confirmPayment", lea, { paymentIntentId: "pi_does_not_exist" })).error).toBe("paymentFailed");
+    expect((await call("confirmPayment", lea, { paymentIntentId: "not-a-payment" })).error).toBe("invalidInput");
+  });
+
+  it("starts a subscription with the first payment", async () => {
+    const before = await balance("demo-admin");
+    const payment = await create(camille, "monthly-20");
+    await pay(payment.paymentIntentId);
+    expect((await call("confirmPayment", camille, { paymentIntentId: payment.paymentIntentId })).result).toEqual({ credits: 20 });
+    expect(await balance("demo-admin")).toBe(before + 20);
+    expect((await call("getMySubscription", camille)).result?.planId).toBe("monthly-20");
+    expect((await call("createPayment", camille, { planId: "monthly-20" })).error).toBe("alreadySubscribed");
+  });
+
+  it("accepts Stripe's webhook only when it is signed, and gives the credits once", async () => {
+    const before = await balance("demo-user");
+    const payment = await create(lea, "pack-10");
+    const paid = await pay(payment.paymentIntentId);
+    const body = JSON.stringify({ id: "evt_test", object: "event", type: "payment_intent.succeeded", data: { object: paid } });
+    const signed = (payload: string, secret = webhookSecret) => ({
+      "Content-Type": "application/json",
+      "Stripe-Signature": Stripe.webhooks.generateTestHeaderString({ payload, secret }),
+    });
+
+    expect((await fetch(WEBHOOK, { method: "POST", headers: signed(body, "whsec_wrong"), body })).status).toBe(400);
+    expect((await fetch(WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body })).status).toBe(400);
+    expect(await balance("demo-user")).toBe(before);
+
+    expect((await fetch(WEBHOOK, { method: "POST", headers: signed(body), body })).status).toBe(200);
+    expect((await fetch(WEBHOOK, { method: "POST", headers: signed(body), body })).status).toBe(200);
+    expect(await balance("demo-user")).toBe(before + 10);
+    // The browser confirming afterwards changes nothing.
+    expect((await call("confirmPayment", lea, { paymentIntentId: payment.paymentIntentId })).result).toEqual({ credits: 10 });
+    expect(await balance("demo-user")).toBe(before + 10);
   });
 });

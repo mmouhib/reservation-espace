@@ -513,6 +513,8 @@
     "planNotFound": "Plan not found.",
     "alreadySubscribed": "You already have an active subscription.",
     "subscriptionNotFound": "Subscription not found.",
+    "paymentFailed": "The payment did not go through.",
+    "paymentUnavailable": "Payments are unavailable right now. Please try again later.",
     "assistantUnavailable": "The AI assistant is temporarily unavailable.",
     "visitNotFound": "Visit not found.",
     "invalidVisitStatus": "This visit can no longer be changed."
@@ -643,7 +645,11 @@
     "subscriptionCancelled": "Subscription cancelled.",
     "purchased_one": "Purchase complete: {count} credit added.",
     "purchased_other": "Purchase complete: {count} credits added.",
-    "simulated": "Payment is simulated in this version of the app.",
+    "payTitle": "Pay for {name}",
+    "pay": "Pay {price}",
+    "paymentReceived": "Your payment went through, but the credits were not added yet.",
+    "checkPayment": "Check my payment",
+    "paymentsOff": "Card payments are not set up yet.",
     "history": "History",
     "noHistory": "No transactions yet.",
     "types": {

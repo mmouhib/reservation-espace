@@ -68,13 +68,15 @@ Owns the `notifications` and `devices` collections. Screen: `/notifications` (be
 
 ### 5. Credits & Subscriptions
 
-Owns `wallets`, `creditTransactions`, `plans`, `subscriptions`. Screens: `/credits`, `/admin/credits`.
+Owns `wallets`, `creditTransactions`, `plans`, `subscriptions`, `payments`. Screens: `/credits`, `/admin/credits`.
 
 - ✅ Balance and full history. Bookings are charged, cancellations and changes are refunded or charged the difference.
 - ✅ Plans: credit packs and monthly subscriptions, created and priced by an administrator.
 - ✅ Subscriptions renew every month (scheduled function) and can be cancelled.
 - ✅ Administrators adjust balances. Optional welcome credits for new accounts (`WELCOME_CREDITS`).
-- 🟡 Payment is simulated: connect a payment provider in `server/src/credits/credits.ts` before charging real money.
+- ✅ Card payment with Stripe, in a form inside the app (Stripe's payment element, so card numbers never reach this server). With test keys (`sk_test_`, `pk_test_`) payments are simulated and no money moves; the cards to use are in [docs/stripe-test-cards.md](docs/stripe-test-cards.md).
+- ✅ The price comes from the plan, never from the browser. The server asks Stripe itself whether a payment succeeded, and a payment can give credits only once, whether the browser or Stripe's webhook confirms it first.
+- 🟡 Subscriptions are paid once, on the first month. The next months' credits are still given by the nightly job without a new charge.
 
 ### 6. Incidents & Equipment
 
@@ -286,6 +288,19 @@ Texts live in `packages/shared/src/i18n/fr.json` (the reference) and `en.json`.
 To add a text, add the same key to both files, then use `t("my.key")` from `useI18n()`.
 The tests check that both files have exactly the same keys and the same variables.
 
+## Pay with Stripe (test mode)
+
+Credits are bought with a card through Stripe. In test mode nothing real is charged.
+
+1. Create a free account at stripe.com and stay in **test mode**. Under Developers > API keys, copy the **publishable**
+   key (`pk_test_...`) and the **secret** key (`sk_test_...`).
+2. Put the secret key in `server/.env.local` as `STRIPE_SECRET_KEY=sk_test_...`, and the publishable key in
+   `apps/web/.env.local` as `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...`. Restart the dev server.
+3. On the Credits page, click Buy and pay with a test card from [docs/stripe-test-cards.md](docs/stripe-test-cards.md).
+4. Optional, so that credits also arrive when the buyer closes the page right after paying: install the Stripe CLI, run
+   `stripe listen --forward-to localhost:8080/api/stripe/webhook`, and put the `whsec_...` it prints in
+   `STRIPE_WEBHOOK_SECRET`. In production, add an endpoint in the Stripe dashboard for the event `payment_intent.succeeded`.
+
 ## Troubleshooting
 
 - **Node version error**: use Node 22 (`nvm use` reads `.nvmrc`).
@@ -296,6 +311,7 @@ The tests check that both files have exactly the same keys and the same variable
 - **On Windows, `next build` fails with `EBUSY`**: no terminal should be open inside `apps/web/out`.
 - **A page stays on "Loading…"**: check that the server and the Auth emulator are running and that `NEXT_PUBLIC_USE_EMULATORS=true`.
 - **No demo users, or empty screens**: run `npm run mongo:init-indexes` and `npm run seed` while the Auth emulator is running.
+- **The Buy buttons are disabled**: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is missing from the web build. **"Payments are unavailable"**: `STRIPE_SECRET_KEY` is missing or wrong on the server.
 - **Connection refused or timeout with Atlas**: your IP address must be allowed in Atlas under Network Access.
 
 ## Deployment
@@ -323,7 +339,8 @@ The host must provide HTTPS: sign-in and installing the app on a phone both requ
    | `FIREBASE_SERVICE_ACCOUNT` | the service account key, the whole JSON on one line |
    | `MONGODB_URI` | the Atlas connection string |
    | `ALLOWED_EMAIL_DOMAINS` | optional: the domain(s) that may sign up with Google, comma separated. Empty lets any Google account in |
-   | `GOOGLE_GENERATIVE_AI_API_KEY` | optional: the AI assistant |
+   | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | the payment of credits (`sk_test_...` simulates payments; the webhook secret is optional). The public key `pk_...` is `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in the web build |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | optional: the AI assistant |
    | `RESEND_API_KEY`, `RESEND_FROM` | optional: notification emails |
    | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | optional: push (`npx web-push generate-vapid-keys`; the public key is also `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in the web build) |
 

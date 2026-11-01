@@ -3,6 +3,7 @@ import { extname, resolve, sep } from "node:path";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { hasRole, isRole } from "@reservation/shared";
 import { auth } from "./lib/admin";
+import { handleStripeWebhook, stripeWebhookEnabled } from "./credits/payments";
 import type { Caller, Endpoint } from "./lib/callable";
 import { CORS_ORIGINS, WEB_DIR } from "./lib/config";
 import { AppError, appError } from "./lib/errors";
@@ -27,6 +28,10 @@ function errorBody(err: unknown): { status: number; body: { error: Record<string
     return { status: err.status, body: { error: { code: err.code, reason: err.reason, message: err.message, ...err.extra } } };
   }
   logger.error("Unhandled error", { err });
+  // The database could not be reached: say so (the app shows "service unavailable"), and the client may retry.
+  if (err instanceof Error && /^Mongo(Network|ServerSelection)/.test(err.name)) {
+    return { status: 503, body: { error: { code: "unavailable", message: "The database is unreachable." } } };
+  }
   return { status: 500, body: { error: { code: "internal", message: "Internal error." } } };
 }
 
@@ -111,6 +116,16 @@ export function createApp(endpoints: Map<string, Endpoint>) {
     res.setHeader("Content-Type", photo.metadata.contentType);
     res.setHeader("Cache-Control", "private, max-age=3600");
     photo.stream.on("error", () => res.destroy()).pipe(res);
+  });
+
+  // ---------- Stripe webhook (signed by Stripe, so no sign-in token) ----------
+
+  app.post("/api/stripe/webhook", express.raw({ type: "application/json", limit: "1mb" }), async (req, res) => {
+    if (!stripeWebhookEnabled()) {
+      res.sendStatus(404);
+      return;
+    }
+    res.sendStatus(await handleStripeWebhook(req.body as Buffer, req.headers["stripe-signature"]?.toString()));
   });
 
   // ---------- Endpoints: POST /api/<name> with the input as JSON ----------

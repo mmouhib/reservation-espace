@@ -34,6 +34,16 @@ export const WEB_DIR = text("WEB_DIR");
 // Google AI Studio key for Gemini (ai.google.dev).
 export const GOOGLE_GENERATIVE_AI_API_KEY = text("GOOGLE_GENERATIVE_AI_API_KEY");
 
+// Stripe (stripe.com) takes the card payments for credits. STRIPE_SECRET_KEY is sk_test_... in test mode.
+// Without it credits cannot be bought. STRIPE_WEBHOOK_SECRET (whsec_...) turns on /api/stripe/webhook, which
+// gives the credits even when the buyer closes the page right after paying.
+export const STRIPE_SECRET_KEY = text("STRIPE_SECRET_KEY");
+export const STRIPE_WEBHOOK_SECRET = text("STRIPE_WEBHOOK_SECRET");
+// Only for the tests: talk to a stand-in for Stripe instead of api.stripe.com.
+export const STRIPE_API_HOST = text("STRIPE_API_HOST");
+export const STRIPE_API_PORT = integer("STRIPE_API_PORT", 443);
+export const STRIPE_API_PROTOCOL = text("STRIPE_API_PROTOCOL", "https");
+
 // Resend key (resend.com) for notification emails. Empty = emails are skipped (logged as a warning).
 export const RESEND_API_KEY = text("RESEND_API_KEY");
 // Sender of the notification emails, e.g. "Réservation <no-reply@yourdomain.com>" (must be verified in Resend).

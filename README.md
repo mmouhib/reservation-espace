@@ -193,6 +193,9 @@ profile, bookings, credits and photos are in MongoDB.
 
 No Firebase account is needed for development: sign-in runs on the local Firebase Auth emulator (it needs no Java).
 
+**Accounts and keys.** How to create the MongoDB Atlas cluster, the Firebase project, the Stripe, Gemini and Resend accounts and the push keys, and where each key goes, is in
+[docs/accounts-and-keys.md](docs/accounts-and-keys.md).
+
 ```bash
 node -v
 docker --version   # only for the local MongoDB
@@ -321,6 +324,7 @@ The tests check that both files have exactly the same keys and the same variable
 ## Pay with Stripe (test mode)
 
 Credits are bought with a card through Stripe. In test mode nothing real is charged.
+(The full account and key steps are in [docs/accounts-and-keys.md](docs/accounts-and-keys.md#3-stripe).)
 
 1. Create a free account at stripe.com and stay in **test mode**. Under Developers > API keys, copy the **publishable**
    key (`pk_test_...`) and the **secret** key (`sk_test_...`).
@@ -349,6 +353,7 @@ Credits are bought with a card through Stripe. In test mode nothing real is char
 The server is one Node process: it serves the built app, the API and the scheduled jobs, so a single host runs
 everything. Any host that runs Node 22 or a Docker image works (Render, Fly.io, Railway, Cloud Run, a VPS...).
 The host must provide HTTPS: sign-in and installing the app on a phone both require it.
+To create the accounts and get the keys used below, follow [docs/accounts-and-keys.md](docs/accounts-and-keys.md).
 
 1. **Firebase (sign-in only).** Create a Firebase project. The free Spark plan is enough: no Functions, Hosting or Storage.
    In the console, enable Authentication with the Google provider, and add your host's domain under

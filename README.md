@@ -107,10 +107,10 @@ Owns `visits`. Screens: `/visiteurs`, `/admin/visiteurs`.
 Already built and used by every module. Change it through a pull request that the whole team can see.
 
 - **Auth and roles:** the sign-in flow, the `secureCall` wrapper for Cloud Functions (authentication, role check, rate limiting, input validation) and the role helpers in `packages/shared`.
-- **Security rules:** `firebase/firestore.rules` is one file. Each module owns its own `match` block.
+- **Access control:** done in the Cloud Functions, not in the database. `secureCall` requires a company role on every function (at least `user`), and each function checks what the caller may touch.
 - **Translations:** `fr.json` and `en.json`. Each module adds its keys under its own namespace.
 - **PWA shell:** install prompt, offline support, update message, navigation, page layout.
-- **Quality:** typecheck, lint, unit tests, rules tests and GitHub Actions CI.
+- **Quality:** typecheck, lint, unit tests, API tests and GitHub Actions CI.
 
 ### Suggested layout for each module
 
@@ -119,8 +119,8 @@ Already built and used by every module. Change it through a pull request that th
 | Screens | `apps/web/app/(app)/<module>/` |
 | Cloud Functions | `functions/src/<module>/`, exported from `functions/src/index.ts` |
 | Types, schemas | `packages/shared/src/` (one file per module) |
-| Security rules | one `match` block in `firebase/firestore.rules` |
-| Rules tests | `tests/rules/<module>.test.ts` |
+| Access control | the role and ownership checks of the module's functions |
+| API tests | `tests/api/`: call the module's functions as real users |
 | Translations | `packages/shared/src/i18n/{fr,en}.json`, under the module's namespace |
 | Demo data | a section in `scripts/seed.ts` |
 
@@ -130,8 +130,8 @@ Already built and used by every module. Change it through a pull request that th
 apps/web/          Next.js app (PWA)
 functions/         Cloud Functions (Node 22)
 packages/shared/   Types, zod schemas, roles, translations (fr.json / en.json)
-firebase/          Firestore and Storage rules, indexes
-tests/rules/       Security rules tests (emulator)
+firebase/          Storage rules (incident photos)
+tests/api/         Cloud Functions tests (emulators and MongoDB)
 scripts/           seed.ts (demo data), generate-icons.mjs
 ```
 
@@ -239,7 +239,6 @@ After a new `npm run build`, reload the page: the "A new version is available" m
 | `npm run typecheck` | TypeScript check of every workspace |
 | `npm run lint` | ESLint |
 | `npm test` | Unit tests (shared and functions) |
-| `npm run test:rules` | Firestore and Storage rules tests (starts the emulators, needs Java 21) |
 | `npm run test:api` | Cloud Functions tests: boots the emulators, seeds the demo data and calls the functions as real users |
 | `npm run icons` | Regenerate the PWA icons (`apps/web/public/icons`) |
 

@@ -441,6 +441,10 @@
   "login": {
     "title": "Sign in",
     "withGoogle": "Sign in with Google",
+    "withEmail": "Sign in with email",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
     "demoAccounts": "Demo accounts (emulators)",
     "feature1": "Desks, meeting rooms and coworking spaces",
     "feature2": "Installable, and works even offline",

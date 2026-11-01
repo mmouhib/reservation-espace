@@ -1,6 +1,6 @@
 /**
  * Checks the configuration before a production deployment: a web build made for the emulators, the demo
- * Firebase project, a server that lets anyone sign in, or one pointed at the development database.
+ * Firebase project, a server that cannot sign anyone in, or one pointed at the development database.
  * It only reads files and environment variables, so it needs no network and no account.
  *
  *   npm run build
@@ -123,15 +123,9 @@ check(
 );
 const domains = server("ALLOWED_EMAIL_DOMAINS");
 check(
-  domains !== "" && !domains.includes("exemple"),
-  `Server: sign-in limited to ${domains}`,
-  "ALLOWED_EMAIL_DOMAINS is empty or the example domain. Set your company domain(s): empty means anyone with a Google account is let in.",
-);
-const admins = server("BOOTSTRAP_ADMIN_EMAILS");
-check(
-  admins !== "" && !admins.includes("@exemple."),
-  "Server: first administrator set",
-  "BOOTSTRAP_ADMIN_EMAILS is empty or the example address, so nobody could become administrator. Set the email of the first admin.",
+  !domains.includes("exemple"),
+  domains === "" ? "Server: any Google account may sign up" : `Server: Google sign-up limited to ${domains}`,
+  "ALLOWED_EMAIL_DOMAINS is the example domain, so nobody could sign up. Set your domain(s), or leave it empty to let any Google account in.",
 );
 const uri = server("MONGODB_URI");
 check(
@@ -162,6 +156,7 @@ Not checked here (do these by hand):
   - the host serves the app over HTTPS (needed for sign-in and for installing the app on a phone)
   - MongoDB Atlas > Network Access lets the host connect, and the indexes exist (npm run mongo:init-indexes)
   - Firebase console: Authentication has Google sign-in enabled, and the host's domain is under Authorized domains
+  - the first administrator exists: npm run create-admin -- <email> --production (the Email/Password provider must be enabled for them to sign in)
 `);
 if (failures.length > 0) {
   console.error(`${failures.length} problem(s) to fix before deploying.`);

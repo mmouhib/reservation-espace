@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { DEMO_ACCOUNTS } from "@reservation/shared";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Button } from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Field";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { USE_EMULATORS } from "@/lib/firebase/client";
@@ -22,11 +23,13 @@ const FEATURES = [
 ] as const satisfies readonly { icon: IconName; key: string }[];
 
 export function LoginView() {
-  const { status, error, signIn, signInDemo } = useAuth();
+  const { status, error, signIn, signInWithEmail } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const [pending, setPending] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (status === "signed-in") router.replace(next);
@@ -77,6 +80,27 @@ export function LoginView() {
             {t("login.withGoogle")}
           </Button>
 
+          <details className="mt-6 border-t border-slate-200 pt-4">
+            <summary className="cursor-pointer text-sm font-medium text-slate-700">{t("login.withEmail")}</summary>
+            <form
+              className="mt-3 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void run(() => signInWithEmail(email.trim(), password));
+              }}
+            >
+              <Field label={t("login.email")}>
+                <Input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </Field>
+              <Field label={t("login.password")}>
+                <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              </Field>
+              <Button type="submit" variant="secondary" className="w-full" disabled={pending || status === "loading"}>
+                {t("login.signIn")}
+              </Button>
+            </form>
+          </details>
+
           {USE_EMULATORS && demoPassword && (
             <section aria-labelledby="demo-title" className="mt-8 border-t border-slate-200 pt-6">
               <h3 id="demo-title" className="text-sm font-semibold text-slate-700">
@@ -85,7 +109,7 @@ export function LoginView() {
               <ul className="mt-3 space-y-2">
                 {DEMO_ACCOUNTS.map((a) => (
                   <li key={a.email}>
-                    <Button variant="secondary" className="w-full justify-between" disabled={pending} onClick={() => void run(() => signInDemo(a.email, demoPassword))}>
+                    <Button variant="secondary" className="w-full justify-between" disabled={pending} onClick={() => void run(() => signInWithEmail(a.email, demoPassword))}>
                       <span>{a.displayName}</span>
                       <span className="text-xs text-slate-600">{t(`roles.${a.role}`)}</span>
                     </Button>

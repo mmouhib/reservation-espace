@@ -14,7 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { isMessageKey, isRole, type MessageKey, type Role, type UserSummary } from "@reservation/shared";
 import { clearCallableCache, readCached, writeCached } from "@/lib/api/cache";
 import { api, errorKey } from "@/lib/api/client";
-import { getFirebase, USE_EMULATORS } from "@/lib/firebase/client";
+import { getFirebase } from "@/lib/firebase/client";
 import { getLocale } from "@/lib/i18n/I18nProvider";
 
 export type Profile = UserSummary;
@@ -30,7 +30,8 @@ interface AuthContextValue {
   /** Translation key of the last sign-in error. */
   error: MessageKey | null;
   signIn: () => Promise<void>;
-  signInDemo: (email: string, password: string) => Promise<void>;
+  /** Email and password sign-in: for accounts created by an administrator (and the demo accounts). */
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -184,8 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signInDemo = useCallback(async (email: string, password: string) => {
-    if (!USE_EMULATORS) throw new Error("Demo sign-in is only available with the emulators");
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
       await signInWithEmailAndPassword(getFirebase().auth, email, password);
@@ -202,10 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       error,
       signIn,
-      signInDemo,
+      signInWithEmail,
       signOut,
     }),
-    [status, user, claimRole, profile, error, signIn, signInDemo, signOut],
+    [status, user, claimRole, profile, error, signIn, signInWithEmail, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

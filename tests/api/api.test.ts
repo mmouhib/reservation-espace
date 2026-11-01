@@ -215,7 +215,8 @@ describe("accounts without a company role", () => {
     ] as const) {
       expect((await call(name, idToken, data)).error, name).toBe("forbidden");
     }
-    expect((await call("bootstrapProfile", idToken, {})).error).not.toBe("forbidden");
+    // Signing up with an email and a password never gives a role: only Google accounts get one.
+    expect((await call("bootstrapProfile", idToken, {})).error).toBe("forbidden");
   });
 });
 
@@ -267,5 +268,52 @@ describe("incident photos", () => {
     expect(incident.result?.incidentId).toBeTruthy();
     const mine = await call("listMyIncidents", lea);
     expect(mine.result.find((i: { id: string }) => i.id === incident.result.incidentId).photoIds).toEqual([photoId]);
+  });
+});
+
+describe("Google sign-up and roles", () => {
+  const SIGN_IN_WITH_GOOGLE = `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=demo`;
+
+  /** Signs in with a fake Google account on the Auth emulator. */
+  async function googleSignIn(email: string, verified = true): Promise<{ token: string; uid: string }> {
+    const idToken = JSON.stringify({ sub: `google-${email}`, email, email_verified: verified });
+    const res = await fetch(SIGN_IN_WITH_GOOGLE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        postBody: `providerId=google.com&id_token=${encodeURIComponent(idToken)}`,
+        requestUri: "http://localhost",
+        returnIdpCredential: true,
+        returnSecureToken: true,
+      }),
+    });
+    const body = (await res.json()) as { idToken: string; localId: string };
+    return { token: body.idToken, uid: body.localId };
+  }
+
+  const email = `newcomer-${Date.now()}@exemple.fr`;
+
+  it("gives a Google account the role user, never admin, even when its email was configured before", async () => {
+    const first = await googleSignIn(email);
+    expect((await call("bootstrapProfile", first.token, {})).result?.created).toBe(true);
+
+    // A new token carries the role.
+    const { token, uid } = await googleSignIn(email);
+    expect((await call("listSites", token)).error).toBeUndefined();
+    expect((await call("setUserRole", token, { uid, role: "admin" })).error).toBe("forbidden");
+    expect((await call("listAllIncidents", token)).error).toBe("forbidden");
+  });
+
+  it("refuses a Google account whose email is not verified", async () => {
+    const { token } = await googleSignIn(`unverified-${Date.now()}@exemple.fr`, false);
+    expect((await call("bootstrapProfile", token, {})).error).toBe("forbidden");
+  });
+
+  it("lets an administrator make a Google user a manager, but not an administrator", async () => {
+    const { uid } = await googleSignIn(email);
+    expect((await call("setUserRole", camille, { uid, role: "admin" })).error).toBe("forbidden");
+    expect((await call("setUserRole", camille, { uid, role: "manager" })).result?.changed).toBe(true);
+    // Administrators are not changed from the app either.
+    expect((await call("setUserRole", camille, { uid: "demo-admin", role: "user" })).error).toBe("cannotDemoteSelf");
   });
 });

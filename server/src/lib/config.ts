@@ -19,7 +19,7 @@ export const FIREBASE_SERVICE_ACCOUNT = text("FIREBASE_SERVICE_ACCOUNT");
 export const MONGODB_URI = text("MONGODB_URI");
 export const MONGODB_DB_NAME = text("MONGODB_DB_NAME");
 
-export const BOOTSTRAP_ADMIN_EMAILS = text("BOOTSTRAP_ADMIN_EMAILS");
+// Email domains that may sign up with Google (comma separated). Empty = any Google account.
 export const ALLOWED_EMAIL_DOMAINS = text("ALLOWED_EMAIL_DOMAINS");
 // Credits given to every new account (0 to give none).
 export const WELCOME_CREDITS = integer("WELCOME_CREDITS", 0);

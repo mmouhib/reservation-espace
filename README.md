@@ -26,7 +26,8 @@ Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
 
 Owns `users`, `departments`, `teams`. Screens: sign-in, profile, `/admin/utilisateurs`, `/admin/organisation`, `/equipe`.
 
-- ✅ Google / company SSO sign-in (OIDC, SAML), email-domain restriction, first-admin bootstrap, demo accounts.
+- ✅ Google sign-in for everyone: a Google account is always a regular `user`, with an optional email-domain restriction. Demo accounts for development.
+- ✅ Administrators are created apart from Google, with `npm run create-admin` (email and password). An admin can make a user a `manager` from the Users screen, but not an admin.
 - ✅ Roles: `user` < `manager` < `admin`. Admin user list with role filter and pagination.
 - ✅ Directory sync that disables departed employees and cancels their upcoming bookings.
 - ✅ Profile: display name, notification preferences, language (FR/EN), department and teams.
@@ -145,8 +146,9 @@ scripts/           seed.ts (demo data), production-check.mjs, generate-icons.mjs
       └─ Google sign-in ──► Firebase Auth (the only Firebase service used)
 ```
 
-The browser signs in with Google through Firebase Auth and sends the Firebase ID token with every request. The server
-checks the token, reads the person's role from it and does everything else itself. Firebase stores nothing else: the
+The browser signs in with Google through Firebase Auth (administrators use an email and a password) and sends the
+Firebase ID token with every request. The server checks the token, reads the person's role from it and does everything
+else itself. A Google account gets the role `user` on its first sign-in, never more; an account without a role can do nothing. Firebase stores nothing else: the
 profile, bookings, credits and photos are in MongoDB.
 
 ## Requirements
@@ -268,6 +270,7 @@ If you created `apps/web/.env.production.local` for a deployment, rename it firs
 | `npm run mongo:up` / `mongo:down` | Start / stop the local MongoDB (Docker Compose, one-node replica set) |
 | `npm run mongo:init-indexes` | Create the MongoDB indexes (run once per database, including Atlas) |
 | `npm run seed` | Load the demo accounts and data |
+| `npm run create-admin -- <email>` | Create an administrator (or make an account one); add `--production` for the real Firebase project |
 | `npm run build` | Build the server and the app (`server/dist`, `apps/web/out`) |
 | `npm start` | Run the built server, which also serves the built app |
 | `npm run typecheck` | TypeScript check of every workspace |
@@ -305,6 +308,8 @@ The host must provide HTTPS: sign-in and installing the app on a phone both requ
    In the console, enable Authentication with the Google provider, and add your host's domain under
    Authentication > Settings > Authorized domains. Register a web app (Project settings > Your apps) to get the web keys.
    Under Project settings > Service accounts, generate a private key: the server needs it to give people their role.
+   To let administrators sign in, also enable the Email/Password provider. It is safe: the server gives a role only to
+   Google accounts and to accounts made with `create-admin`, so someone who signs up with an email gets access to nothing.
 2. **MongoDB Atlas.** Create a cluster, a database user, and allow your host to connect (Network Access). Create the
    indexes once: `MONGODB_URI=<your Atlas URI> npm run mongo:init-indexes`.
 3. **Web build.** Copy `apps/web/.env.production.example` to `apps/web/.env.production.local`, fill in the Firebase web
@@ -317,18 +322,18 @@ The host must provide HTTPS: sign-in and installing the app on a phone both requ
    | `FIREBASE_PROJECT_ID` | your Firebase project id |
    | `FIREBASE_SERVICE_ACCOUNT` | the service account key, the whole JSON on one line |
    | `MONGODB_URI` | the Atlas connection string |
-   | `ALLOWED_EMAIL_DOMAINS` | your company domain(s), comma separated: empty would let any Google account in |
-   | `BOOTSTRAP_ADMIN_EMAILS` | the email(s) that become administrator on their first sign-in |
+   | `ALLOWED_EMAIL_DOMAINS` | optional: the domain(s) that may sign up with Google, comma separated. Empty lets any Google account in |
    | `GOOGLE_GENERATIVE_AI_API_KEY` | optional: the AI assistant |
    | `RESEND_API_KEY`, `RESEND_FROM` | optional: notification emails |
    | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | optional: push (`npx web-push generate-vapid-keys`; the public key is also `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in the web build) |
 
    `server/.env.example` lists every setting. Do not set `FIREBASE_AUTH_EMULATOR_HOST` in production.
 5. **Check, then start.** `node --env-file=server/.env.production.local scripts/production-check.mjs` checks steps 3 and 4
-   (no demo project, not built for the emulator, sign-in limited to your domain, a first administrator, not the
-   development database...). Put the server settings in that git-ignored file to check them, or run the script where
+   (no demo project, not built for the emulator, a service account, not the development database...). Put the server settings in that git-ignored file to check them, or run the script where
    the variables are set. It cannot see the host, Atlas or the Firebase console, so it lists those too.
    Then start the server with `npm start` (or the Docker image).
+6. **First administrator.** `npm run create-admin -- you@yourcompany.com --production` creates the account and prints a password once.
+   Sign in with it under "Sign in with email", then add the other administrators the same way.
 
 Run a single instance, or several: each scheduled job claims its run in MongoDB, so two instances never send the
 same reminders twice.

@@ -441,6 +441,10 @@
   "login": {
     "title": "Connexion",
     "withGoogle": "Se connecter avec Google",
+    "withEmail": "Se connecter avec un e-mail",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
     "demoAccounts": "Comptes de démonstration (émulateurs)",
     "feature1": "Postes, salles de réunion et espaces de coworking",
     "feature2": "Installable, et utilisable même hors ligne",

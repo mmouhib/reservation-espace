@@ -151,11 +151,11 @@ export function UsersAdmin() {
               <Select
                 id={`role-${row.id}`}
                 value={row.role}
-                disabled={busyUid === row.id || row.id === user?.uid || row.status !== "active"}
+                disabled={busyUid === row.id || row.id === user?.uid || row.status !== "active" || row.role === "admin"}
                 onChange={(e) => void changeRole(row, e.target.value as Role)}
                 className="min-h-9 w-auto px-2"
               >
-                {ROLES.map((r) => (
+                {ROLES.filter((r) => r !== "admin" || row.role === "admin").map((r) => (
                   <option key={r} value={r}>
                     {t(`roles.${r}`)}
                   </option>

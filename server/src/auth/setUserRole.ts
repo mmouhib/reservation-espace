@@ -6,11 +6,15 @@ import { secureCall } from "../lib/callable";
 import { getDb } from "../lib/mongo";
 import { withTransaction } from "../lib/transaction";
 
-/** Admin-only: changes a user's role claim and mirrors it on the profile document. */
+/**
+ * Admin-only: changes a user's role claim (user or manager) and mirrors it on the profile document.
+ * Administrators are not made or removed here: they are managed with `npm run create-admin`.
+ */
 export const setUserRole = secureCall(
   { name: "setUserRole", schema: setUserRoleInput, role: "admin" },
   async ({ uid: actorId, data }) => {
-    if (data.uid === actorId && data.role !== "admin") {
+    if (data.role === "admin") throw appError("permission-denied", "forbidden", "Administrators are created with npm run create-admin.");
+    if (data.uid === actorId) {
       throw appError("failed-precondition", "cannotDemoteSelf", "Admins cannot remove their own admin role.");
     }
 
@@ -18,6 +22,7 @@ export const setUserRole = secureCall(
       throw appError("not-found", "userNotFound", "User not found.");
     });
     const previousRole = target.customClaims?.role ?? null;
+    if (previousRole === "admin") throw appError("permission-denied", "forbidden", "An administrator's role cannot be changed here.");
     if (previousRole === data.role) return { changed: false };
 
     await auth.setCustomUserClaims(data.uid, { ...target.customClaims, role: data.role });

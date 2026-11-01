@@ -11,7 +11,9 @@ const WEEKDAYS_FROM_SUNDAY: Weekday[] = ["sun", "mon", "tue", "wed", "thu", "fri
 
 export function isDateString(value: unknown): value is string {
   if (typeof value !== "string" || !DATE_PATTERN.test(value)) return false;
-  return new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+  const date = new Date(`${value}T00:00:00Z`);
+  // A month 13 or a day 45 gives an Invalid Date, whose toISOString() throws instead of answering false.
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
 }
 
 export function addDays(date: string, days: number): string {

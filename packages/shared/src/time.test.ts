@@ -6,6 +6,10 @@ describe("dates", () => {
     expect(isDateString("2026-02-28")).toBe(true);
     expect(isDateString("2026-02-30")).toBe(false);
     expect(isDateString("12/05/2026")).toBe(false);
+    // Impossible months and days are refused, not thrown at.
+    expect(isDateString("2026-13-45")).toBe(false);
+    expect(isDateString("2026-00-10")).toBe(false);
+    expect(isDateString("2026-05-32")).toBe(false);
   });
 
   it("adds days across months and counts days between dates", () => {

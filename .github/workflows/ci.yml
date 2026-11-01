@@ -10,6 +10,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Looks for passwords, API keys and tokens in the whole git history, not only in the latest commit:
+  # a secret that was committed and removed later is still leaked. Free for repositories owned by a
+  # person; a GitHub organization needs a GITLEAKS_LICENSE secret (gitleaks.io).
+  secret-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
   checks:
     runs-on: ubuntu-latest
     steps:

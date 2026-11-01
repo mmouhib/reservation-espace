@@ -6,21 +6,27 @@ Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces.
 
 ## Modules and progress
 
-The app is split into **8 modules**. A module is a part of the app that owns its own collections (the "tables"),
+The app is split into **9 modules**. A module is a part of the app that owns its own collections (the "tables"),
 so each developer can work on one module without touching the data of the others.
 
 Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
+
+**Progress: all 9 modules are built and tested.** The remaining limits are listed under each module and summed up in
+[Known limits](#known-limits).
 
 | # | Module | Owns (collections) | Status |
 |---|---|---|---|
 | 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | ✅ Done |
 | 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | ✅ Done |
 | 3 | [**Bookings**](#3-bookings) | `bookings`, `absences` | ✅ Done |
-| 4 | [**Notifications**](#4-notifications) | `users/{uid}/notifications`, `users/{uid}/devices`, `mail` | 🟡 Push and email need a real project |
-| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions` | 🟡 Payment is simulated |
+| 4 | [**Notifications**](#4-notifications) | `notifications`, `devices` | 🟡 Push is not tested automatically |
+| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions`, `payments` | 🟡 Stripe works; a subscription is charged once |
 | 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` | ✅ Done |
 | 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` | ✅ Done |
 | 8 | [**Visitors**](#8-visitors) | `visits` | ✅ Done |
+| 9 | [**Calendar**](#9-calendar) | `events` | ✅ Done |
+
+A module's data is written only by its own endpoints; the others read it through them.
 
 ### 1. Users
 
@@ -29,8 +35,8 @@ Owns `users`, `departments`, `teams`. Screens: sign-in, profile, `/admin/utilisa
 - ✅ Google sign-in for everyone: a Google account is always a regular `user`, with an optional email-domain restriction. Demo accounts for development.
 - ✅ Administrators are created apart from Google, with `npm run create-admin` (email and password). An admin can make a user a `manager` from the Users screen, but not an admin.
 - ✅ Roles: `user` < `manager` < `admin`. Admin user list with role filter and pagination.
-- ✅ Directory sync that disables departed employees and cancels their upcoming bookings.
-- ✅ Profile: display name, notification preferences, language (FR/EN), department and teams.
+- ✅ Directory sync (every night, and on demand for administrators) that disables departed employees and cancels their upcoming bookings.
+- ✅ Profile: display name, notification preferences, language (FR/EN), department and teams. Sign-in with Google, or with an email and a password for administrators.
 - ✅ Departments and teams administration; users are placed in a department and in teams by an administrator.
 - ✅ Manager view of their teams' bookings (`/equipe`).
 - ✅ GDPR: export of personal data, deletion of the account (by the user or an administrator).
@@ -42,7 +48,7 @@ Owns `sites`, `spaces`. Screen: `/admin/espaces`.
 - ✅ Sites with address, time zone, floors and default opening hours.
 - ✅ Spaces: desk, open space, meeting room, coworking, phone booth. Capacity, price in credits per hour, equipment, features.
 - ✅ Opening hours per space and exceptional closures.
-- ✅ Validation of every space document in the security rules.
+- ✅ Every site and space is validated by the server before it is saved, and only administrators can change them.
 
 ### 3. Bookings
 
@@ -51,16 +57,16 @@ Owns `bookings` and `absences`. Screens: `/reserver`, `/mes-reservations`, `/adm
 - ✅ Availability search by site, date, time slot and number of people, with filters on type, capacity and equipment.
 - ✅ Booking with no double booking (checked in a transaction): desks and rooms are booked whole, open spaces and coworking seat by seat.
 - ✅ Rules: 30 minute slots, 8 hours maximum, opening hours, closures, 60 days ahead, no overlap for one user.
-- ✅ My bookings (upcoming and past), change and cancel, readable offline.
+- ✅ My bookings (upcoming and past), change and cancel, readable offline. The [Calendar](#9-calendar) shows them by day, week or month.
 - ✅ Absences: declaring one cancels and refunds the bookings inside it and blocks new ones.
 - ✅ Admin: all bookings by period, force release with a reason, move to another space or time.
 - 🟡 Not included: recurring bookings and waiting lists.
 
 ### 4. Notifications
 
-Owns the `notifications` and `devices` collections. Screen: `/notifications` (bell in the header).
+Owns the `notifications` and `devices` collections. Screen: the bell in the header, which opens a popup (there is no notifications page).
 
-- ✅ In-app inbox with read / unread, written in the user's language.
+- ✅ In-app inbox in a popup under the bell: the latest 50, read / unread, mark all as read, a click opens the item's page. Written in the user's language. The home page's "unread" link opens it too.
 - ✅ Sent for: booking confirmed, cancelled, moved, 24 h reminder, weekly digest, credits added, subscription renewed, incident updates.
 - 🟡 Push (Web Push): the server sends it with VAPID keys and the service worker shows it. It needs HTTPS and a real browser, so it is not tested automatically. On iPhone the app must be installed first.
 - ✅ Email through Resend (set `RESEND_API_KEY`; without it, emails are skipped).
@@ -72,7 +78,7 @@ Owns `wallets`, `creditTransactions`, `plans`, `subscriptions`, `payments`. Scre
 
 - ✅ Balance and full history. Bookings are charged, cancellations and changes are refunded or charged the difference.
 - ✅ Plans: credit packs and monthly subscriptions, created and priced by an administrator.
-- ✅ Subscriptions renew every month (scheduled function) and can be cancelled.
+- ✅ Subscriptions renew every month (nightly job) and can be cancelled.
 - ✅ Administrators adjust balances. Optional welcome credits for new accounts (`WELCOME_CREDITS`).
 - ✅ Card payment with Stripe, in a form inside the app (Stripe's payment element, so card numbers never reach this server). With test keys (`sk_test_`, `pk_test_`) payments are simulated and no money moves; the cards to use are in [docs/stripe-test-cards.md](docs/stripe-test-cards.md).
 - ✅ The price comes from the plan, never from the browser. The server asks Stripe itself whether a payment succeeded, and a payment can give credits only once, whether the browser or Stripe's webhook confirms it first.
@@ -82,7 +88,7 @@ Owns `wallets`, `creditTransactions`, `plans`, `subscriptions`, `payments`. Scre
 
 Owns `incidents`, `equipmentRequests`. Screens: `/support`, `/admin/support`.
 
-- ✅ Report an incident with up to 3 photos (stored in MongoDB), optionally linked to a space.
+- ✅ Report an incident with up to 3 photos (stored in MongoDB, shrunk on the phone before upload, readable only by their author and the administrators), optionally linked to a space.
 - ✅ Equipment requests (item, quantity, date needed).
 - ✅ Administrators set the status and answer; the requester is notified.
 
@@ -103,8 +109,19 @@ Owns `visits`. Screens: `/visiteurs`, `/admin/visiteurs`.
 - ✅ Reception view of a day's expected guests, with check-in and check-out.
 - ✅ The host is notified in-app the moment their guest checks in.
 - ✅ Cancelling an invite before the visit, by the host or an administrator.
-- ✅ Authorization is enforced entirely in the callables (`server/src/visitors/visits.ts`): the role check of
+- ✅ Authorization is enforced entirely in the server's endpoints (`server/src/visitors/visits.ts`): the role check of
   `secureCall` and ownership checks (a host sees only their own invites; check-in and check-out are for administrators).
+
+### 9. Calendar
+
+Owns `events`. Screen: `/calendrier`.
+
+- ✅ Your bookings, past and future, and your own events, by **day**, **week** or **month**. Weeks start on Monday, the day and week views are hour grids, and items that overlap sit side by side.
+- ✅ Personal events (title, day, optional time or all day, note): private to you, added, changed and deleted from the calendar. At most 500 per person.
+- ✅ Clicking a day or an hour offers to add an event or to book a space: the booking form opens with that day and time filled in. Booking is not offered for days that are over.
+- ✅ Works offline for the periods already visited, like the other screens. Cancelled bookings are not shown.
+- ✅ Included in the personal data export and removed with the account.
+- 🟡 Events are private: nobody else sees them, and they do not block bookings.
 
 ### Shared platform (not owned by a single module)
 
@@ -113,8 +130,21 @@ Already built and used by every module. Change it through a pull request that th
 - **Auth and roles:** the sign-in flow, the `secureCall` wrapper of the server's endpoints (authentication, role check, rate limiting, input validation) and the role helpers in `packages/shared`.
 - **Access control:** done in the server, not in the database. `secureCall` requires a company role on every endpoint (at least `user`), and each endpoint checks what the caller may touch.
 - **Translations:** `fr.json` and `en.json`. Each module adds its keys under its own namespace.
-- **PWA shell:** install prompt, offline support, update message, navigation, page layout.
+- **PWA shell:** install prompt, offline support (the last answers are kept on the device), update message, navigation, page layout.
+- **Dark mode:** a button in the header and on the sign-in page goes through "follow the device", light and dark. The choice is remembered and applied before the first paint. The dark theme remaps the color palette in `globals.css`, so screens need no dark-specific classes (use the palette names, not fixed colors, except for panels that must stay blue).
+- **Scheduled jobs:** reminders, weekly digest, subscription renewals and directory sync run inside the server; each run is claimed in MongoDB so several instances never do it twice.
+- **Sign-in and deployment:** see [How it fits together](#how-it-fits-together) and [Deployment](#deployment).
 - **Quality:** typecheck, lint, unit tests, API tests and GitHub Actions CI.
+
+### Known limits
+
+- **Subscriptions** are charged once, on the first month; the next months' credits are given by the nightly job without a new charge.
+- **Stripe** runs in test mode with test keys. Real payments need live keys and a webhook endpoint (see [Pay with Stripe](#pay-with-stripe-test-mode)).
+- **Push notifications** need HTTPS and a real browser, so they are not tested automatically. On iPhone the app must be installed first.
+- **Recurring bookings and waiting lists** do not exist.
+- **Calendar events** are private to their owner and do not block bookings.
+- **The Calendar** is not in the phone's bottom bar (it holds 5 entries); it is reached from the home page.
+- **The service worker** (install, offline) is only verified in a real browser, not by the automated tests.
 
 ### Suggested layout for each module
 
@@ -277,7 +307,7 @@ If you created `apps/web/.env.production.local` for a deployment, rename it firs
 | `npm start` | Run the built server, which also serves the built app |
 | `npm run typecheck` | TypeScript check of every workspace |
 | `npm run lint` | ESLint |
-| `npm test` | Unit tests (shared and server) |
+| `npm test` | Unit tests (shared, server and web) |
 | `npm run test:api` | API tests: starts MongoDB (Docker) and the Auth emulator, seeds a `reservation_test` database, starts the built server and calls it as real users |
 | `npm run check:prod` | Checks the production configuration (see Deployment) |
 | `npm run icons` | Regenerate the PWA icons (`apps/web/public/icons`) |

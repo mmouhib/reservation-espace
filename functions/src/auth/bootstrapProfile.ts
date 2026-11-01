@@ -35,7 +35,8 @@ async function giveWelcomeCredits(uid: string): Promise<void> {
  * would require Identity Platform.
  */
 export const bootstrapProfile = secureCall(
-  { name: "bootstrapProfile", schema: bootstrapProfileInput, rateLimit: { limit: 10, windowSec: 60 } },
+  // The only function open to an account without a role: it is the one that gives the role.
+  { name: "bootstrapProfile", schema: bootstrapProfileInput, role: null, rateLimit: { limit: 10, windowSec: 60 } },
   async ({ uid, data }): Promise<BootstrapProfileResult> => {
     const user = await auth.getUser(uid);
     const email = user.email?.toLowerCase();

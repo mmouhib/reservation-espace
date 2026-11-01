@@ -19,8 +19,12 @@ export interface CallContext<I> {
 export interface AuthorizeOptions<S extends z.ZodType> {
   name: string;
   schema: S;
-  /** Minimum role required. Omit to allow any signed-in user, including one without a role claim yet. */
-  role?: Role;
+  /**
+   * Minimum role required. Defaults to "user", which any bootstrapped company account has:
+   * a signed-in account without a role claim (for example a Google account outside the
+   * allowed email domains) is refused. Pass `null` to allow it, only for bootstrapProfile.
+   */
+  role?: Role | null;
   rateLimit?: RateLimitPolicy;
 }
 
@@ -32,8 +36,8 @@ export interface SecureCallOptions<S extends z.ZodType> extends AuthorizeOptions
 const DEFAULT_RATE_LIMIT: RateLimitPolicy = { limit: 30, windowSec: 60 };
 
 /**
- * Authentication, optional role check, per-user rate limiting and zod input
- * validation shared by every callable, streaming or not.
+ * Authentication, role check (at least "user" unless said otherwise), per-user rate
+ * limiting and zod input validation shared by every callable, streaming or not.
  */
 export async function authorize<S extends z.ZodType>(
   request: CallableRequest<unknown>,
@@ -45,8 +49,9 @@ export async function authorize<S extends z.ZodType>(
   const uid = request.auth.uid;
   const role = isRole(token.role) ? token.role : null;
 
-  if (opts.role && (!role || !hasRole(role, opts.role))) {
-    logger.warn("Permission denied", { fn: opts.name, uid, role, required: opts.role });
+  const required = opts.role === undefined ? "user" : opts.role;
+  if (required && (!role || !hasRole(role, required))) {
+    logger.warn("Permission denied", { fn: opts.name, uid, role, required });
     throw appError("permission-denied", "forbidden", "Missing required role.");
   }
 

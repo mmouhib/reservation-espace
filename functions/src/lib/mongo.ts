@@ -1,10 +1,12 @@
 import { MongoClient, type Db } from "mongodb";
+import { MONGODB_URI } from "./config";
 
 let clientPromise: Promise<MongoClient> | null = null;
 
 function connect(): Promise<MongoClient> {
   if (!clientPromise) {
-    const uri = process.env.MONGODB_URI;
+    // The emulators read it from functions/.env.local; a deployed function gets the secret bound to it.
+    const uri = process.env.MONGODB_URI || MONGODB_URI.value();
     if (!uri) throw new Error("MONGODB_URI is not set");
     clientPromise = new MongoClient(uri, { maxPoolSize: 10 }).connect();
   }

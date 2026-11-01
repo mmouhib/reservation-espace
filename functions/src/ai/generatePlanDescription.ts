@@ -3,7 +3,7 @@ import { logger } from "firebase-functions/v2";
 import { DEFAULT_LOCALE, generatePlanDescriptionInput, type GeneratePlanDescriptionResult, type Locale } from "@reservation/shared";
 import { secureCall } from "../lib/callable";
 import { appError } from "../lib/errors";
-import { GOOGLE_GENERATIVE_AI_API_KEY } from "../lib/config";
+import { GOOGLE_GENERATIVE_AI_API_KEY, MONGODB_URI } from "../lib/config";
 import { geminiModel } from "./gemini";
 
 const LANGUAGE_NAMES: Record<Locale, string> = { fr: "French", en: "English" };
@@ -15,7 +15,7 @@ export const generatePlanDescription = secureCall(
     schema: generatePlanDescriptionInput,
     role: "admin",
     rateLimit: { limit: 20, windowSec: 60 },
-    secrets: [GOOGLE_GENERATIVE_AI_API_KEY],
+    secrets: [GOOGLE_GENERATIVE_AI_API_KEY, MONGODB_URI],
   },
   async ({ data }): Promise<GeneratePlanDescriptionResult> => {
     try {

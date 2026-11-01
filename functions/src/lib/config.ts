@@ -2,6 +2,12 @@ import { defineBoolean, defineInt, defineSecret, defineString } from "firebase-f
 
 export const REGION = "europe-west1";
 
+// MongoDB connection string (Atlas in production). It contains the database password, so it lives in
+// Secret Manager: `firebase functions:secrets:set MONGODB_URI`. Every function reads Mongo (the rate
+// limiter alone does), so every function must bind it: see lib/globalOptions.ts. For the emulators,
+// MONGODB_URI in functions/.env.local is used instead (see lib/mongo.ts).
+export const MONGODB_URI = defineSecret("MONGODB_URI");
+
 export const BOOTSTRAP_ADMIN_EMAILS = defineString("BOOTSTRAP_ADMIN_EMAILS", { default: "" });
 export const ALLOWED_EMAIL_DOMAINS = defineString("ALLOWED_EMAIL_DOMAINS", { default: "" });
 // Credits given to every new account (0 to give none).

@@ -3,7 +3,7 @@ import { onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { chatWithAssistantInput, type ChatWithAssistantResult } from "@reservation/shared";
 import { authorize } from "../lib/callable";
-import { ENFORCE_APP_CHECK, GOOGLE_GENERATIVE_AI_API_KEY, REGION } from "../lib/config";
+import { ENFORCE_APP_CHECK, GOOGLE_GENERATIVE_AI_API_KEY, MONGODB_URI, REGION } from "../lib/config";
 import { appError } from "../lib/errors";
 import { geminiModel } from "./gemini";
 
@@ -16,7 +16,7 @@ Reply in the same language the user writes in (French or English), concisely (a 
 
 /** Any signed-in user: a streaming shopping-assistant-style chat backed by Gemini. */
 export const chatWithAssistant = onCall<unknown, Promise<ChatWithAssistantResult>, string>(
-  { region: REGION, enforceAppCheck: ENFORCE_APP_CHECK, secrets: [GOOGLE_GENERATIVE_AI_API_KEY] },
+  { region: REGION, enforceAppCheck: ENFORCE_APP_CHECK, secrets: [GOOGLE_GENERATIVE_AI_API_KEY, MONGODB_URI] },
   async (request, response) => {
     const { data } = await authorize(request, {
       name: "chatWithAssistant",

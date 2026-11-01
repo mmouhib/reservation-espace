@@ -2,7 +2,7 @@
 
 Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces. The UI is available in French and English.
 
-**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Firebase (Auth, Firestore, Cloud Functions, Storage, Hosting) · Serwist (service worker) · Vitest.
+**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Firebase (Auth, Cloud Functions, Storage, Hosting) · MongoDB · Serwist (service worker) · Vitest.
 
 ## Modules and progress
 
@@ -20,7 +20,7 @@ Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
 | 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions` | 🟡 Payment is simulated |
 | 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` | ✅ Done |
 | 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` | ✅ Done |
-| 8 | [**Visitors**](#8-visitors) | `visits` (MongoDB, not Firestore) | ✅ Done |
+| 8 | [**Visitors**](#8-visitors) | `visits` | ✅ Done |
 
 ### 1. Users
 
@@ -141,15 +141,19 @@ scripts/           seed.ts (demo data), generate-icons.mjs
 |---|---|---|
 | Node.js | **22 or later** (see `.nvmrc`) | Next.js 16 and Cloud Functions |
 | npm | 10 or later (comes with Node 22) | Workspaces |
-| Java (JDK) | **21 or later** | Required by the Firestore emulator (firebase-tools 15) |
+| Java (JDK) | **21 or later** | Required by the Storage emulator (firebase-tools 15) |
+| MongoDB | a replica set: **Docker** (local) or a **MongoDB Atlas** cluster | All the data lives in MongoDB, and its transactions need a replica set |
 
-No Firebase account is needed for development: everything runs on the local emulators.
+No Firebase account is needed for development: sign-in, the Cloud Functions and the file storage run on the local
+Firebase emulators. The data is stored in MongoDB: Docker Compose starts a local one-node replica set, or you can
+point the app at an Atlas cluster.
 
 Check your versions:
 
 ```bash
 node -v
 java -version
+docker --version   # only for the local MongoDB
 ```
 
 ## Run it locally
@@ -174,33 +178,53 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 Copy-Item functions/.env.example functions/.env.local
 ```
 
-The default values work as they are with the emulators. You can change `NEXT_PUBLIC_DEMO_PASSWORD`
+`functions/.env.local` holds `MONGODB_URI`. The default points at the local Docker MongoDB. To use Atlas instead, put its
+connection string there and add `MONGODB_DB_NAME=reservation_dev`, so that the demo data goes into a development
+database and never into the production one. You can also change `NEXT_PUBLIC_DEMO_PASSWORD` in `apps/web/.env.local`
 (the password of the demo accounts, at least 6 characters).
 
-### 3. Start the emulators and the app
+### 3. Start MongoDB, the emulators and the app
+
+With Docker:
 
 ```bash
 npm run dev
 ```
 
-This builds the functions, starts the Firebase emulators and runs the Next.js dev server.
-The emulator data is kept in `.emulator-data/` between runs.
+This starts MongoDB with Docker Compose, builds the functions, starts the Firebase emulators and runs the Next.js dev
+server. The emulator data (the demo sign-in accounts) is kept in `.emulator-data/` between runs.
+
+With Atlas, without Docker, in two terminals:
+
+```bash
+npm run build -w functions
+npx cross-env FUNCTIONS_DISCOVERY_TIMEOUT=60 firebase emulators:start
+```
+
+```bash
+npm run dev -w apps/web
+```
 
 | Service | URL |
 |---|---|
 | App (Next.js) | http://localhost:3000 |
 | Emulator UI | http://127.0.0.1:4000 |
-| Auth / Firestore / Functions / Storage | ports 9099 / 8080 / 5001 / 9199 |
+| Auth / Functions / Storage | ports 9099 / 5001 / 9199 |
+| MongoDB (Docker) | port 27017 |
 
-### 4. Load the demo data
+### 4. Create the indexes and load the demo data
 
 In a second terminal, once the emulators are ready:
 
 ```bash
+npm run mongo:init-indexes
 npm run seed
 ```
 
-This creates 2 sites, 28 spaces, 4 departments, 1 team and 26 users. It is safe to run again.
+The first command creates the indexes the queries rely on (MongoDB does not create them by itself). The second creates
+the demo sign-in accounts in the Auth emulator and writes 2 sites, 28 spaces, 4 departments, 1 team, 26 users and some
+bookings, credits and support requests into the database of `MONGODB_URI`. Both are safe to run again.
+Never run the seed against a production database.
 
 ### 5. Sign in
 
@@ -226,20 +250,23 @@ npm run emulators
 
 The emulators serve the static build (`apps/web/out`) on **http://localhost:5050**, with the service worker enabled.
 After a new `npm run build`, reload the page: the "A new version is available" message appears.
+Without Docker, start the emulators with the `firebase emulators:start` command of step 3 instead of `npm run emulators`.
 
 ## Useful commands
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Emulators and dev server |
-| `npm run emulators` | Emulators only (data kept in `.emulator-data/`) |
-| `npm run emulators:clean` | Emulators with no import or export (empty state) |
-| `npm run seed` | Load the demo data into the emulators |
+| `npm run dev` | Local MongoDB (Docker), emulators and dev server |
+| `npm run emulators` | Local MongoDB (Docker) and emulators (sign-in accounts kept in `.emulator-data/`) |
+| `npm run emulators:clean` | The same, with no import or export of the emulator data |
+| `npm run mongo:up` / `mongo:down` | Start / stop the local MongoDB (Docker Compose, one-node replica set) |
+| `npm run mongo:init-indexes` | Create the MongoDB indexes (run once per database, including Atlas) |
+| `npm run seed` | Load the demo accounts and data |
 | `npm run build` | Build the functions and the app (`apps/web/out`) |
 | `npm run typecheck` | TypeScript check of every workspace |
 | `npm run lint` | ESLint |
 | `npm test` | Unit tests (shared and functions) |
-| `npm run test:api` | Cloud Functions tests: boots the emulators, seeds the demo data and calls the functions as real users |
+| `npm run test:api` | Cloud Functions tests: starts MongoDB (Docker) and the emulators, seeds a `reservation_test` database and calls the functions as real users |
 | `npm run icons` | Regenerate the PWA icons (`apps/web/public/icons`) |
 
 ## Translations
@@ -250,17 +277,24 @@ The tests check that both files have exactly the same keys and the same variable
 
 ## Troubleshooting
 
-- **`firebase-tools no longer supports Java version before 21`**: install JDK 21 or later and check `java -version`.
+- **`firebase-tools no longer supports Java version before 21`**: the Storage emulator needs JDK 21 or later. Check `java -version`.
 - **Node version error**: use Node 22 (`nvm use` reads `.nvmrc`).
-- **Port already in use**: a previous emulator is still running. Stop it, or free ports 4000, 5001, 5050, 8080, 9099 and 9199.
+- **`docker` is not found when running `npm run dev`**: install Docker, or use MongoDB Atlas and the two-terminal start of step 3.
+- **`MONGODB_URI is not set`**: add it to `functions/.env.local` (the example file has the local Docker value).
+- **Port already in use**: a previous emulator is still running. Stop it, or free ports 4000, 5001, 5050, 9099 and 9199.
 - **On Windows, `next build` fails with `EBUSY`**: no terminal should be open inside `apps/web/out`.
 - **A page stays on "Loading…"**: check that the emulators are running and that `NEXT_PUBLIC_USE_EMULATORS=true`.
-- **No demo users**: run `npm run seed` while the emulators are running.
+- **No demo users, or empty screens**: run `npm run mongo:init-indexes` and `npm run seed` while the emulators are running.
+- **Connection refused or timeout with Atlas**: your IP address must be allowed in Atlas under Network Access.
 
 ## Deployment (overview)
 
-1. Create a Firebase project (Blaze plan, needed for Cloud Functions) and enable Authentication, Firestore and Storage.
-2. Fill in `.firebaserc`, `apps/web/.env.local` (values from the Firebase console, `NEXT_PUBLIC_USE_EMULATORS=false`)
+1. Create a Firebase project (Blaze plan, needed for Cloud Functions) and enable Authentication and Storage.
+2. Create a MongoDB Atlas cluster (a replica set), a database user, and allow the Cloud Functions to connect
+   (Network Access). Run `npm run mongo:init-indexes` once with `MONGODB_URI` pointing at it.
+3. Set the three secrets, which every function needs before it can be deployed:
+   `firebase functions:secrets:set MONGODB_URI`, `RESEND_API_KEY` and `GOOGLE_GENERATIVE_AI_API_KEY`.
+4. Fill in `.firebaserc`, `apps/web/.env.local` (values from the Firebase console, `NEXT_PUBLIC_USE_EMULATORS=false`)
    and `functions/.env.<projectId>`.
-3. Set `ALLOWED_EMAIL_DOMAINS` and `BOOTSTRAP_ADMIN_EMAILS`, and set `ENFORCE_APP_CHECK=true`.
-4. Run `npm run build`, then `npx firebase deploy`.
+5. Set `ALLOWED_EMAIL_DOMAINS` and `BOOTSTRAP_ADMIN_EMAILS`, and set `ENFORCE_APP_CHECK=true`.
+6. Run `npm run build`, then `npx firebase deploy`.

@@ -18,22 +18,18 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      # The Firestore emulator requires Java 21+.
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - name: Unit tests
         run: npm test
-      - name: Firestore rules tests
-        run: npm run test:rules
-      - name: API tests (Cloud Functions on the emulators)
+      # Starts MongoDB with Docker Compose (a one-node replica set, needed for transactions),
+      # then the Auth and Functions emulators, seeds the demo data and calls the functions.
+      - name: API tests (Cloud Functions on the emulators, MongoDB in Docker)
         run: npm run test:api
         env:
           NEXT_PUBLIC_DEMO_PASSWORD: ci-demo-password
+          MONGODB_URI: mongodb://127.0.0.1:27017/reservation?replicaSet=rs0
       - name: Build
         run: npm run build
         env:

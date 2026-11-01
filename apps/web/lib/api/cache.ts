@@ -1,7 +1,6 @@
 /**
- * Last successful callable responses, kept in IndexedDB so pages that read through
- * Cloud Functions still show data offline (Firestore's own cache does this for
- * direct reads). Every operation is best-effort: private browsing or blocked
+ * Last successful API responses, kept in IndexedDB so pages that read through
+ * the server still show data offline. Every operation is best-effort: private browsing or blocked
  * storage simply means no offline copy.
  */
 

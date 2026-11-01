@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 const nextConfig: NextConfig = {
-  // Static export served by Firebase Hosting: no app server.
+  // Static export, served as plain files by the Node server (server/src/app.ts): no Next.js server.
   output: "export",
   images: { unoptimized: true },
   transpilePackages: ["@reservation/shared"],

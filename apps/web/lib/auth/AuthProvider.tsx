@@ -2,21 +2,18 @@
 
 import {
   GoogleAuthProvider,
-  OAuthProvider,
-  SAMLAuthProvider,
   onIdTokenChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
-  type AuthProvider as FirebaseAuthProvider,
   type User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { isMessageKey, isRole, type MessageKey, type Role, type UserSummary } from "@reservation/shared";
 import { clearCallableCache, readCached, writeCached } from "@/lib/api/cache";
-import { api, errorKey } from "@/lib/api/functions";
+import { api, errorKey } from "@/lib/api/client";
 import { getFirebase, USE_EMULATORS } from "@/lib/firebase/client";
 import { getLocale } from "@/lib/i18n/I18nProvider";
 
@@ -39,10 +36,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function ssoProvider(): FirebaseAuthProvider {
-  const id = process.env.NEXT_PUBLIC_AUTH_PROVIDER ?? "google";
-  if (id.startsWith("oidc.")) return new OAuthProvider(id);
-  if (id.startsWith("saml.")) return new SAMLAuthProvider(id);
+function googleProvider(): GoogleAuthProvider {
   const google = new GoogleAuthProvider();
   google.setCustomParameters({ prompt: "select_account" });
   return google;
@@ -180,10 +174,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     const { auth } = getFirebase();
     try {
-      await signInWithPopup(auth, ssoProvider());
+      await signInWithPopup(auth, googleProvider());
     } catch (err) {
       if (err instanceof FirebaseError && err.code === "auth/popup-blocked") {
-        await signInWithRedirect(auth, ssoProvider());
+        await signInWithRedirect(auth, googleProvider());
         return;
       }
       setError(errorKey(err));

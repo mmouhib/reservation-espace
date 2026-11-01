@@ -1,21 +1,19 @@
 "use client";
 
-import { ref, uploadBytes } from "firebase/storage";
 import { useState, type FormEvent } from "react";
-import { COL } from "@reservation/shared";
 import { IncidentPhotos } from "@/components/support/IncidentPhotos";
 import { IncidentStatusBadge } from "@/components/support/StatusBadges";
 import { Button } from "@/components/ui/Button";
 import { Card, EmptyState, Section } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
-import { api } from "@/lib/api/functions";
+import { api, uploadPhoto } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { getFirebase } from "@/lib/firebase/client";
 import { formatDateTime } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { shrinkPhoto } from "@/lib/images";
 
 const MAX_PHOTOS = 3;
 
@@ -42,19 +40,14 @@ export function IncidentsTab() {
     if (!uid) return;
     setBusy(true);
     try {
-      // Photos are uploaded first; the server checks that each path is under incidents/{uid}/.
-      const { storage } = getFirebase();
-      const photoPaths: string[] = [];
-      for (const file of photos) {
-        const path = `${COL.incidents}/${uid}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
-        await uploadBytes(ref(storage, path), file);
-        photoPaths.push(path);
-      }
+      // Photos are uploaded first; the server checks that each one is the reporter's own.
+      const photoIds: string[] = [];
+      for (const file of photos) photoIds.push(await uploadPhoto(await shrinkPhoto(file)));
       await api.createIncident({
         title: title.trim(),
         description: description.trim(),
         spaceId: spaceId || null,
-        photoPaths,
+        photoIds,
       });
       flash.success("support.incidentSent");
       setTitle("");
@@ -124,7 +117,7 @@ export function IncidentsTab() {
                     <IncidentStatusBadge status={incident.status} />
                   </div>
                   <p className="mt-2 text-sm text-slate-700">{incident.description}</p>
-                  <IncidentPhotos paths={incident.photoPaths} />
+                  <IncidentPhotos ids={incident.photoIds} />
                   {incident.adminNote && (
                     <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm">
                       <strong>{t("support.answer")} :</strong> {incident.adminNote}

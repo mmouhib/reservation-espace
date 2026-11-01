@@ -2,7 +2,7 @@
 
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { SitesSection } from "./SitesSection";

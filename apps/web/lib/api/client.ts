@@ -1,5 +1,4 @@
 import { FirebaseError } from "firebase/app";
-import { FunctionsError, httpsCallable } from "firebase/functions";
 import {
   isErrorReason,
   type AdjustCreditsInput,
@@ -57,16 +56,14 @@ import {
   type UpdateIncidentStatusInput,
   type UpdateEquipmentRequestStatusInput,
 } from "@reservation/shared";
-import { getFirebase } from "@/lib/firebase/client";
+import { ApiError, photoUrl, post, postStream, uploadPhoto } from "./transport";
 
-/** Typed wrappers over callable Cloud Functions. */
+export { photoUrl, uploadPhoto };
+
+/** Typed wrappers over the server endpoints (`POST /api/<name>`). */
 
 function callable<I, O>(name: string) {
-  return async (input: I): Promise<O> => {
-    const fn = httpsCallable<I, O>(getFirebase().functions, name);
-    const res = await fn(input);
-    return res.data;
-  };
+  return (input: I): Promise<O> => post<O>(name, input);
 }
 
 type Empty = Record<string, never>;
@@ -113,7 +110,10 @@ export const api = {
     { displayName?: string; notificationPrefs?: NotificationPrefs; locale?: "fr" | "en" },
     { updated: boolean }
   >("updateMyProfile"),
-  registerDevice: callable<{ fcmToken: string; platform: string; userAgent: string }, { registered: boolean }>("registerDevice"),
+  registerDevice: callable<
+    { endpoint: string; keys: { p256dh: string; auth: string }; platform: string; userAgent: string },
+    { registered: boolean }
+  >("registerDevice"),
   // Reference data (sites, spaces, departments, teams)
   listSites: callable<Empty, SiteSummary[]>("listSites"),
   listSpaces: callable<{ siteId?: string }, SpaceSummary[]>("listSpaces"),
@@ -164,18 +164,15 @@ export const api = {
   // AI assistant
   generatePlanDescription: callable<GeneratePlanDescriptionInput, GeneratePlanDescriptionResult>("generatePlanDescription"),
   /** Streaming chat: the text arrives chunk by chunk through `.stream`, then `.data` resolves to the full reply. */
-  chatWithAssistant: (messages: ChatMessageInput[]) =>
-    httpsCallable<{ messages: ChatMessageInput[] }, ChatWithAssistantResult, string>(getFirebase().functions, "chatWithAssistant").stream({
-      messages,
-    }),
+  chatWithAssistant: (messages: ChatMessageInput[]) => postStream<ChatWithAssistantResult>("chatWithAssistant", { messages }),
 };
 
 const CODE_KEYS: Record<string, MessageKey> = {
-  "functions/unauthenticated": "errors.authRequired",
-  "functions/permission-denied": "errors.forbidden",
-  "functions/resource-exhausted": "errors.rateLimited",
-  "functions/unavailable": "errors.unavailable",
-  "functions/internal": "errors.internal",
+  unauthenticated: "errors.authRequired",
+  "permission-denied": "errors.forbidden",
+  "resource-exhausted": "errors.rateLimited",
+  unavailable: "errors.unavailable",
+  internal: "errors.internal",
   "auth/popup-closed-by-user": "errors.popupClosed",
   "auth/network-request-failed": "errors.network",
   "auth/invalid-credential": "errors.invalidCredential",
@@ -183,14 +180,15 @@ const CODE_KEYS: Record<string, MessageKey> = {
 };
 
 /**
- * Translation key for any error. Callable errors carry a `reason` set by the
- * server (see functions/src/lib/errors.ts); other Firebase errors map by code.
+ * Translation key for any error. Server errors carry a `reason` (see server/src/lib/errors.ts);
+ * Firebase sign-in errors map by code, and a request that never reached the server is a network error.
  */
 export function errorKey(err: unknown): MessageKey {
-  if (err instanceof FunctionsError) {
-    const reason = (err.details as { reason?: unknown } | undefined)?.reason;
-    if (isErrorReason(reason)) return `errors.${reason}`;
+  if (err instanceof ApiError) {
+    if (isErrorReason(err.reason)) return `errors.${err.reason}`;
+    return CODE_KEYS[err.code] ?? "errors.generic";
   }
+  if (err instanceof TypeError) return "errors.network";
   if (err instanceof FirebaseError) {
     return CODE_KEYS[err.code] ?? "errors.generic";
   }

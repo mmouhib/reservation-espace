@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatMessageInput } from "@reservation/shared";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 

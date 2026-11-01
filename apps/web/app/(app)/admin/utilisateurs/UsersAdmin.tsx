@@ -9,7 +9,7 @@ import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { Table, Td } from "@/components/ui/Table";
-import { api, errorKey } from "@/lib/api/functions";
+import { api, errorKey } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useI18n } from "@/lib/i18n/I18nProvider";

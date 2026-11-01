@@ -19,7 +19,7 @@ import { Checkbox, Field, Input, Select } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { Table, Td } from "@/components/ui/Table";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type SpaceRow = SpaceSummary;

@@ -1,5 +1,5 @@
 import type { Locale } from "@reservation/shared";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 
 /**
  * When signed in, the profile holds the language (it follows the user across

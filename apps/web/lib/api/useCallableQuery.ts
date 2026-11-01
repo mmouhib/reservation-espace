@@ -36,7 +36,7 @@ export interface CallableQueryOptions {
 }
 
 /**
- * Reads data through a callable Cloud Function, polls it while the page is visible,
+ * Reads data from a server endpoint, polls it while the page is visible,
  * and keeps the last response on the device so the page still works offline.
  * Pass `input: null` to wait (e.g. until a form value is known). `fn` must be stable
  * (the `api.*` wrappers are), or the query restarts on every render.

@@ -8,7 +8,7 @@ import { EmptyState, Section, StatCard } from "@/components/ui/Card";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, formatIsoDateTime, formatPrice } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";

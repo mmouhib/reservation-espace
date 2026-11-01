@@ -18,7 +18,7 @@ import { Field, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -80,7 +80,7 @@ export default function SupportAdminPage() {
                       <IncidentStatusBadge status={incident.status} />
                     </div>
                     <p className="mt-2 text-sm text-slate-700">{incident.description}</p>
-                    <IncidentPhotos paths={incident.photoPaths} />
+                    <IncidentPhotos ids={incident.photoIds} />
                     {incident.adminNote && <p className="mt-2 rounded-lg bg-slate-50 p-2 text-sm">{incident.adminNote}</p>}
                     <Button className="mt-3" size="sm" variant="secondary" onClick={() => setHandling({ kind: "incident", item: incident, status: incident.status, note: incident.adminNote })}>
                       {t("common.edit")}

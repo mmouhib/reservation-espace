@@ -8,7 +8,7 @@ import { Card, EmptyState } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { todayLocal } from "@/lib/format";

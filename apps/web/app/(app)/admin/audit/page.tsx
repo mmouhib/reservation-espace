@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/Card";
 import { Field, Select } from "@/components/ui/Field";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Table, Td } from "@/components/ui/Table";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDateTime } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";

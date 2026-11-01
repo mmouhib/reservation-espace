@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type { MessageKey, MessageValues } from "@reservation/shared";
-import { errorKey } from "@/lib/api/functions";
+import { errorKey } from "@/lib/api/client";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { cn } from "@/lib/cn";
 import { Icon } from "./Icon";

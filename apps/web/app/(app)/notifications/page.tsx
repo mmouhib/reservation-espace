@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, EmptyState } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/format";

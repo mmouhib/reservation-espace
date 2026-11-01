@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Table, Td } from "@/components/ui/Table";
 import { TimeSelect } from "@/components/ui/TimeSelect";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, todayLocal } from "@/lib/format";
 import { useNow } from "@/lib/hooks/useNow";

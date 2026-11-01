@@ -8,7 +8,7 @@ import { EmptyState, Section, StatCard } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { downloadFile, formatDate, todayLocal } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";

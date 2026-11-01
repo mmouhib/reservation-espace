@@ -21,7 +21,7 @@ import { useFlash } from "@/components/ui/Flash";
 import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { TimeSelect } from "@/components/ui/TimeSelect";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { formatDate, nextWorkday, todayLocal } from "@/lib/format";

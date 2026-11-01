@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 
 /**
  * Client-side guard for authenticated pages. This only drives the UI: data is
- * protected by Firestore rules and custom claims, not by this redirect.
+ * protected by the server (sign-in token and role checks), not by this redirect.
  */
 export default function AuthenticatedLayout({ children }: { children: ReactNode }) {
   const { status, role } = useAuth();

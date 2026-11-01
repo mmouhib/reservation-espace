@@ -9,13 +9,13 @@ import { Field, Input } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
-import { api, errorKey } from "@/lib/api/functions";
+import { api, errorKey } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth, type Profile } from "@/lib/auth/AuthProvider";
-import { requestPushToken } from "@/lib/firebase/messaging";
 import { downloadFile } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { requestPushSubscription } from "@/lib/push";
 
 const PREF_KEYS: (keyof NotificationPrefs)[] = ["email", "push", "weeklyDigest"];
 
@@ -85,16 +85,16 @@ function PreferencesForm({ profile }: { profile: Profile }) {
     }
   }
 
-  /** Asks the browser for permission and stores this device's push token on the server. */
+  /** Asks the browser for permission and stores this browser's push subscription on the server. */
   async function enablePush() {
     try {
-      const token = await requestPushToken();
-      if (!token) {
+      const subscription = await requestPushSubscription();
+      if (!subscription) {
         flash.failure(Notification.permission === "denied" ? "profile.push.denied" : "profile.push.unavailable");
         return;
       }
       await api.registerDevice({
-        fcmToken: token,
+        ...subscription,
         platform: navigator.platform.slice(0, 100),
         userAgent: navigator.userAgent.slice(0, 200),
       });

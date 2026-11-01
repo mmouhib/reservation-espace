@@ -11,7 +11,7 @@ import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tabs } from "@/components/ui/Tabs";
 import { TimeSelect } from "@/components/ui/TimeSelect";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { formatDate, todayLocal } from "@/lib/format";
 import { useNow } from "@/lib/hooks/useNow";

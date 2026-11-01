@@ -6,7 +6,7 @@ import { BookingCard } from "@/components/bookings/BookingCard";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { EmptyState, StatCard } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { formatDate, todayLocal } from "@/lib/format";

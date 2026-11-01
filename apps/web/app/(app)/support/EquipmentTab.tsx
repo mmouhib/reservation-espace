@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, EmptyState, Section } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { formatDate, nextWorkday } from "@/lib/format";

@@ -9,7 +9,7 @@ import { useFlash } from "@/components/ui/Flash";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
 import { VisitStatusBadge } from "@/components/visitors/VisitStatusBadge";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { todayLocal } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";

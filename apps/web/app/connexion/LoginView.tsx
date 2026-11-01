@@ -15,8 +15,6 @@ function safeNext(value: string | null): string {
   return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
 }
 
-const SSO_LABEL_KEY = (process.env.NEXT_PUBLIC_AUTH_PROVIDER ?? "google") === "google" ? "login.withGoogle" : "login.withSso";
-
 const FEATURES = [
   { icon: "layers", key: "login.feature1" },
   { icon: "download", key: "login.feature2" },
@@ -76,7 +74,7 @@ export function LoginView() {
           </div>
 
           <Button size="lg" className="mt-5 w-full" disabled={pending || status === "loading"} onClick={() => void run(signIn)}>
-            {t(SSO_LABEL_KEY)}
+            {t("login.withGoogle")}
           </Button>
 
           {USE_EMULATORS && demoPassword && (

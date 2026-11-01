@@ -9,7 +9,7 @@ import { Checkbox, Field, Input, Select } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 

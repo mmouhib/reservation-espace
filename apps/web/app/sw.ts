@@ -1,7 +1,5 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
-import { initializeApp } from "firebase/app";
-import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { ExpirationPlugin, NetworkFirst, Serwist, StaleWhileRevalidate } from "serwist";
 import { APP } from "@/lib/app";
@@ -112,45 +110,30 @@ self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") void self.skipWaiting();
 });
 
-// Firebase APIs (Firestore, Auth, Functions, Storage) and any other origin are left to
-// the browser: proxying them breaks Firestore's streaming WebChannel, and Firestore has
-// its own offline cache in IndexedDB. Registered first so Serwist never sees them.
+// Other origins (Google sign-in) and the server's API are left to the browser: sign-in
+// requests must not be proxied, and API answers belong to the signed-in user, so they are
+// never cached (the app keeps its own offline copy, see lib/api/cache.ts).
+// Registered first so Serwist never sees them.
 self.addEventListener("fetch", (event) => {
-  if (new URL(event.request.url).origin !== self.location.origin) event.stopImmediatePropagation();
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) event.stopImmediatePropagation();
 });
 
 serwist.addEventListeners();
 
-// ---------- Firebase Cloud Messaging (background) ----------
-// Merged into this worker so that a single service worker is registered.
-// The client passes this registration to getToken().
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Push needs a real project (FCM is not emulated).
-if (firebaseConfig.messagingSenderId && firebaseConfig.appId) {
-  const messaging = getMessaging(initializeApp(firebaseConfig));
-
-  // The server sends data-only messages ({ title, body, link }), already in the
-  // user's language (profile `locale`), so display is handled here.
-  onBackgroundMessage(messaging, (payload) => {
-    const data = payload.data ?? {};
-    void self.registration.showNotification(data.title ?? APP.name, {
+// ---------- Web Push ----------
+// The server sends { title, body, link }, already in the user's language (profile `locale`).
+self.addEventListener("push", (event) => {
+  const data = (event.data?.json() ?? {}) as { title?: string; body?: string; link?: string };
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? APP.name, {
       body: data.body,
       icon: "/icons/icon-192.png",
       badge: "/icons/badge-72.png",
-      tag: data.tag,
       data: { link: data.link ?? "/" },
-    });
-  });
-}
+    }),
+  );
+});
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

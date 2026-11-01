@@ -8,7 +8,7 @@ import { EmptyState, Section } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { ConfirmModal, Modal } from "@/components/ui/Modal";
-import { api } from "@/lib/api/functions";
+import { api } from "@/lib/api/client";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const OFFICE_HOURS: OpeningHours = {

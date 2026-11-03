@@ -6,7 +6,7 @@ goes. The websites change their menus from time to time, so a label may differ a
 | Service | What it is for | Needed? | Costs |
 |---|---|---|---|
 | [MongoDB Atlas](#1-mongodb-atlas) | All the data and the incident photos | Yes (or Docker, locally) | Free tier |
-| [Firebase](#2-firebase-google-sign-in) | Google sign-in only | Production. Development uses a local emulator | Free (Spark plan) |
+| [Firebase](#2-firebase-sign-in) | Sign-in and sign-up (Google, or email and password) | Production. Development uses a local emulator | Free (Spark plan) |
 | [Stripe](#3-stripe) | Card payment of credits | To buy credits | Free in test mode |
 | [Google AI Studio (Gemini)](#4-gemini-ai-assistant) | The AI assistant | Optional | Free tier |
 | [Resend](#5-resend-emails) | Notification emails | Optional | Free tier |
@@ -60,14 +60,15 @@ Atlas clusters are replica sets, which the app needs for its transactions.
 
 Never run `seed` against the production database. The API tests use their own `reservation_test` database, which they drop at each run.
 
-## 2. Firebase (Google sign-in)
+## 2. Firebase (sign-in)
 
-Firebase is used for Google sign-in only. The free Spark plan is enough: no Functions, Hosting or Storage. In development you do not need an account:
+Firebase is used for signing in and signing up, with Google or with an email and a password, and for nothing else. The free Spark plan is enough: no Functions, Hosting or Storage. In development you do not need an account:
 the local **Auth emulator** (`npm run emulators`) stands in for it.
 
 1. Go to [console.firebase.google.com](https://console.firebase.google.com) and **Add project** (Google Analytics can stay off).
-2. **Authentication** > **Get started** > **Sign-in method** > **Google** > turn it on, choose a support email, save.
-3. **Authentication** > **Settings** > **Authorized domains**: add the domain of your deployed app (`localhost` is already allowed).
+2. **Authentication** > **Get started** > **Sign-in method**: turn on **Google** (choose a support email) and **Email/Password** (leave "Email link" off), save each.
+3. **Authentication** > **Settings** > **Authorized domains**: add the domain of your deployed app (`localhost` is already allowed). The link in the confirmation and
+   reset emails brings people back to it, so it must be listed.
 4. **Project settings** (the gear) > **Your apps** > the web icon `</>` > register an app (no Firebase Hosting). Copy the four values of `firebaseConfig`
    into the web app's settings:
 
@@ -92,17 +93,21 @@ the local **Auth emulator** (`npm run emulators`) stands in for it.
    ```
 
    (`GOOGLE_APPLICATION_CREDENTIALS=<path to the file>` also works, for a host that keeps files.) Remove `FIREBASE_AUTH_EMULATOR_HOST` from a real deployment.
-6. **Administrators** sign in with an email and a password, not with Google. Turn on **Authentication** > **Sign-in method** > **Email/Password**
-   (people who sign up by themselves get no access: the server only gives a role to Google accounts and to accounts made by `create-admin`),
-   then create the first administrator:
+6. **Emails sent by Firebase.** People who sign up with an email and a password receive a confirmation link, and "forgot password" sends a reset link. Firebase sends both
+   itself, so nothing needs configuring. You can change their wording and sender name under **Authentication** > **Templates**.
+   Nobody gets access before the confirmation link is opened: the server only gives the role `user` to an account whose email address is confirmed (a Google
+   account always is), so nobody can sign up with someone else's address.
+7. **Administrators** are not made by signing up. Create the first one:
 
    ```bash
    npm run create-admin -- you@yourcompany.com --production
    ```
 
-   It prints a generated password once. Sign in under "Sign in with email".
+   It prints a generated password once. Sign in with it in the "Sign in" tab.
 
-Optional: `ALLOWED_EMAIL_DOMAINS=yourcompany.com` limits Google sign-up to your company's addresses. Empty lets any Google account in.
+Optional: `ALLOWED_EMAIL_DOMAINS=yourcompany.com` limits sign-up, with Google or with a password, to your company's addresses. Empty lets any address in.
+
+In development there is no mailbox: the confirmation and reset links are in the Auth emulator (http://127.0.0.1:4000 > Authentication), and the sign-in page says so.
 
 ## 3. Stripe
 
@@ -188,5 +193,5 @@ ever arrives; `production-check` verifies that they match.
 **Develop on your machine** (nothing to sign up for): install Node 22 and Docker, then follow "Run it locally" in the [README](../README.md).
 Add Atlas, Stripe test keys or Gemini only for the parts you work on.
 
-**Put it online**: [MongoDB Atlas](#1-mongodb-atlas) + [Firebase](#2-firebase-google-sign-in), then optionally Stripe, Gemini, Resend and the push keys. Build
+**Put it online**: [MongoDB Atlas](#1-mongodb-atlas) + [Firebase](#2-firebase-sign-in), then optionally Stripe, Gemini, Resend and the push keys. Build
 the web app, set the server's environment variables on your host, run `production-check`, and start the server (see "Deployment" in the README).

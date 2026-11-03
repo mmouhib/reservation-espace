@@ -2,11 +2,15 @@
 
 import {
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
   onIdTokenChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
+  updateProfile,
   type User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
@@ -19,7 +23,8 @@ import { getLocale } from "@/lib/i18n/I18nProvider";
 
 export type Profile = UserSummary;
 
-type Status = "loading" | "signed-out" | "signed-in";
+/** "unverified": signed in with a password, but the email address was not confirmed yet (nothing is available until it is). */
+type Status = "loading" | "signed-out" | "unverified" | "signed-in";
 
 interface AuthContextValue {
   status: Status;
@@ -30,8 +35,17 @@ interface AuthContextValue {
   /** Translation key of the last sign-in error. */
   error: MessageKey | null;
   signIn: () => Promise<void>;
-  /** Email and password sign-in: for accounts created by an administrator (and the demo accounts). */
+  /** Email and password sign-in. */
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  /** Creates an account with an email and a password, and emails a link to confirm the address. */
+  signUpWithEmail: (name: string, email: string, password: string) => Promise<void>;
+  /** Sends the confirmation email again. True when it was sent. */
+  resendVerification: () => Promise<boolean>;
+  /** Asks Firebase whether the address was confirmed meanwhile, and carries on when it was. */
+  checkVerified: () => Promise<boolean>;
+  /** Emails a link to choose a new password. True when the request was accepted (it does not say whether the account exists). */
+  sendPasswordReset: (email: string) => Promise<boolean>;
+  clearError: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -41,6 +55,23 @@ function googleProvider(): GoogleAuthProvider {
   const google = new GoogleAuthProvider();
   google.setCustomParameters({ prompt: "select_account" });
   return google;
+}
+
+/** Where the link of a confirmation or reset email brings the person back to. */
+const returnUrl = () => `${window.location.origin}/connexion`;
+
+/**
+ * Creating the profile is asked once at a time per account: the listener below can run twice at once (for example
+ * when a token refresh and a reload of the user land together), and two calls would race on the server.
+ */
+const bootstrapsInFlight = new Map<string, ReturnType<typeof api.bootstrapProfile>>();
+function bootstrapProfileOnce(uid: string): ReturnType<typeof api.bootstrapProfile> {
+  let pending = bootstrapsInFlight.get(uid);
+  if (!pending) {
+    pending = api.bootstrapProfile({ locale: getLocale() }).finally(() => bootstrapsInFlight.delete(uid));
+    bootstrapsInFlight.set(uid, pending);
+  }
+  return pending;
 }
 
 const BOOTSTRAP_KEY = "bootstrapped:";
@@ -86,6 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // A password account must confirm its address before it can have a role (the server refuses it otherwise).
+      if (!u.emailVerified) {
+        setUser(u);
+        setClaimRole(null);
+        setProfile(null);
+        setStatus("unverified");
+        return;
+      }
+
       // Offline with an expired token this fails; the cached profile then provides the role.
       let token = await u.getIdTokenResult().catch(() => null);
       let role = token && isRole(token.claims.role) ? token.claims.role : null;
@@ -93,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (needsBootstrap) {
         try {
-          const res = await api.bootstrapProfile({ locale: getLocale() });
+          const res = await bootstrapProfileOnce(u.uid);
           sessionStorage.setItem(BOOTSTRAP_KEY + u.uid, "1");
           if (res.claimsChanged) {
             token = await u.getIdTokenResult(true);
@@ -117,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Profile (one-shot reads through getMyProfile). Refreshed on focus, visibility change,
   // reconnect and on an interval. The last copy stays on the device for offline use.
-  const uid = user?.uid;
+  const uid = status === "signed-in" ? user?.uid : undefined;
   useEffect(() => {
     if (!uid) return;
     let cancelled = false;
@@ -129,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let next = await api.getMyProfile({});
         if (next === null) {
           // Profile not created yet: bootstrap it, then read it again.
-          await api.bootstrapProfile({ locale: getLocale() }).catch((err) => console.warn("Profile bootstrap failed", err));
+          await bootstrapProfileOnce(uid).catch((err) => console.warn("Profile bootstrap failed", err));
           next = await api.getMyProfile({});
         }
         if (cancelled) return;
@@ -194,6 +234,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signUpWithEmail = useCallback(async (name: string, email: string, password: string) => {
+    setError(null);
+    try {
+      const { user: created } = await createUserWithEmailAndPassword(getFirebase().auth, email, password);
+      await updateProfile(created, { displayName: name });
+      await sendEmailVerification(created, { url: returnUrl() });
+    } catch (err) {
+      setError(errorKey(err));
+    }
+  }, []);
+
+  const resendVerification = useCallback(async () => {
+    setError(null);
+    const current = getFirebase().auth.currentUser;
+    if (!current) return false;
+    try {
+      await sendEmailVerification(current, { url: returnUrl() });
+      return true;
+    } catch (err) {
+      setError(errorKey(err));
+      return false;
+    }
+  }, []);
+
+  const checkVerified = useCallback(async () => {
+    const current = getFirebase().auth.currentUser;
+    if (!current) return false;
+    try {
+      await current.reload();
+      if (!current.emailVerified) return false;
+      // A new token carries the confirmed address: that makes the sign-in carry on (see onIdTokenChanged above).
+      await current.getIdToken(true);
+      return true;
+    } catch (err) {
+      setError(errorKey(err));
+      return false;
+    }
+  }, []);
+
+  const sendPasswordReset = useCallback(async (email: string) => {
+    setError(null);
+    try {
+      await sendPasswordResetEmail(getFirebase().auth, email, { url: returnUrl() });
+      return true;
+    } catch (err) {
+      // Whether an address has an account is not revealed.
+      if (err instanceof FirebaseError && err.code === "auth/user-not-found") return true;
+      setError(errorKey(err));
+      return false;
+    }
+  }, []);
+
+  const clearError = useCallback(() => setError(null), []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
@@ -203,9 +297,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       error,
       signIn,
       signInWithEmail,
+      signUpWithEmail,
+      resendVerification,
+      checkVerified,
+      sendPasswordReset,
+      clearError,
       signOut,
     }),
-    [status, user, claimRole, profile, error, signIn, signInWithEmail, signOut],
+    [status, user, claimRole, profile, error, signIn, signInWithEmail, signUpWithEmail, resendVerification, checkVerified, sendPasswordReset, clearError, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

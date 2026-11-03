@@ -2,7 +2,7 @@
 
 Progressive web app (PWA) for booking desks, meeting rooms and coworking spaces. The UI is available in French and English.
 
-**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Node server (Express) · MongoDB (data and photos) · Firebase Auth (Google sign-in only) · Serwist (service worker) · Vitest.
+**Stack:** Next.js 16 (static export) · React 19 · Tailwind CSS 4 · Node server (Express) · MongoDB (data and photos) · Firebase Auth (sign-in and sign-up) · Serwist (service worker) · Vitest.
 
 ## Modules and progress
 
@@ -32,11 +32,12 @@ A module's data is written only by its own endpoints; the others read it through
 
 Owns `users`, `departments`, `teams`. Screens: sign-in, profile, `/admin/utilisateurs`, `/admin/organisation`, `/equipe`.
 
-- ✅ Google sign-in for everyone: a Google account is always a regular `user`, with an optional email-domain restriction. Demo accounts for development.
-- ✅ Administrators are created apart from Google, with `npm run create-admin` (email and password). An admin can make a user a `manager` from the Users screen, but not an admin.
+- ✅ Sign-in and sign-up with **Google**, or with an **email and a password** (full name, password of at least 8 characters, "forgot password" link). A new account is always a regular `user`, with an optional email-domain restriction. Demo accounts for development.
+- ✅ An account made with a password must **confirm its email address** (a link emailed by Firebase) before it gets any access, so nobody can sign up with someone else's address. A Google account is confirmed already.
+- ✅ Administrators are never made by signing up: they are created with `npm run create-admin` (email and password). An admin can make a user a `manager` from the Users screen, but not an admin.
 - ✅ Roles: `user` < `manager` < `admin`. Admin user list with role filter and pagination.
 - ✅ Directory sync (every night, and on demand for administrators) that disables departed employees and cancels their upcoming bookings.
-- ✅ Profile: display name, notification preferences, language (FR/EN), department and teams. Sign-in with Google, or with an email and a password for administrators.
+- ✅ Profile: display name, notification preferences, language (FR/EN), department and teams. Sign in with Google or with an email and a password.
 - ✅ Departments and teams administration; users are placed in a department and in teams by an administrator.
 - ✅ Manager view of their teams' bookings (`/equipe`).
 - ✅ GDPR: export of personal data, deletion of the account (by the user or an administrator).
@@ -175,12 +176,12 @@ scripts/           seed.ts (demo data), production-check.mjs, generate-icons.mjs
       │               │   ├─ serves the web app (apps/web/out)
       │               │   ├─ POST /api/<name>  (74 endpoints)
       │               │   └─ scheduled jobs (reminders, weekly digest, renewals, directory sync)
-      └─ Google sign-in ──► Firebase Auth (the only Firebase service used)
+      └─ sign-in / sign-up ──► Firebase Auth (the only Firebase service used)
 ```
 
-The browser signs in with Google through Firebase Auth (administrators use an email and a password) and sends the
+The browser signs in, or signs up, with Google or with an email and a password through Firebase Auth, and sends the
 Firebase ID token with every request. The server checks the token, reads the person's role from it and does everything
-else itself. A Google account gets the role `user` on its first sign-in, never more; an account without a role can do nothing. Firebase stores nothing else: the
+else itself. An account gets the role `user` on its first sign-in once its email address is confirmed, never more; an account without a role can do nothing. Firebase stores nothing else: the
 profile, bookings, credits and photos are in MongoDB.
 
 ## Requirements
@@ -356,11 +357,11 @@ The host must provide HTTPS: sign-in and installing the app on a phone both requ
 To create the accounts and get the keys used below, follow [docs/accounts-and-keys.md](docs/accounts-and-keys.md).
 
 1. **Firebase (sign-in only).** Create a Firebase project. The free Spark plan is enough: no Functions, Hosting or Storage.
-   In the console, enable Authentication with the Google provider, and add your host's domain under
+   In the console, enable Authentication with the Google and the Email/Password providers, and add your host's domain under
    Authentication > Settings > Authorized domains. Register a web app (Project settings > Your apps) to get the web keys.
    Under Project settings > Service accounts, generate a private key: the server needs it to give people their role.
-   To let administrators sign in, also enable the Email/Password provider. It is safe: the server gives a role only to
-   Google accounts and to accounts made with `create-admin`, so someone who signs up with an email gets access to nothing.
+   Email/Password is safe to enable: the server gives a role only to an account whose email address is confirmed,
+   so someone who signs up with an address that is not theirs gets access to nothing.
 2. **MongoDB Atlas.** Create a cluster, a database user, and allow your host to connect (Network Access). Create the
    indexes once: `MONGODB_URI=<your Atlas URI> npm run mongo:init-indexes`.
 3. **Web build.** Copy `apps/web/.env.production.example` to `apps/web/.env.production.local`, fill in the Firebase web
@@ -373,7 +374,7 @@ To create the accounts and get the keys used below, follow [docs/accounts-and-ke
    | `FIREBASE_PROJECT_ID` | your Firebase project id |
    | `FIREBASE_SERVICE_ACCOUNT` | the service account key, the whole JSON on one line |
    | `MONGODB_URI` | the Atlas connection string |
-   | `ALLOWED_EMAIL_DOMAINS` | optional: the domain(s) that may sign up with Google, comma separated. Empty lets any Google account in |
+   | `ALLOWED_EMAIL_DOMAINS` | optional: the domain(s) that may sign up (Google or password), comma separated. Empty lets any address in |
    | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | the payment of credits (`sk_test_...` simulates payments; the webhook secret is optional). The public key `pk_...` is `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in the web build |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | optional: the AI assistant |
    | `RESEND_API_KEY`, `RESEND_FROM` | optional: notification emails |
@@ -385,7 +386,7 @@ To create the accounts and get the keys used below, follow [docs/accounts-and-ke
    the variables are set. It cannot see the host, Atlas or the Firebase console, so it lists those too.
    Then start the server with `npm start` (or the Docker image).
 6. **First administrator.** `npm run create-admin -- you@yourcompany.com --production` creates the account and prints a password once.
-   Sign in with it under "Sign in with email", then add the other administrators the same way.
+   Sign in with it in the "Sign in" tab, then add the other administrators the same way.
 
 Run a single instance, or several: each scheduled job claims its run in MongoDB, so two instances never send the
 same reminders twice.

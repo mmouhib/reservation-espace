@@ -11,6 +11,7 @@ export const ERROR_REASONS = [
   "rateLimited",
   "noEmail",
   "notInCompany",
+  "emailNotVerified",
   "cannotDemoteSelf",
   "userNotFound",
   // Bookings

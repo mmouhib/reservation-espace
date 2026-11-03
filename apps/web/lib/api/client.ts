@@ -191,6 +191,12 @@ const CODE_KEYS: Record<string, MessageKey> = {
   "auth/popup-closed-by-user": "errors.popupClosed",
   "auth/network-request-failed": "errors.network",
   "auth/invalid-credential": "errors.invalidCredential",
+  "auth/wrong-password": "errors.invalidCredential",
+  "auth/user-not-found": "errors.invalidCredential",
+  "auth/email-already-in-use": "errors.emailInUse",
+  "auth/weak-password": "errors.weakPassword",
+  "auth/invalid-email": "errors.invalidEmail",
+  "auth/too-many-requests": "errors.tooManyAttempts",
   "auth/user-disabled": "errors.accountDisabled",
 };
 

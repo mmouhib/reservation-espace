@@ -18,7 +18,9 @@ async function callerOf(req: Request): Promise<Caller | null> {
   try {
     const token = await auth.verifyIdToken(header.slice("Bearer ".length));
     return { uid: token.uid, token };
-  } catch {
+  } catch (err) {
+    // Expired, malformed, or from another Firebase project: the person is told to sign in again, the log says why.
+    logger.warn("ID token refused", { code: (err as { code?: string }).code, reason: err instanceof Error ? err.message.slice(0, 160) : undefined });
     return null;
   }
 }

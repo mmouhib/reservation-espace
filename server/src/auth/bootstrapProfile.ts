@@ -29,12 +29,13 @@ async function giveWelcomeCredits(uid: string): Promise<void> {
 }
 
 /**
- * Called by the client right after sign-in. Gives a Google account its first role, "user"
- * (which every endpoint requires for any access), and creates or refreshes the profile document.
- * Only a Google account with a verified email, in an allowed domain, can get that role: other
- * accounts are refused, so signing up with an email and a password gives access to nothing.
- * Administrators are never made here: they are created with `npm run create-admin`, which sets
- * their role before their first sign-in.
+ * Called by the client right after sign-in. Gives an account its first role, "user" (which every
+ * endpoint requires for any access), and creates or refreshes the profile document.
+ * Only an account whose email address is verified, in an allowed domain, can get that role: a Google
+ * account always has a verified address, and a person who signed up with a password proves theirs by
+ * clicking the link Firebase emails them. Without that proof anyone could sign up with somebody else's
+ * address and be taken for them. Administrators are never made here: they are created with
+ * `npm run create-admin`, which sets their role before their first sign-in.
  */
 export const bootstrapProfile = secureCall(
   // The only function open to an account without a role: it is the one that gives the role.
@@ -49,8 +50,10 @@ export const bootstrapProfile = secureCall(
     const existingRole = user.customClaims?.role as Role | undefined;
 
     if (!existingRole) {
-      const viaGoogle = user.emailVerified && user.providerData.some((provider) => provider.providerId === "google.com");
-      if (!viaGoogle) throw appError("permission-denied", "forbidden", "Only a verified Google account can sign up.");
+      const knownProvider = user.providerData.some((provider) => provider.providerId === "google.com" || provider.providerId === "password");
+      if (!user.emailVerified || !knownProvider) {
+        throw appError("permission-denied", "emailNotVerified", "Verify the email address first.");
+      }
       if (!isEmailAllowed(email, csv(ALLOWED_EMAIL_DOMAINS()))) {
         throw appError("permission-denied", "notInCompany", "Email domain is not allowed.");
       }
@@ -95,7 +98,16 @@ export const bootstrapProfile = secureCall(
         lastLoginAt: now,
         createdAt: now,
       };
-      await users.insertOne(profile);
+      // The browser may call this twice at once right after a new account is confirmed: the call that inserts the
+      // profile first does the rest of the setup, the other one finds it already there and has nothing left to do.
+      const inserted = await users.insertOne(profile).then(
+        () => true,
+        (err: { code?: number }) => {
+          if (err.code === 11000) return false;
+          throw err;
+        },
+      );
+      if (!inserted) return { created: false, claimsChanged };
       await giveWelcomeCredits(uid);
       await writeAudit({ actorId: uid, actorRole: role, action: "user.created", targetType: "user", targetId: uid });
     }

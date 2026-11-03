@@ -17,7 +17,7 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const pathname = usePathname();
 
   useEffect(() => {
-    if (status === "signed-out") router.replace(`/connexion?next=${encodeURIComponent(pathname)}`);
+    if (status === "signed-out" || status === "unverified") router.replace(`/connexion?next=${encodeURIComponent(pathname)}`);
   }, [status, pathname, router]);
 
   if (status !== "signed-in" || !role) {

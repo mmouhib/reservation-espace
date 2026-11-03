@@ -216,8 +216,8 @@ describe("accounts without a company role", () => {
     ] as const) {
       expect((await call(name, idToken, data)).error, name).toBe("forbidden");
     }
-    // Signing up with an email and a password never gives a role: only Google accounts get one.
-    expect((await call("bootstrapProfile", idToken, {})).error).toBe("forbidden");
+    // An account that has not confirmed its email address gets no role, whatever way it signed up.
+    expect((await call("bootstrapProfile", idToken, {})).error).toBe("emailNotVerified");
   });
 });
 
@@ -307,7 +307,7 @@ describe("Google sign-up and roles", () => {
 
   it("refuses a Google account whose email is not verified", async () => {
     const { token } = await googleSignIn(`unverified-${Date.now()}@exemple.fr`, false);
-    expect((await call("bootstrapProfile", token, {})).error).toBe("forbidden");
+    expect((await call("bootstrapProfile", token, {})).error).toBe("emailNotVerified");
   });
 
   it("lets an administrator make a Google user a manager, but not an administrator", async () => {
@@ -453,5 +453,66 @@ describe("calendar", () => {
     expect((await call("createEvent", lea, { title: "Backwards", date: DAY, from: 700, to: 600 })).error).toBe("invalidInput");
     expect((await call("createEvent", lea, { title: "Bad day", date: "2026-13-45", allDay: true })).error).toBe("invalidInput");
     await call("deleteEvent", lea, { eventId: id });
+  });
+});
+
+describe("sign-up with an email and a password", () => {
+  const EMULATOR = `http://${AUTH_HOST}`;
+  const IDENTITY = `${EMULATOR}/identitytoolkit.googleapis.com/v1/accounts`;
+  const password = "a-long-enough-password";
+  const email = `member-${Date.now()}@exemple.fr`;
+  let token: string;
+
+  const post = (path: string, body: object) =>
+    fetch(`${IDENTITY}:${path}?key=demo`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((res) => res.json() as Promise<any>);
+
+  /** What clicking the link of the confirmation email does, on the Auth emulator. */
+  async function confirmEmail(idToken: string) {
+    await post("sendOobCode", { requestType: "VERIFY_EMAIL", idToken });
+    const { oobCodes } = (await (await fetch(`${EMULATOR}/emulator/v1/projects/demo-reservation-espace/oobCodes`)).json()) as {
+      oobCodes: { email: string; requestType: string; oobCode: string }[];
+    };
+    const code = oobCodes.filter((c) => c.email === email && c.requestType === "VERIFY_EMAIL").at(-1)!.oobCode;
+    await post("update", { oobCode: code });
+  }
+
+  it("gives nothing until the email address is confirmed", async () => {
+    token = (await post("signUp", { email, password, returnSecureToken: true })).idToken;
+    expect((await call("bootstrapProfile", token, {})).error).toBe("emailNotVerified");
+    expect((await call("listSites", token)).error).toBe("forbidden");
+  });
+
+  it("makes a regular user of the account once the address is confirmed, and never an administrator", async () => {
+    await confirmEmail(token);
+    const signedIn = await post("signInWithPassword", { email, password, returnSecureToken: true });
+    expect((await call("bootstrapProfile", signedIn.idToken, {})).result?.created).toBe(true);
+
+    // A new token carries the role.
+    const refreshed = await post("signInWithPassword", { email, password, returnSecureToken: true });
+    expect((await call("listSites", refreshed.idToken)).error).toBeUndefined();
+    expect((await call("listAllIncidents", refreshed.idToken)).error).toBe("forbidden");
+    expect((await call("setUserRole", refreshed.idToken, { uid: refreshed.localId, role: "admin" })).error).toBe("forbidden");
+  });
+});
+
+describe("the first sign-in of a new account", () => {
+  const EMULATOR = `http://${AUTH_HOST}`;
+  const IDENTITY = `${EMULATOR}/identitytoolkit.googleapis.com/v1/accounts`;
+  const email = `racer-${Date.now()}@exemple.fr`;
+  const password = "a-long-enough-password";
+  const post = (path: string, body: object) =>
+    fetch(`${IDENTITY}:${path}?key=demo`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((res) => res.json() as Promise<any>);
+
+  it("can be asked twice at once (the browser does it when the address was just confirmed)", async () => {
+    const created = await post("signUp", { email, password, returnSecureToken: true });
+    await post("sendOobCode", { requestType: "VERIFY_EMAIL", idToken: created.idToken });
+    const { oobCodes } = (await (await fetch(`${EMULATOR}/emulator/v1/projects/demo-reservation-espace/oobCodes`)).json()) as { oobCodes: { email: string; oobCode: string }[] };
+    await post("update", { oobCode: oobCodes.filter((c) => c.email === email).at(-1)!.oobCode });
+    const { idToken, localId } = await post("signInWithPassword", { email, password, returnSecureToken: true });
+
+    const results = await Promise.all(Array.from({ length: 6 }, () => call("bootstrapProfile", idToken, {})));
+    expect(results.map((r) => r.error)).toEqual(Array(6).fill(undefined));
+    expect(results.filter((r) => r.result?.created)).toHaveLength(1);
+    expect(await mongo.db(process.env.MONGODB_DB_NAME || undefined).collection(COL.users).countDocuments({ _id: localId })).toBe(1);
   });
 });

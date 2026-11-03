@@ -3,10 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DEMO_ACCOUNTS } from "@reservation/shared";
+import { EmailAuthForm } from "@/components/auth/EmailAuthForm";
+import { VerifyEmailPanel } from "@/components/auth/VerifyEmailPanel";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
-import { Field, Input } from "@/components/ui/Field";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { USE_EMULATORS } from "@/lib/firebase/client";
@@ -24,13 +25,11 @@ const FEATURES = [
 ] as const satisfies readonly { icon: IconName; key: string }[];
 
 export function LoginView() {
-  const { status, error, signIn, signInWithEmail } = useAuth();
+  const { status, user, error, signIn, signInWithEmail } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const [pending, setPending] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (status === "signed-in") router.replace(next);
@@ -70,39 +69,38 @@ export function LoginView() {
 
       <section className="flex flex-col items-center justify-center gap-6 px-4 py-10">
         <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-semibold">{t("login.welcome")}</h2>
-          <p className="mt-1 text-sm text-slate-600">{t("login.title")}</p>
+          {status !== "unverified" && (
+            <>
+              <h2 className="text-xl font-semibold">{t("login.welcome")}</h2>
+              <p className="mt-1 text-sm text-slate-600">{t("login.title")}</p>
+            </>
+          )}
 
           <div role="alert" className="mt-5 empty:hidden rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">
             {error && t(error)}
           </div>
 
-          <Button size="lg" className="mt-5 w-full" disabled={pending || status === "loading"} onClick={() => void run(signIn)}>
-            {t("login.withGoogle")}
-          </Button>
-
-          <details className="mt-6 border-t border-slate-200 pt-4">
-            <summary className="cursor-pointer text-sm font-medium text-slate-700">{t("login.withEmail")}</summary>
-            <form
-              className="mt-3 space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void run(() => signInWithEmail(email.trim(), password));
-              }}
-            >
-              <Field label={t("login.email")}>
-                <Input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
-              </Field>
-              <Field label={t("login.password")}>
-                <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-              </Field>
-              <Button type="submit" variant="secondary" className="w-full" disabled={pending || status === "loading"}>
-                {t("login.signIn")}
+          {status === "unverified" ? (
+            <div className="mt-5">
+              <VerifyEmailPanel email={user?.email ?? ""} />
+            </div>
+          ) : (
+            <>
+              <Button size="lg" className="mt-5 w-full" disabled={pending || status === "loading"} onClick={() => void run(signIn)}>
+                {t("login.withGoogle")}
               </Button>
-            </form>
-          </details>
 
-          {USE_EMULATORS && demoPassword && (
+              <div className="my-5 flex items-center gap-3 text-xs uppercase text-slate-500">
+                <span className="h-px flex-1 bg-slate-200" />
+                {t("login.or")}
+                <span className="h-px flex-1 bg-slate-200" />
+              </div>
+
+              <EmailAuthForm busy={pending || status === "loading"} run={run} />
+            </>
+          )}
+
+          {USE_EMULATORS && demoPassword && status !== "unverified" && (
             <section aria-labelledby="demo-title" className="mt-8 border-t border-slate-200 pt-6">
               <h3 id="demo-title" className="text-sm font-semibold text-slate-700">
                 {t("login.demoAccounts")}

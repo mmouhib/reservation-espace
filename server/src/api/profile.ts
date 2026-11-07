@@ -22,6 +22,7 @@ export const updateMyProfile = secureCall(
     if (data.displayName !== undefined) set.displayName = data.displayName;
     if (data.notificationPrefs !== undefined) set.notificationPrefs = data.notificationPrefs;
     if (data.locale !== undefined) set.locale = data.locale;
+    if (data.showOnFloorPlan !== undefined) set.showOnFloorPlan = data.showOnFloorPlan;
 
     const result = await (await usersCol()).updateOne({ _id: uid }, { $set: set });
     if (result.matchedCount === 0) throw appError("not-found", "userNotFound", "User not found.");

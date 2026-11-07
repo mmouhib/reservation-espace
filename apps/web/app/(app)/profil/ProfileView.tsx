@@ -63,6 +63,7 @@ function PreferencesForm({ profile }: { profile: Profile }) {
   const { t } = useI18n();
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [prefs, setPrefs] = useState<NotificationPrefs>(profile.notificationPrefs);
+  const [showOnFloorPlan, setShowOnFloorPlan] = useState(profile.showOnFloorPlan ?? true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; key: MessageKey } | null>(null);
 
@@ -76,7 +77,7 @@ function PreferencesForm({ profile }: { profile: Profile }) {
     }
     setSaving(true);
     try {
-      await api.updateMyProfile({ displayName: displayName.trim(), notificationPrefs: prefs });
+      await api.updateMyProfile({ displayName: displayName.trim(), notificationPrefs: prefs, showOnFloorPlan });
       setMessage({ kind: "ok", key: "profile.saved" });
     } catch (err) {
       setMessage({ kind: "error", key: errorKey(err) });
@@ -139,6 +140,28 @@ function PreferencesForm({ profile }: { profile: Profile }) {
                 </div>
               </div>
             ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="mt-6">
+          <legend className="text-sm font-medium">{t("profile.privacy")}</legend>
+          <div className="mt-2 flex items-start gap-3">
+            <input
+              id="pref-floorplan"
+              type="checkbox"
+              checked={showOnFloorPlan}
+              onChange={(e) => setShowOnFloorPlan(e.target.checked)}
+              aria-describedby="pref-floorplan-hint"
+              className="mt-0.5 size-5 accent-brand-700"
+            />
+            <div>
+              <label htmlFor="pref-floorplan" className="text-sm font-medium">
+                {t("profile.showOnFloorPlan.label")}
+              </label>
+              <p id="pref-floorplan-hint" className="text-sm text-slate-600">
+                {t("profile.showOnFloorPlan.hint")}
+              </p>
+            </div>
           </div>
         </fieldset>
 

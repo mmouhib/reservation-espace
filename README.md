@@ -44,19 +44,21 @@ Owns `users`, `departments`, `teams`. Screens: sign-in, profile, `/admin/utilisa
 - ✅ Administrators are never made by signing up: they are created with `npm run create-admin` (email and password). An admin can make a user a `manager` from the Users screen, but not an admin.
 - ✅ Roles: `user` < `manager` < `admin`. Admin user list with role filter and pagination.
 - ✅ Directory sync (every night, and on demand for administrators) that disables departed employees and cancels their upcoming bookings.
-- ✅ Profile: display name, notification preferences, language (FR/EN), department and teams. Sign in with Google or with an email and a password.
+- ✅ Profile: display name, notification preferences, privacy (show my name on the floor plan), language (FR/EN), department and teams. Sign in with Google or with an email and a password.
 - ✅ Departments and teams administration; users are placed in a department and in teams by an administrator.
 - ✅ Manager view of their teams' bookings (`/equipe`).
 - ✅ GDPR: export of personal data, deletion of the account (by the user or an administrator).
 
 ### 2. Spaces
 
-Owns `sites`, `spaces`. Screen: `/admin/espaces`.
+Owns `sites`, `spaces`. Screens: `/admin/espaces`, `/plan`, `/admin/plan`.
 
 - ✅ Sites with address, time zone, floors and default opening hours.
 - ✅ Spaces: desk, open space, meeting room, coworking, phone booth. Capacity, price in credits per hour, equipment, features.
 - ✅ Opening hours per space and exceptional closures.
 - ✅ Every site and space is validated by the server before it is saved, and only administrators can change them.
+- ✅ **Interactive floor plan** (`/plan`): a map of one floor at the chosen time (now by default). Each space is a tile coloured free, partly taken, taken, mine or closed, with the **names of the people inside** (and a dot when they have checked in). Click a tile to see its details and book it. The map refreshes every 20 seconds, and a list shows everyone present on the floor. A person can hide their name in their profile (they then show as "Someone"; the space still shows as taken).
+- ✅ **Plan editor** (`/admin/plan`): administrators drag each space to its place on the floor (mouse, touch or arrow keys), resize it, take it off the plan, or let the app place the spaces that are not on it yet. Overlaps are shown in red. The demo data comes with every floor already drawn and people in the office.
 
 ### 3. Bookings
 

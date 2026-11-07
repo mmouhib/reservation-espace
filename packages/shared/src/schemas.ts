@@ -23,6 +23,7 @@ import {
   type UserStatus,
   type VisitStatus,
 } from "./models";
+import type { PlanLayout } from "./layout";
 import { daysBetween, isDateString } from "./time";
 import { ROLES, type Role } from "./roles";
 
@@ -370,6 +371,7 @@ export const updateMyProfileInput = z
     displayName: z.string().trim().min(1).max(80).optional(),
     notificationPrefs: z.object({ email: z.boolean(), push: z.boolean(), weeklyDigest: z.boolean() }).strict().optional(),
     locale: z.enum(LOCALES).optional(),
+    showOnFloorPlan: z.boolean().optional(),
   })
   .strict()
   .refine((input) => Object.keys(input).length > 0, "at least one field is required");
@@ -497,6 +499,8 @@ export interface UserSummary {
   locale: Locale;
   claimsUpdatedAt: string | null;
   lastLoginAt: string | null;
+  /** Whether the person's name is shown on the floor plan. */
+  showOnFloorPlan: boolean;
   createdAt: string;
 }
 
@@ -523,6 +527,8 @@ export interface SpaceSummary {
   openingHours: OpeningHours;
   status: "active" | "closed";
   closures: { from: string; to: string; reason: string }[];
+  /** Where the space is drawn on the plan of its floor, or null when it is not on the plan yet. */
+  layout: PlanLayout | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -698,4 +704,61 @@ export type CheckInInput = z.infer<typeof checkInInput>;
 export interface CheckInResult {
   booking: BookingSummary;
   alreadyCheckedIn: boolean;
+}
+
+// ---------- Floor plan ----------
+
+const planLayoutSchema = z
+  .object({ x: z.number().min(0).max(100), y: z.number().min(0).max(60), w: z.number().min(3).max(100), h: z.number().min(3).max(60) })
+  .strict()
+  .refine((tile) => tile.x + tile.w <= 100 && tile.y + tile.h <= 60, "the tile must stay inside the plan");
+
+export const setSpaceLayoutsInput = z
+  .object({
+    layouts: z
+      .array(z.object({ spaceId: z.string().min(1).max(64), layout: planLayoutSchema.nullable() }).strict())
+      .min(1)
+      .max(500),
+  })
+  .strict();
+export type SetSpaceLayoutsInput = z.input<typeof setSpaceLayoutsInput>;
+
+export const floorPlanInput = z
+  .object({ siteId: z.string().min(1).max(64), floor: z.string().min(1).max(32), date: dateString, from: minuteOfDay, to: minuteOfDay })
+  .strict()
+  .refine((slot) => slot.to > slot.from, "the slot must end after it starts");
+export type FloorPlanInput = z.input<typeof floorPlanInput>;
+
+/** What a space looks like on the plan at the chosen time. */
+export type FloorSpaceState = "free" | "partial" | "taken" | "mine" | "closed";
+
+export interface FloorPlanPerson {
+  /** The name, or null when the person chose not to be shown. */
+  name: string | null;
+  /** The person scanned the QR code of the space. */
+  checkedIn: boolean;
+  me: boolean;
+}
+
+export interface FloorPlanSpace {
+  id: string;
+  name: string;
+  location: string;
+  category: SpaceCategory;
+  capacity: number;
+  equipment: string[];
+  tags: string[];
+  layout: PlanLayout;
+  state: FloorSpaceState;
+  /** The people booked in the space during the slot. */
+  people: FloorPlanPerson[];
+  /** Whether the signed-in person can book it for the slot, and if not, why. */
+  bookable: boolean;
+  reason: string | null;
+  /** Credits the slot costs. */
+  cost: number;
+}
+
+export interface FloorPlan {
+  spaces: FloorPlanSpace[];
 }

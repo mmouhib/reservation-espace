@@ -62,6 +62,7 @@ export function toUserSummary(user: UserDoc): UserSummary {
     locale: user.locale,
     claimsUpdatedAt: isoOrNull(user.claimsUpdatedAt),
     lastLoginAt: isoOrNull(user.lastLoginAt),
+    showOnFloorPlan: user.showOnFloorPlan ?? true,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -92,6 +93,7 @@ export function toSpaceSummary(space: SpaceDoc): SpaceSummary {
     openingHours: space.openingHours,
     status: space.status,
     closures: space.closures,
+    layout: space.layout ?? null,
     createdAt: space.createdAt.toISOString(),
     updatedAt: space.updatedAt.toISOString(),
   };

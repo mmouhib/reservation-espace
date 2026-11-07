@@ -14,6 +14,7 @@ import {
   COL,
   DEMO_ACCOUNTS,
   addDays,
+  autoLayout,
   bookingCost,
   nowIn,
   weekdayOf,
@@ -22,6 +23,7 @@ import {
   type Department,
   type OpeningHours,
   type Plan,
+  type PlanLayout,
   type Role,
   type Site,
   type Space,
@@ -218,9 +220,16 @@ async function main() {
   for (const [id, d] of Object.entries(DEPARTMENTS)) stage(COL.departments, id, d);
   for (const [id, t] of Object.entries(TEAMS)) stage(COL.teams, id, t);
   for (const [id, s] of Object.entries(SITES)) stage(COL.sites, id, s);
+  // Every floor is drawn: the spaces of a floor are placed side by side (see packages/shared/src/layout.ts).
+  const layouts = new Map<string, PlanLayout>();
+  for (const key of new Set(SPACES.map(([, s]) => `${s.siteId}/${s.floor}`))) {
+    const onFloor = SPACES.filter(([, s]) => `${s.siteId}/${s.floor}` === key).map(([id, s]) => ({ id, category: s.category }));
+    for (const [id, layout] of autoLayout(onFloor)) layouts.set(id, layout);
+  }
   for (const [id, s] of SPACES) {
     const space: Space<Date> = {
       ...s,
+      layout: layouts.get(id) ?? null,
       creditsPerHour: CREDITS_PER_HOUR[s.category],
       openingHours: SITES[s.siteId]!.defaultOpeningHours,
       status: "active",
@@ -248,6 +257,7 @@ async function main() {
       locale: "fr",
       claimsUpdatedAt: now,
       lastLoginAt: null,
+      ...(u.uid === COLLEAGUES[11]!.uid ? { showOnFloorPlan: false } : {}),
       createdAt: now,
     };
     stage(COL.users, u.uid, profile);
@@ -286,7 +296,7 @@ async function main() {
   const [tomorrow, inTwoDays, lastWeek] = [workday(1), workday(2), workday(-4)];
 
   let bookingCount = 0;
-  const book = (user: SeedUser, spaceId: string, date: string, from: number, to: number, attendees = 1) => {
+  const book = (user: SeedUser, spaceId: string, date: string, from: number, to: number, attendees = 1, checkedIn = false) => {
     const space = SPACES.find(([id]) => id === spaceId)![1];
     bookingCount += 1;
     const id = `seed-booking-${bookingCount}`;
@@ -308,6 +318,7 @@ async function main() {
       cancelledBy: null,
       cancelReason: null,
       reminderSent: false,
+      ...(checkedIn ? { checkedInAt: now } : {}),
       createdAt: now,
       updatedAt: now,
     };
@@ -326,6 +337,18 @@ async function main() {
   book(COLLEAGUES[2]!, "paris-open-2", tomorrow, 9 * 60, 17 * 60);
   book(COLLEAGUES[3]!, "paris-open-2", tomorrow, 13 * 60, 17 * 60);
   book(COLLEAGUES[4]!, "paris-salle-louvre", tomorrow, 14 * 60, 16 * 60, 6);
+
+  // People in the office on the day of the seed (or the next working day), so that the floor plan has someone in it.
+  const present = ["sat", "sun"].includes(weekdayOf(today)) ? workday(1) : today;
+  book(COLLEAGUES[5]!, "paris-1A-03", present, 8 * 60, 17 * 60, 1, true);
+  book(COLLEAGUES[6]!, "paris-1A-04", present, 8 * 60 + 30, 17 * 60, 1, true);
+  book(COLLEAGUES[7]!, "paris-1A-05", present, 9 * 60, 18 * 60);
+  book(COLLEAGUES[8]!, "paris-1A-06", present, 9 * 60, 13 * 60, 1, true);
+  book(COLLEAGUES[9]!, "paris-salle-louvre", present, 9 * 60, 11 * 60, 5);
+  book(COLLEAGUES[10]!, "paris-salle-orsay", present, 14 * 60, 16 * 60, 3);
+  book(COLLEAGUES[11]!, "paris-2B-04", present, 9 * 60, 17 * 60); // this person hides their name (see below)
+  book(COLLEAGUES[12]!, "paris-open-2", present, 9 * 60, 17 * 60, 1, true);
+  book(COLLEAGUES[13]!, "paris-open-2", present, 9 * 60, 17 * 60, 1, true);
 
   mongoOps.push(
     mdb.collection(COL.subscriptions).replaceOne(

@@ -82,7 +82,8 @@
     "notifications": "Notifications",
     "calendar": "Calendrier",
     "myBookingsShort": "Réservations",
-    "visitors": "Visiteurs"
+    "visitors": "Visiteurs",
+    "plan": "Plan"
   },
   "home": {
     "greeting": "Bonjour",
@@ -97,7 +98,8 @@
       "team": "Les réservations des membres de votre équipe.",
       "credits": "Votre solde, vos formules et l'historique.",
       "support": "Signalez un problème ou demandez du matériel.",
-      "visitors": "Invitez un visiteur externe et suivez vos invitations."
+      "visitors": "Invitez un visiteur externe et suivez vos invitations.",
+      "plan": "Voyez sur le plan de l'étage ce qui est libre et qui est présent."
     },
     "upcoming": "Prochaines réservations",
     "noUpcoming": "Aucune réservation à venir.",
@@ -180,6 +182,11 @@
     "installApp": "Installer l'application",
     "preferences": "Préférences",
     "displayName": "Nom affiché",
+    "privacy": "Confidentialité",
+    "showOnFloorPlan": {
+      "label": "Afficher mon nom sur le plan de l'étage",
+      "hint": "Vos collègues voient votre nom sur l'espace que vous avez réservé. Désactivé, ils voient seulement qu'il est occupé."
+    },
     "notifications": "Notifications",
     "prefs": {
       "email": {
@@ -248,6 +255,10 @@
       "statistics": {
         "title": "Statistiques",
         "text": "Occupation, utilisation et exports."
+      },
+      "plan": {
+        "title": "Plans d'étage",
+        "text": "Dessinez chaque étage : placez les espaces où ils se trouvent."
       },
       "qr": {
         "title": "QR codes",
@@ -747,6 +758,57 @@
     "bookNow": "Réserver un espace",
     "myBookings": "Mes réservations",
     "invalid": "Ce QR code n'est pas valide."
+  },
+  "plan": {
+    "title": "Plan de l'étage",
+    "description": "Cliquez sur un espace pour voir qui s'y trouve et le réserver. La carte se met à jour en direct.",
+    "site": "Site",
+    "floor": "Étage",
+    "now": "Maintenant",
+    "legend": "Légende",
+    "live": "En direct",
+    "stale": "Pas à jour",
+    "state": {
+      "free": "Libre",
+      "partial": "Partiellement pris",
+      "taken": "Occupé",
+      "mine": "À moi",
+      "closed": "Fermé"
+    },
+    "empty": "Cet étage n'a pas encore de plan. Un administrateur peut le dessiner.",
+    "mapLabel": "Plan de l'étage {floor}",
+    "hint": "Vert : libre, orange : partiellement pris, rouge : occupé, bleu : à vous. Un point devant un nom indique que la personne est arrivée (check-in).",
+    "details": "Détails",
+    "selectHint": "Sélectionnez un espace sur le plan.",
+    "capacity": "{count} places",
+    "inside": "Présent à cet horaire",
+    "nobody": "Personne.",
+    "someone": "Quelqu'un",
+    "you": "Vous",
+    "checkedIn": "Arrivé",
+    "book": "Réserver cet espace",
+    "seeMyBookings": "Voir mes réservations",
+    "unavailable": "Cet espace ne peut pas être réservé à cet horaire.",
+    "whoIsHere": "Personnes présentes ({count})",
+    "noOne": "Personne n'est réservé sur cet étage à cet horaire."
+  },
+  "adminPlan": {
+    "title": "Plans d'étage",
+    "description": "Faites glisser chaque espace à sa place sur l'étage. Les collaborateurs voient ce plan en direct.",
+    "mapLabel": "Étage en cours de modification",
+    "hint": "Faites glisser un espace pour le déplacer, ou sélectionnez-le et utilisez les flèches (Maj pour de plus grands pas).",
+    "selection": "Sélection",
+    "selectHint": "Sélectionnez un espace sur le plan pour changer sa taille ou le retirer.",
+    "width": "Largeur",
+    "height": "Hauteur",
+    "remove": "Retirer du plan",
+    "unplaced": "Hors plan ({count})",
+    "allPlaced": "Tous les espaces de cet étage sont sur le plan.",
+    "place": "Placer",
+    "placeAll": "Tout placer",
+    "save": "Enregistrer ({count})",
+    "saved": "Plan enregistré.",
+    "overlap": "{count} espaces se chevauchent. Ils sont affichés en rouge."
   },
   "qr": {
     "title": "QR codes des espaces",

@@ -35,7 +35,7 @@ const INDEXES: Record<string, IndexDescription[]> = {
     { key: { calendarToken: 1 }, unique: true, partialFilterExpression: { calendarToken: { $type: "string" } } },
   ],
   [COL.teams]: [{ key: { managerIds: 1 } }, { key: { memberIds: 1 } }],
-  [COL.spaces]: [{ key: { siteId: 1 } }],
+  [COL.spaces]: [{ key: { siteId: 1 } }, { key: { siteId: 1, floor: 1 } }],
   [COL.bookings]: [
     { key: { spaceId: 1, date: 1, status: 1 } },
     { key: { siteId: 1, date: 1, status: 1 } },

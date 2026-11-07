@@ -656,3 +656,88 @@ describe("occupancy heatmap", () => {
     expect((await call("getOccupancyHeatmap", camille, { from: "2028-01-01", to: "2030-01-01" })).error).toBe("invalidInput");
   });
 });
+
+describe("interactive floor plan", () => {
+  const db = () => mongo.db(process.env.MONGODB_DB_NAME || undefined);
+  const DATE = nextWeekday(addDays(today, 20), "wed"); // far enough from the demo bookings and the other tests, and still bookable
+  const ids: string[] = [];
+  const slot = { siteId: "paris", floor: "1", date: DATE, from: 540, to: 600 };
+
+  async function book(userId: string, userName: string, spaceId: string, from: number, to: number, checkedIn = false) {
+    const _id = `floorplan-test-${ids.length}-${Date.now()}`;
+    ids.push(_id);
+    await db().collection(COL.bookings).insertOne({
+      _id, userId, userName, teamIds: [], spaceId, spaceName: spaceId, siteId: "paris",
+      date: DATE, from, to, attendees: 1, startsAt: new Date(`${DATE}T08:00:00Z`), status: "confirmed", credits: 0,
+      cancelledBy: null, cancelReason: null, reminderSent: true, ...(checkedIn ? { checkedInAt: new Date() } : {}),
+      createdAt: new Date(), updatedAt: new Date(),
+    } as never);
+  }
+  const spaceOf = async (token: string, id: string, input = slot) => {
+    const plan = (await call("getFloorPlan", token, input)).result;
+    return plan.spaces.find((s: { id: string }) => s.id === id);
+  };
+
+  afterAll(async () => {
+    await db().collection(COL.bookings).deleteMany({ _id: { $in: ids } as never });
+    await db().collection(COL.users).updateOne({ _id: "demo-colleague-2" as never }, { $unset: { showOnFloorPlan: "" } });
+  });
+
+  it("shows the spaces of a floor, each with a position, to any signed-in person", async () => {
+    expect((await call("getFloorPlan", null, slot)).error).toBe("authRequired");
+    const plan = (await call("getFloorPlan", lea, slot)).result;
+    expect(plan.spaces.length).toBeGreaterThan(5);
+    for (const space of plan.spaces) {
+      expect(space.layout.w).toBeGreaterThan(0);
+      expect(space.people).toEqual([]);
+    }
+    expect((await call("getFloorPlan", lea, { ...slot, siteId: "nowhere" })).error).toBe("spaceNotFound");
+    expect((await call("getFloorPlan", lea, { ...slot, from: 600, to: 540 })).error).toBe("invalidInput");
+  });
+
+  it("tells free, taken and mine apart, and who is inside", async () => {
+    await book("demo-colleague-1", "Colleague One", "paris-1A-03", 540, 600, true);
+    await book("demo-user", "Léa Collaboratrice", "paris-1A-04", 480, 1020);
+
+    const taken = await spaceOf(hugo, "paris-1A-03");
+    expect(taken.state).toBe("taken");
+    expect(taken.bookable).toBe(false);
+    expect(taken.reason).toBe("slotTaken");
+    expect(taken.people).toEqual([{ name: "Colleague One", checkedIn: true, me: false }]);
+
+    const mine = await spaceOf(lea, "paris-1A-04");
+    expect(mine.state).toBe("mine");
+    expect(mine.people[0].me).toBe(true);
+
+    const free = await spaceOf(hugo, "paris-1A-05");
+    expect(free.state).toBe("free");
+    expect(free.bookable).toBe(true);
+    expect(free.cost).toBeGreaterThanOrEqual(0);
+
+    // Outside the booked hour, the same desk is free again.
+    expect((await spaceOf(hugo, "paris-1A-03", { ...slot, from: 600, to: 660 })).state).toBe("free");
+  });
+
+  it("hides the name of someone who turned it off, but not the fact that the space is taken", async () => {
+    await book("demo-colleague-2", "Colleague Two", "paris-1A-06", 540, 600);
+    await db().collection(COL.users).updateOne({ _id: "demo-colleague-2" as never }, { $set: { showOnFloorPlan: false } });
+    const hidden = await spaceOf(hugo, "paris-1A-06");
+    expect(hidden.state).toBe("taken");
+    expect(hidden.people).toEqual([{ name: null, checkedIn: false, me: false }]);
+  });
+
+  it("lets only administrators move the spaces", async () => {
+    const before = await spaceOf(lea, "paris-1A-05");
+    const moved = { x: 70, y: 40, w: 5, h: 5 };
+    expect((await call("setSpaceLayouts", lea, { layouts: [{ spaceId: "paris-1A-05", layout: moved }] })).error).toBe("forbidden");
+    expect((await call("setSpaceLayouts", camille, { layouts: [{ spaceId: "paris-1A-05", layout: { x: 99, y: 0, w: 5, h: 5 } }] })).error).toBe("invalidInput");
+    expect((await call("setSpaceLayouts", camille, { layouts: [{ spaceId: "no-such-space", layout: moved }] })).error).toBe("spaceNotFound");
+
+    expect((await call("setSpaceLayouts", camille, { layouts: [{ spaceId: "paris-1A-05", layout: moved }] })).result).toEqual({ updated: 1 });
+    expect((await spaceOf(lea, "paris-1A-05")).layout).toEqual(moved);
+    // Taken off the plan, a space no longer shows.
+    await call("setSpaceLayouts", camille, { layouts: [{ spaceId: "paris-1A-05", layout: null }] });
+    expect(await spaceOf(lea, "paris-1A-05")).toBeUndefined();
+    await call("setSpaceLayouts", camille, { layouts: [{ spaceId: "paris-1A-05", layout: before.layout }] });
+  });
+});

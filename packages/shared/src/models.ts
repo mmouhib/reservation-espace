@@ -1,4 +1,5 @@
 import type { Locale } from "./i18n";
+import type { PlanLayout } from "./layout";
 import type { Role } from "./roles";
 
 /**
@@ -30,6 +31,8 @@ export interface UserProfile<T = unknown> {
   /** Bumped by Functions when custom claims change, so clients refresh their ID token. */
   claimsUpdatedAt: T | null;
   lastLoginAt: T | null;
+  /** Whether the person's name is shown on the floor plan when they are booked in a space. Missing means yes. */
+  showOnFloorPlan?: boolean;
   /** The secret in the link of the person's calendar feed (see server/src/calendar/feed.ts). */
   calendarToken?: string | null;
   createdAt: T;
@@ -108,6 +111,8 @@ export interface Space<T = unknown> {
   openingHours: OpeningHours;
   status: "active" | "closed";
   closures: Closure[];
+  /** Where the space is drawn on the plan of its floor, or null when it is not on the plan yet. */
+  layout?: PlanLayout | null;
   createdAt: T;
   updatedAt: T;
 }

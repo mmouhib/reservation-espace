@@ -36,6 +36,7 @@ export const userProfileSchema = z.object({
   lastLoginAt: z.date().nullable(),
   disabledAt: z.date().nullable().optional(),
   calendarToken: z.string().nullable().optional(),
+  showOnFloorPlan: z.boolean().optional(),
   createdAt: z.date(),
 });
 
@@ -76,6 +77,7 @@ export const spaceSchema = z.object({
   openingHours: openingHoursSchema,
   status: z.enum(["active", "closed"]),
   closures: z.array(closureSchema),
+  layout: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }).nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

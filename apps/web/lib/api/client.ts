@@ -11,6 +11,9 @@ import {
   type CancelSubscriptionInput,
   type CheckInInput,
   type CheckInResult,
+  type FloorPlan,
+  type FloorPlanInput,
+  type SetSpaceLayoutsInput,
   type ConfirmPaymentInput,
   type ConfirmPaymentResult,
   type CreateEventInput,
@@ -96,6 +99,7 @@ export const api = {
   updateBooking: callable<UpdateBookingInput, { updated: boolean }>("updateBooking"),
   cancelBooking: callable<CancelBookingInput, { cancelled: boolean }>("cancelBooking"),
   checkInToSpace: callable<CheckInInput, CheckInResult>("checkInToSpace"),
+  getFloorPlan: callable<FloorPlanInput, FloorPlan>("getFloorPlan"),
   declareAbsence: callable<DeclareAbsenceInput, { absenceId: string; cancelled: number }>("declareAbsence"),
   removeAbsence: callable<RemoveAbsenceInput, { removed: boolean }>("removeAbsence"),
   teamBookings: callable<TeamBookingsInput, TeamBookingsResult>("teamBookings"),
@@ -122,7 +126,7 @@ export const api = {
   // Profile and devices
   getMyProfile: callable<Empty, UserSummary | null>("getMyProfile"),
   updateMyProfile: callable<
-    { displayName?: string; notificationPrefs?: NotificationPrefs; locale?: "fr" | "en" },
+    { displayName?: string; notificationPrefs?: NotificationPrefs; locale?: "fr" | "en"; showOnFloorPlan?: boolean },
     { updated: boolean }
   >("updateMyProfile"),
   registerDevice: callable<
@@ -185,6 +189,7 @@ export const api = {
   getHoursPerCategory: callable<{ from: string; to: string }, HoursPerCategory[]>("getHoursPerCategory"),
   getTopSpaces: callable<{ from: string; to: string }, TopSpace[]>("getTopSpaces"),
   getOccupancyHeatmap: callable<OccupancyInput, OccupancyHeatmap>("getOccupancyHeatmap"),
+  setSpaceLayouts: callable<SetSpaceLayoutsInput, { updated: number }>("setSpaceLayouts"),
   // AI assistant
   generatePlanDescription: callable<GeneratePlanDescriptionInput, GeneratePlanDescriptionResult>("generatePlanDescription"),
   /** Streaming chat: the text arrives chunk by chunk through `.stream`, then `.data` resolves to the full reply. */

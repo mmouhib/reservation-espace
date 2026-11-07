@@ -104,3 +104,26 @@
 [data-theme="dark"] dialog::backdrop {
   background-color: rgb(0 0 0 / 0.65);
 }
+
+/* Printing a page that has a .print-area (the QR codes): only that area is printed, on white. */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

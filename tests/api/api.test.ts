@@ -556,3 +556,51 @@ describe("calendar sync", () => {
     expect((await feed(next)).status).toBe(200);
   });
 });
+
+describe("check-in by QR code", () => {
+  const bookingsCol = () => mongo.db(process.env.MONGODB_DB_NAME || undefined).collection(COL.bookings);
+  const inserted: string[] = [];
+
+  /** A confirmed booking of `demo-user` that started `startedMinutesAgo` minutes ago (negative: starts later). */
+  async function bookingStartedAgo(spaceId: string, startedMinutesAgo: number, durationMinutes = 60) {
+    const startsAt = new Date(Date.now() - startedMinutesAgo * 60_000);
+    const _id = `checkin-test-${inserted.length}-${Date.now()}`;
+    inserted.push(_id);
+    await bookingsCol().insertOne({
+      _id, userId: "demo-user", userName: "Léa Collaboratrice", teamIds: [], spaceId, spaceName: "Check-in test", siteId: "paris",
+      date: startsAt.toISOString().slice(0, 10), from: 540, to: 540 + durationMinutes, attendees: 1, startsAt, status: "confirmed",
+      credits: 0, cancelledBy: null, cancelReason: null, reminderSent: true, createdAt: new Date(), updatedAt: new Date(),
+    });
+    return _id;
+  }
+
+  afterAll(async () => {
+    await bookingsCol().deleteMany({ _id: { $in: inserted } as never });
+  });
+
+  it("checks the person in to their running booking, once", async () => {
+    await bookingStartedAgo("paris-1A-06", 10);
+    const first = await call("checkInToSpace", lea, { spaceId: "paris-1A-06" });
+    expect(first.result.alreadyCheckedIn).toBe(false);
+    expect(first.result.booking.checkedInAt).toBeTruthy();
+    const second = await call("checkInToSpace", lea, { spaceId: "paris-1A-06" });
+    expect(second.result.alreadyCheckedIn).toBe(true);
+    expect(second.result.booking.id).toBe(first.result.booking.id);
+  });
+
+  it("is open from 30 minutes before the start, not before, and not after the end", async () => {
+    await bookingStartedAgo("paris-1A-07", -20); // starts in 20 minutes
+    expect((await call("checkInToSpace", lea, { spaceId: "paris-1A-07" })).result?.alreadyCheckedIn).toBe(false);
+    await bookingStartedAgo("paris-1A-08", -120); // starts in 2 hours
+    expect((await call("checkInToSpace", lea, { spaceId: "paris-1A-08" })).error).toBe("noBookingNow");
+    await bookingStartedAgo("paris-2B-05", 180, 60); // ended 2 hours ago
+    expect((await call("checkInToSpace", lea, { spaceId: "paris-2B-05" })).error).toBe("noBookingNow");
+  });
+
+  it("refuses someone who has no booking there, and an unknown space", async () => {
+    expect((await call("checkInToSpace", hugo, { spaceId: "paris-1A-06" })).error).toBe("noBookingNow");
+    expect((await call("checkInToSpace", lea, { spaceId: "nowhere" })).error).toBe("spaceNotFound");
+    expect((await call("checkInToSpace", lea, { spaceId: "" })).error).toBe("invalidInput");
+    expect((await call("checkInToSpace", null, { spaceId: "paris-1A-06" })).error).toBe("authRequired");
+  });
+});

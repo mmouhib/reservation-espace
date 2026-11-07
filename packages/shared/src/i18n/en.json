@@ -150,6 +150,7 @@
     "past": "Past",
     "emptyUpcoming": "No upcoming bookings.",
     "emptyPast": "No past bookings.",
+    "checkedInBadge": "Checked in",
     "cancelledBadge": "Cancelled",
     "change": "Change",
     "cancel": "Cancel",
@@ -247,6 +248,10 @@
       "statistics": {
         "title": "Statistics",
         "text": "Occupancy, usage and exports."
+      },
+      "qr": {
+        "title": "QR codes",
+        "text": "Print the check-in codes to stick on the spaces."
       },
       "audit": {
         "title": "Audit log",
@@ -550,6 +555,7 @@
     "paymentFailed": "The payment did not go through.",
     "paymentUnavailable": "Payments are unavailable right now. Please try again later.",
     "eventNotFound": "This event no longer exists.",
+    "noBookingNow": "You have no booking for this space right now.",
     "assistantUnavailable": "The AI assistant is temporarily unavailable.",
     "visitNotFound": "Visit not found.",
     "invalidVisitStatus": "This visit can no longer be changed."
@@ -720,6 +726,23 @@
       "attendees_other": "{count} people",
       "manage": "Manage my bookings"
     }
+  },
+  "checkin": {
+    "title": "Check-in",
+    "checking": "Checking you in…",
+    "done": "You are checked in",
+    "already": "You were already checked in",
+    "noBookingHelp": "Check-in opens 30 minutes before your booking starts and closes when it ends.",
+    "bookNow": "Book a space",
+    "myBookings": "My bookings",
+    "invalid": "This QR code is not valid."
+  },
+  "qr": {
+    "title": "QR codes of the spaces",
+    "description": "Print these codes and stick one on each space. Scanning one with a phone checks the person in to their booking.",
+    "site": "Site",
+    "print": "Print",
+    "scanHint": "Scan to check in"
   },
   "credits": {
     "title": "Credits",

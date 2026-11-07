@@ -150,6 +150,7 @@
     "past": "Passées",
     "emptyUpcoming": "Aucune réservation à venir.",
     "emptyPast": "Aucune réservation passée.",
+    "checkedInBadge": "Présent",
     "cancelledBadge": "Annulée",
     "change": "Modifier",
     "cancel": "Annuler",
@@ -247,6 +248,10 @@
       "statistics": {
         "title": "Statistiques",
         "text": "Occupation, utilisation et exports."
+      },
+      "qr": {
+        "title": "QR codes",
+        "text": "Imprimez les codes de pointage à coller sur les espaces."
       },
       "audit": {
         "title": "Journal d'audit",
@@ -550,6 +555,7 @@
     "paymentFailed": "Le paiement n'a pas abouti.",
     "paymentUnavailable": "Les paiements sont indisponibles pour le moment. Réessayez plus tard.",
     "eventNotFound": "Cet événement n'existe plus.",
+    "noBookingNow": "Vous n'avez pas de réservation pour cet espace en ce moment.",
     "assistantUnavailable": "L'assistant IA est momentanément indisponible.",
     "visitNotFound": "Visite introuvable.",
     "invalidVisitStatus": "Cette visite ne peut plus être modifiée."
@@ -720,6 +726,23 @@
       "attendees_other": "{count} personnes",
       "manage": "Gérer mes réservations"
     }
+  },
+  "checkin": {
+    "title": "Pointage",
+    "checking": "Pointage en cours…",
+    "done": "Vous êtes pointé",
+    "already": "Vous étiez déjà pointé",
+    "noBookingHelp": "Le pointage ouvre 30 minutes avant le début de votre réservation et ferme à sa fin.",
+    "bookNow": "Réserver un espace",
+    "myBookings": "Mes réservations",
+    "invalid": "Ce QR code n'est pas valide."
+  },
+  "qr": {
+    "title": "QR codes des espaces",
+    "description": "Imprimez ces codes et collez-en un sur chaque espace. En scannant l'un d'eux avec un téléphone, la personne est pointée sur sa réservation.",
+    "site": "Site",
+    "print": "Imprimer",
+    "scanHint": "Scannez pour pointer"
   },
   "credits": {
     "title": "Crédits",

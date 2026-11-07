@@ -60,13 +60,14 @@ Owns `sites`, `spaces`. Screen: `/admin/espaces`.
 
 ### 3. Bookings
 
-Owns `bookings` and `absences`. Screens: `/reserver`, `/mes-reservations`, `/admin/reservations`.
+Owns `bookings` and `absences`. Screens: `/reserver`, `/mes-reservations`, `/checkin`, `/admin/reservations`, `/admin/qr`.
 
 - ✅ Availability search by site, date, time slot and number of people, with filters on type, capacity and equipment.
 - ✅ Booking with no double booking (checked in a transaction): desks and rooms are booked whole, open spaces and coworking seat by seat.
 - ✅ Rules: 30 minute slots, 8 hours maximum, opening hours, closures, 60 days ahead, no overlap for one user.
 - ✅ My bookings (upcoming and past), change and cancel, readable offline. The [Calendar](#9-calendar) shows them by day, week or month.
 - ✅ Absences: declaring one cancels and refunds the bookings inside it and blocks new ones.
+- ✅ **Check-in by QR code**: an administrator prints one QR code per space (`/admin/qr`) and sticks it on the desk or the door. Scanning it with the phone camera opens the app and checks the person in to their own booking of that space (from 30 minutes before the start until the end). Checked-in bookings show a "Checked in" badge. Nothing is cancelled automatically when nobody scans.
 - ✅ Admin: all bookings by period, force release with a reason, move to another space or time.
 - 🟡 Not included: recurring bookings and waiting lists.
 

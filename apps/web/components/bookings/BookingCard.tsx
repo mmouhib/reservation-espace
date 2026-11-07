@@ -32,6 +32,7 @@ export function BookingCard({ booking, actions }: { booking: BookingSummary; act
         ) : (
           booking.credits > 0 && <Badge tone="info">{t("common.credits", { count: booking.credits })}</Badge>
         )}
+        {!cancelled && booking.checkedInAt && <Badge tone="success">{t("myBookings.checkedInBadge")}</Badge>}
         {actions}
       </div>
     </Card>

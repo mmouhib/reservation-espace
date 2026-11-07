@@ -27,6 +27,7 @@ export const ERROR_REASONS = [
   "spaceNotFound",
   "bookingNotFound",
   "bookingNotCancellable",
+  "noBookingNow",
   "invalidDates",
   // Credits
   "notEnoughCredits",

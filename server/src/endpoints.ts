@@ -11,6 +11,7 @@ export { searchSpaces } from "./bookings/searchSpaces";
 export { createBooking } from "./bookings/createBooking";
 export { updateBooking } from "./bookings/updateBooking";
 export { cancelBooking } from "./bookings/cancelBooking";
+export { checkInToSpace } from "./bookings/checkIn";
 export { declareAbsence, removeAbsence } from "./bookings/absences";
 export { teamBookings } from "./bookings/teamBookings";
 

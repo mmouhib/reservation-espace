@@ -147,6 +147,8 @@ export interface Booking<T = unknown> {
   cancelledBy: string | null;
   cancelReason: string | null;
   reminderSent: boolean;
+  /** When the person scanned the QR code of the space (see server/src/bookings/checkIn.ts). */
+  checkedInAt?: T | null;
   createdAt: T;
   updatedAt: T;
 }

@@ -17,7 +17,8 @@ export default function AuthenticatedLayout({ children }: { children: ReactNode 
   const pathname = usePathname();
 
   useEffect(() => {
-    if (status === "signed-out" || status === "unverified") router.replace(`/connexion?next=${encodeURIComponent(pathname)}`);
+    // The query string is kept: a scanned QR code opens /checkin?space=..., and signing in must bring the person back to it.
+    if (status === "signed-out" || status === "unverified") router.replace(`/connexion?next=${encodeURIComponent(pathname + window.location.search)}`);
   }, [status, pathname, router]);
 
   if (status !== "signed-in" || !role) {

@@ -557,6 +557,8 @@ export interface BookingSummary {
   credits: number;
   cancelledBy: string | null;
   cancelReason: string | null;
+  /** When the person checked in by scanning the QR code of the space, if they did. */
+  checkedInAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -669,4 +671,14 @@ export interface EventSummary {
 /** The secret of the person's calendar link: `<server>/api/calendar/<token>.ics`. */
 export interface CalendarFeedResult {
   token: string;
+}
+
+// ---------- Check-in ----------
+
+export const checkInInput = z.object({ spaceId: z.string().min(1).max(64) }).strict();
+export type CheckInInput = z.infer<typeof checkInInput>;
+
+export interface CheckInResult {
+  booking: BookingSummary;
+  alreadyCheckedIn: boolean;
 }

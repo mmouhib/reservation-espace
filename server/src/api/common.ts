@@ -125,6 +125,7 @@ export function toBookingSummary(booking: BookingDoc): BookingSummary {
     credits: booking.credits,
     cancelledBy: booking.cancelledBy,
     cancelReason: booking.cancelReason,
+    checkedInAt: booking.checkedInAt?.toISOString() ?? null,
     createdAt: booking.createdAt.toISOString(),
     updatedAt: booking.updatedAt.toISOString(),
   };

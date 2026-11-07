@@ -134,3 +134,14 @@ export function placeItems(items: CalendarItem[]): PlacedItem[] {
   if (group.length > 0) closeGroup();
   return placed;
 }
+
+const googleDate = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+
+/** A link that opens Google Calendar with this booking filled in, ready to save. */
+export function googleCalendarUrl(booking: BookingSummary, location = ""): string {
+  const start = new Date(booking.startsAt);
+  const end = new Date(start.getTime() + (booking.to - booking.from) * 60_000);
+  const params = new URLSearchParams({ action: "TEMPLATE", text: booking.spaceName, dates: `${googleDate(start)}/${googleDate(end)}` });
+  if (location) params.set("location", location);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}

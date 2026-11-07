@@ -31,6 +31,8 @@ const INDEXES: Record<string, IndexDescription[]> = {
     { key: { role: 1, status: 1 } },
     { key: { displayName: 1, _id: 1 } },
     { key: { role: 1, displayName: 1 } },
+    // The calendar link is looked up by its token.
+    { key: { calendarToken: 1 }, unique: true, partialFilterExpression: { calendarToken: { $type: "string" } } },
   ],
   [COL.teams]: [{ key: { managerIds: 1 } }, { key: { memberIds: 1 } }],
   [COL.spaces]: [{ key: { siteId: 1 } }],

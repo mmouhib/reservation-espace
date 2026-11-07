@@ -516,3 +516,43 @@ describe("the first sign-in of a new account", () => {
     expect(await mongo.db(process.env.MONGODB_DB_NAME || undefined).collection(COL.users).countDocuments({ _id: localId })).toBe(1);
   });
 });
+
+describe("calendar sync", () => {
+  const feed = (token: string) => fetch(`${API}/calendar/${token}.ics`);
+  let token: string;
+  let hugoToken: string;
+
+  it("gives each person their own private link, the same one each time", async () => {
+    token = (await call("getMyCalendarFeed", lea)).result.token;
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect((await call("getMyCalendarFeed", lea)).result.token).toBe(token);
+    hugoToken = (await call("getMyCalendarFeed", hugo)).result.token;
+    expect(hugoToken).not.toBe(token);
+    expect((await call("getMyCalendarFeed", null)).error).toBe("authRequired");
+  });
+
+  it("serves a calendar file with the person's bookings and events, and nobody else's", async () => {
+    const created = await call("createEvent", lea, { title: "Sync check, with; punctuation", date: DAY, from: 600, to: 660 });
+    const res = await feed(token);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/calendar");
+    const text = (await res.text()).replaceAll("\r\n ", "");
+    expect(text.startsWith("BEGIN:VCALENDAR")).toBe(true);
+    expect(text).toContain("SUMMARY:Sync check\\, with\\; punctuation");
+    expect(text).toContain(`DTSTART:${DAY.replaceAll("-", "")}T100000`);
+    expect(text).toMatch(/UID:booking-[0-9a-f]+@reservation-espace/);
+
+    const others = (await (await feed(hugoToken)).text()).replaceAll("\r\n ", "");
+    expect(others).not.toContain("Sync check");
+    await call("deleteEvent", lea, { eventId: created.result.eventId });
+  });
+
+  it("refuses an unknown link, and a link that was replaced stops working", async () => {
+    expect((await feed("x".repeat(43))).status).toBe(404);
+    expect((await feed("short")).status).toBe(404);
+    const next = (await call("resetMyCalendarFeed", lea)).result.token;
+    expect(next).not.toBe(token);
+    expect((await feed(token)).status).toBe(404);
+    expect((await feed(next)).status).toBe(200);
+  });
+});

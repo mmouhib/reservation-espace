@@ -3,6 +3,7 @@ import { extname, resolve, sep } from "node:path";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { hasRole, isRole } from "@reservation/shared";
 import { auth } from "./lib/admin";
+import { buildFeed } from "./calendar/feed";
 import { handleStripeWebhook, stripeWebhookEnabled } from "./credits/payments";
 import type { Caller, Endpoint } from "./lib/callable";
 import { CORS_ORIGINS, WEB_DIR } from "./lib/config";
@@ -118,6 +119,21 @@ export function createApp(endpoints: Map<string, Endpoint>) {
     res.setHeader("Content-Type", photo.metadata.contentType);
     res.setHeader("Cache-Control", "private, max-age=3600");
     photo.stream.on("error", () => res.destroy()).pipe(res);
+  });
+
+  // ---------- Calendar feed (read by calendar apps, which cannot sign in: the token in the link is the secret) ----------
+
+  app.get("/api/calendar/:file", async (req, res) => {
+    const file = String(req.params.file);
+    const feed = await buildFeed(file.endsWith(".ics") ? file.slice(0, -4) : file);
+    if (feed === null) {
+      res.sendStatus(404);
+      return;
+    }
+    res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+    res.setHeader("Content-Disposition", 'inline; filename="reservations.ics"');
+    res.setHeader("Cache-Control", "private, max-age=600");
+    res.send(feed);
   });
 
   // ---------- Stripe webhook (signed by Stripe, so no sign-in token) ----------

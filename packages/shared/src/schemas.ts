@@ -665,3 +665,8 @@ export interface EventSummary {
   from: number;
   to: number;
 }
+
+/** The secret of the person's calendar link: `<server>/api/calendar/<token>.ics`. */
+export interface CalendarFeedResult {
+  token: string;
+}

@@ -35,6 +35,7 @@ export const userProfileSchema = z.object({
   claimsUpdatedAt: z.date().nullable(),
   lastLoginAt: z.date().nullable(),
   disabledAt: z.date().nullable().optional(),
+  calendarToken: z.string().nullable().optional(),
   createdAt: z.date(),
 });
 

@@ -128,6 +128,7 @@ Owns `events`. Screen: `/calendrier`.
 - ✅ Personal events (title, day, optional time or all day, note): private to you, added, changed and deleted from the calendar. At most 500 per person.
 - ✅ Clicking a day or an hour offers to add an event or to book a space: the booking form opens with that day and time filled in. Booking is not offered for days that are over.
 - ✅ Works offline for the periods already visited, like the other screens. Cancelled bookings are not shown.
+- ✅ **Calendar sync**: the Sync button gives a private link (`/api/calendar/<secret>.ics`) that Google Calendar, Apple Calendar or Outlook subscribe to, so bookings and events appear there by themselves. The link can be replaced at any time, and each booking also has an "Add to Google Calendar" button. Google refreshes subscribed calendars every few hours, and it can only read the link once the app is online (not on `localhost`).
 - ✅ Included in the personal data export and removed with the account.
 - 🟡 Events are private: nobody else sees them, and they do not block bookings.
 

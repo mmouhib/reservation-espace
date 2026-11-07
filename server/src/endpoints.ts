@@ -60,6 +60,7 @@ export { listMyBookings, listMyBookingsInRange, listMyUpcomingBookings, listBook
 
 // Calendar
 export { createEvent, deleteEvent, listMyEvents, updateEvent } from "./calendar/events";
+export { getMyCalendarFeed, resetMyCalendarFeed } from "./calendar/feed";
 export { listMyAbsences } from "./api/absences";
 export { listMyNotifications, markNotificationRead, markAllNotificationsRead } from "./api/notifications";
 export { listUsers } from "./api/admin-users";

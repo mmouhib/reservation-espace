@@ -3,6 +3,11 @@ import { getFirebase } from "@/lib/firebase/client";
 /** Address of the server. Empty when the server also serves the web app (the normal case): requests stay on the same origin. */
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+/** The full address of a path on the server, for links that leave the app (a calendar app reads them, not the browser). */
+export function serverUrl(path: string): string {
+  return `${API_URL || window.location.origin}${path}`;
+}
+
 interface ErrorBody {
   error?: { code?: string; reason?: string; message?: string };
 }

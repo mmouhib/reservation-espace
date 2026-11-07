@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BookingSummary, EventSummary } from "@reservation/shared";
-import { addMonths, groupByDay, move, placeItems, startOfWeek, visibleDays, weekdayNames, type CalendarItem } from "./calendar";
+import { addMonths, googleCalendarUrl, groupByDay, move, placeItems, startOfWeek, visibleDays, weekdayNames, type CalendarItem } from "./calendar";
 
 const item = (key: string, from: number, to: number, allDay = false): CalendarItem => ({ key, kind: "event", title: key, date: "2026-05-12", from, to, allDay });
 
@@ -68,5 +68,17 @@ describe("grouping and placing", () => {
     expect(byKey.b).toMatchObject({ lane: 1, lanes: 3 });
     expect(byKey.c).toMatchObject({ lane: 2, lanes: 3 });
     expect(byKey.d).toMatchObject({ lane: 0, lanes: 1 });
+  });
+});
+
+describe("Add to Google Calendar", () => {
+  it("fills in the booking, in UTC", () => {
+    const booking = { spaceName: "Desk 1A-04", startsAt: "2026-11-05T08:00:00.000Z", from: 540, to: 1020 } as BookingSummary;
+    const url = new URL(googleCalendarUrl(booking, "Paris, La Défense"));
+    expect(url.origin + url.pathname).toBe("https://calendar.google.com/calendar/render");
+    expect(url.searchParams.get("action")).toBe("TEMPLATE");
+    expect(url.searchParams.get("text")).toBe("Desk 1A-04");
+    expect(url.searchParams.get("dates")).toBe("20261105T080000Z/20261105T160000Z");
+    expect(url.searchParams.get("location")).toBe("Paris, La Défense");
   });
 });

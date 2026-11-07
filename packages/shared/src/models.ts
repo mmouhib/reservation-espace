@@ -30,6 +30,8 @@ export interface UserProfile<T = unknown> {
   /** Bumped by Functions when custom claims change, so clients refresh their ID token. */
   claimsUpdatedAt: T | null;
   lastLoginAt: T | null;
+  /** The secret in the link of the person's calendar feed (see server/src/calendar/feed.ts). */
+  calendarToken?: string | null;
   createdAt: T;
 }
 

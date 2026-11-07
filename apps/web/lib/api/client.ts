@@ -6,6 +6,7 @@ import {
   type BootstrapProfileInput,
   type BootstrapProfileResult,
   type CancelBookingInput,
+  type CalendarFeedResult,
   type CalendarRangeInput,
   type CancelSubscriptionInput,
   type ConfirmPaymentInput,
@@ -152,6 +153,8 @@ export const api = {
   createEvent: callable<CreateEventInput, { eventId: string }>("createEvent"),
   updateEvent: callable<UpdateEventInput, { updated: boolean }>("updateEvent"),
   deleteEvent: callable<DeleteEventInput, { deleted: boolean }>("deleteEvent"),
+  getMyCalendarFeed: callable<Empty, CalendarFeedResult>("getMyCalendarFeed"),
+  resetMyCalendarFeed: callable<Empty, CalendarFeedResult>("resetMyCalendarFeed"),
   // Notifications
   listMyNotifications: callable<{ unreadOnly?: boolean; limit?: number }, NotificationSummary[]>("listMyNotifications"),
   markNotificationRead: callable<{ notificationId: string }, { marked: boolean }>("markNotificationRead"),

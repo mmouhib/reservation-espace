@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/cn";
-import type { CalendarItem } from "@/lib/calendar";
+import { googleCalendarUrl, type CalendarItem } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { itemTone } from "./tones";
@@ -94,12 +94,23 @@ export function ItemModal({ item, onClose, onEdit }: { item: CalendarItem | null
         <>
           <BookingCard booking={item.booking} />
           <p className="text-sm text-slate-600">{t("calendar.booking.attendees", { count: item.booking.attendees })}</p>
-          <Link
-            href="/mes-reservations"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-100"
-          >
-            {t("calendar.booking.manage")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/mes-reservations"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-100"
+            >
+              {t("calendar.booking.manage")}
+            </Link>
+            <a
+              href={googleCalendarUrl(item.booking)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 hover:bg-slate-100"
+            >
+              <Icon name="calendar-plus" />
+              {t("calendar.sync.addBooking")}
+            </a>
+          </div>
         </>
       )}
       {item?.event && (

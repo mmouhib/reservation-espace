@@ -12,6 +12,7 @@ import { todayLocal } from "@/lib/format";
 import { useNow } from "@/lib/hooks/useNow";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { useI18n } from "@/lib/i18n/I18nProvider";
+import { CalendarSyncModal } from "./CalendarSyncModal";
 import { ItemModal, SlotModal, type Slot } from "./CalendarModals";
 import { EventModal, type EventDraft } from "./EventModal";
 import { MonthGrid } from "./MonthGrid";
@@ -37,6 +38,7 @@ export function CalendarView() {
   const [slot, setSlot] = useState<Slot | null>(null);
   const [item, setItem] = useState<CalendarItem | null>(null);
   const [draft, setDraft] = useState<EventDraft | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const days = useMemo(() => visibleDays(view, anchor), [view, anchor]);
   const range = useMemo(() => ({ from: days[0]!, to: days[days.length - 1]! }), [days]);
@@ -74,6 +76,10 @@ export function CalendarView() {
         <h2 aria-live="polite" className="min-w-0 flex-1 text-lg font-semibold capitalize text-slate-900">
           {viewTitle(view, anchor, locale)}
         </h2>
+        <Button variant="secondary" size="sm" disabled={!online} onClick={() => setSyncing(true)}>
+          <Icon name="link" />
+          {t("calendar.sync.button")}
+        </Button>
         <Button size="sm" disabled={!online} onClick={() => setDraft({ date: anchor, from: DEFAULT_FROM, to: DEFAULT_FROM + HOUR })}>
           <Icon name="plus" />
           {t("calendar.addEvent")}
@@ -144,6 +150,7 @@ export function CalendarView() {
           if (picked.event) setDraft({ event: picked.event });
         }}
       />
+      <CalendarSyncModal open={syncing} onClose={() => setSyncing(false)} />
       <EventModal draft={draft} onClose={() => setDraft(null)} onChanged={refetch} />
     </>
   );

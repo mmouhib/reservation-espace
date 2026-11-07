@@ -408,6 +408,17 @@
       "hours": "Heures réservées",
       "creditsSpent": "Crédits dépensés",
       "activeUsers": "Utilisateurs actifs",
+      "heatmap": {
+        "title": "Occupation par jour de la semaine et par heure",
+        "description": "La part moyenne des espaces réservés à chaque moment de la semaine, sur la période ci-dessus.",
+        "site": "Site",
+        "allSites": "Tous les sites",
+        "noSpaces": "Aucun espace actif à mesurer.",
+        "peak": "Moment le plus chargé : {day} à {time}, avec {percent} % des espaces réservés en moyenne.",
+        "cell": "{day} {time} : {count} espaces réservés sur {total} en moyenne ({percent} %)",
+        "quiet": "Calme",
+        "full": "Complet"
+      },
       "byDay": "Réservations par jour",
       "byCategory": "Heures par type d'espace",
       "topSpaces": "Espaces les plus réservés",

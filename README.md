@@ -109,6 +109,7 @@ Owns `auditLogs`. Screens: `/admin/statistiques`, `/admin/audit`.
 - ✅ Audit log viewer with an action filter.
 - ✅ Statistics over a period: bookings, cancellations, hours booked, credits spent, active users, per day, per space type, most booked spaces.
 - ✅ CSV export of the bookings of the period.
+- ✅ **Occupancy heatmap**: a week-by-hour grid on the statistics page, bluer where more of the spaces are booked (the average over the days of the period, for one site or all), with the busiest time written out and a tooltip on every cell.
 
 ### 8. Visitors
 

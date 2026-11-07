@@ -625,6 +625,23 @@ export interface TopSpace {
   count: number;
 }
 
+/** A period of at most a year, for one site or all of them. */
+export const occupancyInput = z
+  .object({ ...dateRangeFields, siteId: z.string().min(1).max(64).optional() })
+  .strict()
+  .refine(notReversed, "from must not be after to")
+  .refine((range) => daysBetween(range.from, range.to) <= 366, "the period is too long");
+export type OccupancyInput = z.input<typeof occupancyInput>;
+
+/** How full the spaces are. `cells[weekday][hour]` (Monday is 0) is the average number of spaces booked at that time. */
+export interface OccupancyHeatmap {
+  cells: number[][];
+  /** Active spaces of the site (or of all sites): what a full office would be. */
+  spaces: number;
+  /** The busiest weekday and hour, or null when nothing is booked. */
+  peak: { weekday: number; hour: number; value: number } | null;
+}
+
 // ---------- Calendar ----------
 
 const eventFields = {

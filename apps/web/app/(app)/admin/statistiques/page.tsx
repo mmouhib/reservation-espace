@@ -8,6 +8,7 @@ import { EmptyState, Section, StatCard } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
 import { useFlash } from "@/components/ui/Flash";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { OccupancyHeatmap } from "@/components/stats/OccupancyHeatmap";
 import { api } from "@/lib/api/client";
 import { useCallableQuery } from "@/lib/api/useCallableQuery";
 import { downloadFile, formatDate, todayLocal } from "@/lib/format";
@@ -107,6 +108,7 @@ export default function StatisticsPage() {
           <Section title={t("admin.statistics.byDay")} icon="chart" className="xl:col-span-2">
             <Bars items={dayRows.map((d) => ({ label: formatDate(d.date, locale), value: d.count, display: String(d.count) }))} />
           </Section>
+          <OccupancyHeatmap from={from} to={to} />
           <Section title={t("admin.statistics.byCategory")} icon="layers">
             <Bars
               items={SPACE_CATEGORIES.filter((c: SpaceCategory) => hoursByCategory.has(c)).map((c) => ({

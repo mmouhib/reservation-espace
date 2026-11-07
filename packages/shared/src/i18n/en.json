@@ -408,6 +408,17 @@
       "hours": "Hours booked",
       "creditsSpent": "Credits spent",
       "activeUsers": "Active users",
+      "heatmap": {
+        "title": "Occupancy by weekday and hour",
+        "description": "The average share of the spaces that are booked at each time of the week, over the period above.",
+        "site": "Site",
+        "allSites": "All sites",
+        "noSpaces": "There is no active space to measure.",
+        "peak": "Busiest time: {day} at {time}, with {percent}% of the spaces booked on average.",
+        "cell": "{day} {time}: {count} of {total} spaces booked on average ({percent}%)",
+        "quiet": "Quiet",
+        "full": "Full"
+      },
       "byDay": "Bookings per day",
       "byCategory": "Hours by space type",
       "topSpaces": "Most booked spaces",

@@ -55,6 +55,8 @@ import {
   type BookingSummary,
   type AbsenceSummary,
   type NotificationSummary,
+  type OccupancyHeatmap,
+  type OccupancyInput,
   type AuditLogSummary,
   type BookingTotals,
   type BookingsPerDay,
@@ -182,6 +184,7 @@ export const api = {
   getBookingsPerDay: callable<{ from: string; to: string }, BookingsPerDay[]>("getBookingsPerDay"),
   getHoursPerCategory: callable<{ from: string; to: string }, HoursPerCategory[]>("getHoursPerCategory"),
   getTopSpaces: callable<{ from: string; to: string }, TopSpace[]>("getTopSpaces"),
+  getOccupancyHeatmap: callable<OccupancyInput, OccupancyHeatmap>("getOccupancyHeatmap"),
   // AI assistant
   generatePlanDescription: callable<GeneratePlanDescriptionInput, GeneratePlanDescriptionResult>("generatePlanDescription"),
   /** Streaming chat: the text arrives chunk by chunk through `.stream`, then `.data` resolves to the full reply. */

@@ -67,6 +67,7 @@ export { listMyNotifications, markNotificationRead, markAllNotificationsRead } f
 export { listUsers } from "./api/admin-users";
 export { listAuditLogs } from "./api/audit";
 export { getBookingTotals, getBookingsPerDay, getHoursPerCategory, getTopSpaces } from "./api/stats";
+export { getOccupancyHeatmap } from "./api/occupancy";
 
 // AI assistant
 export { chatWithAssistant } from "./ai/chatWithAssistant";

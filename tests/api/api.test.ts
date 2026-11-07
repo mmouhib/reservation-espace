@@ -604,3 +604,55 @@ describe("check-in by QR code", () => {
     expect((await call("checkInToSpace", null, { spaceId: "paris-1A-06" })).error).toBe("authRequired");
   });
 });
+
+describe("occupancy heatmap", () => {
+  const bookingsCol = () => mongo.db(process.env.MONGODB_DB_NAME || undefined).collection(COL.bookings);
+  const ids: string[] = [];
+
+  /** A confirmed booking on a Monday of 2030 (the demo data stops long before). */
+  async function book(date: string, spaceId: string, from: number, to: number) {
+    const _id = `heatmap-test-${ids.length}-${Date.now()}`;
+    ids.push(_id);
+    await bookingsCol().insertOne({
+      _id, userId: "demo-user", userName: "Léa Collaboratrice", teamIds: [], spaceId, spaceName: spaceId, siteId: "paris",
+      date, from, to, attendees: 1, startsAt: new Date(`${date}T08:00:00Z`), status: "confirmed", credits: 0,
+      cancelledBy: null, cancelReason: null, reminderSent: true, createdAt: new Date(), updatedAt: new Date(),
+    });
+  }
+
+  afterAll(async () => {
+    await bookingsCol().deleteMany({ _id: { $in: ids } as never });
+  });
+
+  it("is for administrators only", async () => {
+    expect((await call("getOccupancyHeatmap", lea, { from: "2030-03-04", to: "2030-03-10" })).error).toBe("forbidden");
+    expect((await call("getOccupancyHeatmap", hugo, { from: "2030-03-04", to: "2030-03-10" })).error).toBe("forbidden");
+    expect((await call("getOccupancyHeatmap", camille, { from: "2030-03-04", to: "2030-03-10" })).result?.cells).toHaveLength(7);
+  });
+
+  it("averages the booked spaces by weekday and hour, over the days of the period", async () => {
+    await book("2030-03-04", "paris-1A-06", 540, 660); // Monday 09:00-11:00
+    await book("2030-03-04", "paris-1A-07", 540, 600); // Monday 09:00-10:00
+    await book("2030-03-11", "paris-1A-06", 540, 600); // the next Monday
+
+    const oneWeek = (await call("getOccupancyHeatmap", camille, { from: "2030-03-04", to: "2030-03-10" })).result;
+    expect(oneWeek.cells[0][9]).toBe(2);
+    expect(oneWeek.cells[0][10]).toBe(1);
+    expect(oneWeek.cells[0][11]).toBe(0);
+    expect(oneWeek.peak).toEqual({ weekday: 0, hour: 9, value: 2 });
+    expect(oneWeek.spaces).toBeGreaterThan(0);
+
+    const twoWeeks = (await call("getOccupancyHeatmap", camille, { from: "2030-03-04", to: "2030-03-11" })).result;
+    expect(twoWeeks.cells[0][9]).toBe(1.5); // (2 + 1) over two Mondays
+  });
+
+  it("can be limited to one site, and refuses a period that is backwards or too long", async () => {
+    const paris = (await call("getOccupancyHeatmap", camille, { from: "2030-03-04", to: "2030-03-10", siteId: "paris" })).result;
+    expect(paris.cells[0][9]).toBe(2);
+    const nowhere = (await call("getOccupancyHeatmap", camille, { from: "2030-03-04", to: "2030-03-10", siteId: "nowhere" })).result;
+    expect(nowhere.spaces).toBe(0);
+    expect(nowhere.peak).toBeNull();
+    expect((await call("getOccupancyHeatmap", camille, { from: "2030-03-10", to: "2030-03-04" })).error).toBe("invalidInput");
+    expect((await call("getOccupancyHeatmap", camille, { from: "2028-01-01", to: "2030-01-01" })).error).toBe("invalidInput");
+  });
+});

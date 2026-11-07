@@ -14,19 +14,26 @@ Legend: ✅ done · 🟡 done, with a limit to know about · ⬜ not started
 **Progress: all 9 modules are built and tested.** The remaining limits are listed under each module and summed up in
 [Known limits](#known-limits).
 
-| # | Module | Owns (collections) | Status |
-|---|---|---|---|
-| 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | ✅ Done |
-| 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | ✅ Done |
-| 3 | [**Bookings**](#3-bookings) | `bookings`, `absences` | ✅ Done |
-| 4 | [**Notifications**](#4-notifications) | `notifications`, `devices` | 🟡 Push is not tested automatically |
-| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions`, `payments` | 🟡 Stripe works; a subscription is charged once |
-| 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` | ✅ Done |
-| 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` | ✅ Done |
-| 8 | [**Visitors**](#8-visitors) | `visits` | ✅ Done |
-| 9 | [**Calendar**](#9-calendar) | `events` | ✅ Done |
+| # | Module | Owns (collections) | What it does | Status |
+|---|---|---|---|---|
+| 1 | [**Users**](#1-users) | `users`, `departments`, `teams` | Accounts and roles, profile, organization, and the manager's team view | ✅ Done |
+| 2 | [**Spaces**](#2-spaces) | `sites`, `spaces` | Sites and bookable spaces, with opening hours and closures | ✅ Done |
+| 3 | [**Bookings**](#3-bookings) | `bookings`, `absences` | Availability search, booking without double-booking, and absences | ✅ Done |
+| 4 | [**Notifications**](#4-notifications) | `notifications`, `devices` | The bell popup, email and push, and the scheduled reminders | 🟡 Push is not tested automatically |
+| 5 | [**Credits & Subscriptions**](#5-credits--subscriptions) | `wallets`, `creditTransactions`, `plans`, `subscriptions`, `payments` | Balance and history, plans, and card payment with Stripe | 🟡 Stripe works; a subscription is charged once |
+| 6 | [**Incidents & Equipment**](#6-incidents--equipment) | `incidents`, `equipmentRequests` | Problem reports with photos, and equipment requests | ✅ Done |
+| 7 | [**Analytics & Audit**](#7-analytics--audit) | `auditLogs` | Statistics and the audit log | ✅ Done |
+| 8 | [**Visitors**](#8-visitors) | `visits` | Inviting guests, and check-in and check-out at reception | ✅ Done |
+| 9 | [**Calendar**](#9-calendar) | `events` | Your bookings and your own events, by day, week or month | ✅ Done |
 
 A module's data is written only by its own endpoints; the others read it through them.
+
+**What is not a module.** Some features use data without being a module of their own:
+
+- **Platform data** used by every module: `rateLimits`, `locks` (they prevent double-booking) and `jobRuns` (they keep a scheduled job from running twice).
+- **Incident photos** (the `incidentPhotos` storage) belong to Incidents & Equipment.
+- **Features with no data of their own:** the AI assistant, dark mode, the PWA shell and the sign-in flow (see [Shared platform](#shared-platform-not-owned-by-a-single-module)). Sign-in uses Firebase's own accounts; the matching profile lives in Users.
+- **Parts that could be modules but sit inside another:** `wallets` and `payments` are part of Credits & Subscriptions, and `absences` is part of Bookings.
 
 ### 1. Users
 

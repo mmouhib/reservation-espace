@@ -178,7 +178,7 @@ export function BookingSearch() {
             <Button type="submit" disabled={searching || !online || !slotIsValid || !siteId}>
               {searching ? t("reserve.searching") : t("reserve.search")}
             </Button>
-            {!online && <p className="ml-3 text-sm text-amber-800">{t("reserve.offline")}</p>}
+            {!online && <p className="ms-3 text-sm text-amber-800">{t("reserve.offline")}</p>}
           </div>
         </form>
       </Card>

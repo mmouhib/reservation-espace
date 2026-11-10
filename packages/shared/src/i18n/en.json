@@ -44,7 +44,8 @@
   "language": {
     "label": "Language",
     "fr": "Français",
-    "en": "English"
+    "en": "English",
+    "aeb": "تونسي"
   },
   "theme": {
     "label": "Theme",
@@ -182,7 +183,7 @@
     "installApp": "Install the app",
     "preferences": "Preferences",
     "displayName": "Display name",
-    "privacy": "Privacy",
+    "visibility": "Privacy",
     "showOnFloorPlan": {
       "label": "Show my name on the floor plan",
       "hint": "Colleagues see your name on the space you booked. Turned off, they only see that it is taken."

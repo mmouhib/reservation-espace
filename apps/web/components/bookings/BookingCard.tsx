@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { formatMinutes, type BookingSummary } from "@reservation/shared";
+import { formatMinutes, INTL_LOCALE, type BookingSummary } from "@reservation/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
@@ -12,7 +12,7 @@ import { useI18n } from "@/lib/i18n/I18nProvider";
 export function BookingCard({ booking, actions }: { booking: BookingSummary; actions?: ReactNode }) {
   const { t, locale } = useI18n();
   const cancelled = booking.status === "cancelled";
-  const month = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(new Date(`${booking.date}T00:00:00Z`));
+  const month = new Intl.DateTimeFormat(INTL_LOCALE[locale], { month: "short", timeZone: "UTC" }).format(new Date(`${booking.date}T00:00:00Z`));
 
   return (
     <Card className={cn("flex flex-wrap items-center gap-4 p-4", cancelled && "opacity-60")}>

@@ -1,4 +1,4 @@
-import { addDays, weekdayOf, type BookingSummary, type EventSummary, type Locale } from "@reservation/shared";
+import { addDays, INTL_LOCALE, weekdayOf, type BookingSummary, type EventSummary, type Locale } from "@reservation/shared";
 
 export type CalendarView = "day" | "week" | "month";
 
@@ -54,17 +54,17 @@ const utc = (date: string) => new Date(`${date}T00:00:00Z`);
 
 /** "May 2026", "11 – 17 May 2026" or "Tuesday 12 May 2026". */
 export function viewTitle(view: CalendarView, anchor: string, locale: Locale): string {
-  const format = (options: Intl.DateTimeFormatOptions, date = anchor) => new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(utc(date));
+  const format = (options: Intl.DateTimeFormatOptions, date = anchor) => new Intl.DateTimeFormat(INTL_LOCALE[locale], { ...options, timeZone: "UTC" }).format(utc(date));
   if (view === "month") return format({ month: "long", year: "numeric" });
   if (view === "day") return format({ weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const days = visibleDays("week", anchor);
-  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).formatRange(utc(days[0]!), utc(days[6]!));
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).formatRange(utc(days[0]!), utc(days[6]!));
 }
 
 /** "Mon", "Tue"... in the language of the user, Monday first. */
 export function weekdayNames(locale: Locale, style: "short" | "long" = "short"): string[] {
   // 2024-01-01 is a Monday.
-  return Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(locale, { weekday: style, timeZone: "UTC" }).format(utc(addDays("2024-01-01", i))));
+  return Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(INTL_LOCALE[locale], { weekday: style, timeZone: "UTC" }).format(utc(addDays("2024-01-01", i))));
 }
 
 /** The items of the bookings and the events, grouped by day, all-day events first and then by start time. */

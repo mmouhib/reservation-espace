@@ -88,7 +88,7 @@ export function IncidentsTab() {
               accept="image/*"
               multiple
               onChange={(e) => setPhotos([...(e.target.files ?? [])].slice(0, MAX_PHOTOS))}
-              className="block w-full text-sm file:mr-3 file:min-h-10 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:font-medium"
+              className="block w-full text-sm file:me-3 file:min-h-10 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:font-medium"
             />
           </Field>
           <Button type="submit" disabled={busy || !online}>

@@ -1,4 +1,5 @@
 import en from "./en.json";
+import aeb from "./aeb.json";
 import fr from "./fr.json";
 
 /**
@@ -13,13 +14,33 @@ import fr from "./fr.json";
  *  - `<tag>text</tag>` marks rich text, rendered by the caller (see `parts`).
  */
 
-export const LOCALES = ["fr", "en"] as const;
+export const LOCALES = ["fr", "en", "aeb"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "fr";
 
 export type Messages = typeof fr;
 
-export const MESSAGES: Record<Locale, Messages> = { fr, en };
+export const MESSAGES: Record<Locale, Messages> = { fr, en, aeb };
+
+/**
+ * The BCP 47 tag the browser's Intl APIs (dates, numbers, plurals) know for each locale. `aeb` is Tunisian Arabic
+ * (the spoken dialect, written in Arabic script): Intl has no data for it, so it uses Arabic as spoken in Tunisia.
+ */
+export const INTL_LOCALE: Record<Locale, string> = { fr: "fr", en: "en", aeb: "ar-TN" };
+
+/** Text direction of each locale. Tunisian Arabic is written right to left. */
+export const LOCALE_DIRECTION: Record<Locale, "ltr" | "rtl"> = { fr: "ltr", en: "ltr", aeb: "rtl" };
+
+/** The short name shown in the language picker of the header, in the language itself. */
+export const LOCALE_SHORT_NAME: Record<Locale, string> = { fr: "FR", en: "EN", aeb: "تونسي" };
+
+/** The locale for a browser language tag such as "fr-CA" or "ar-TN" (Arabic from Tunisia is the dialect), or null. */
+export function localeOfBrowserTag(tag: string): Locale | null {
+  const lower = tag.toLowerCase();
+  if (lower === "aeb" || lower.startsWith("aeb-") || lower === "ar-tn") return "aeb";
+  const base = lower.split("-")[0];
+  return isLocale(base) ? base : null;
+}
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
@@ -80,7 +101,7 @@ export function splitRich(template: string): RichPart[] {
 }
 
 export function createTranslator(locale: Locale): Translator {
-  const plural = new Intl.PluralRules(locale);
+  const plural = new Intl.PluralRules(INTL_LOCALE[locale]);
 
   function template(key: MessageKey, values?: MessageValues): string {
     const count = values?.count;

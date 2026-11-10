@@ -1,0 +1,913 @@
+{
+  "app": {
+    "name": "حجز الفضاءات",
+    "shortName": "الحجز",
+    "description": "احجز بيرو، قاعة اجتماعات ولا فضاء كوورکينڨ في ثواني."
+  },
+  "common": {
+    "loading": "جاري التحميل…",
+    "later": "موبعد",
+    "save": "سجّل",
+    "saving": "جاري التسجيل…",
+    "retry": "عاود جرّب",
+    "signOut": "اخرج",
+    "skipToContent": "امشي للمحتوى الرئيسي",
+    "comingSoon": "الميزة هاذي جاية قريب <muted>(مرحلة {phase})</muted>.",
+    "availableInPhase": "قريب باش تتوفّر (مرحلة {phase})",
+    "cancel": "إلغاء",
+    "confirm": "أكّد",
+    "close": "سكّر",
+    "edit": "بدّل",
+    "delete": "امسح",
+    "add": "زيد",
+    "create": "اعمل",
+    "search": "لوّج",
+    "all": "الكل",
+    "none": "حتى واحد",
+    "name": "الاسم",
+    "description": "الوصف",
+    "status": "الحالة",
+    "date": "التاريخ",
+    "from": "من",
+    "to": "لين",
+    "optional": "(اختياري)",
+    "saved": "تسجّل.",
+    "deleted": "تمسح.",
+    "free": "بلاش",
+    "download": "نزّل",
+    "needsConnection": "الحاجة هاذي تحتاج أنترنات.",
+    "credits_one": "{count} كريدي",
+    "credits_other": "{count} كريدي",
+    "people_one": "{count} واحد",
+    "people_other": "{count} ناس"
+  },
+  "language": {
+    "label": "اللغة",
+    "fr": "Français",
+    "en": "English",
+    "aeb": "تونسي"
+  },
+  "theme": {
+    "label": "المظهر",
+    "system": "كيما التليفون",
+    "light": "فاتح",
+    "dark": "غامق"
+  },
+  "roles": {
+    "user": "موظّف",
+    "manager": "مسؤول فريق",
+    "admin": "أدمين"
+  },
+  "userStatus": {
+    "active": "نشيط",
+    "disabled": "موقّف",
+    "anonymized": "مجهول الهويّة"
+  },
+  "spaceCategories": {
+    "desk": "بيرو",
+    "open_space": "أوبن سباس",
+    "meeting_room": "قاعة اجتماعات",
+    "coworking": "فضاء كوورکينڨ",
+    "phone_booth": "كابينة تليفون"
+  },
+  "nav": {
+    "label": "القايمة الرئيسية",
+    "home": "الرئيسية",
+    "reserve": "احجز",
+    "myBookings": "حجوزاتي",
+    "profile": "البروفيل",
+    "admin": "الإدارة",
+    "team": "فريقي",
+    "credits": "الكريدي",
+    "support": "المساعدة",
+    "notifications": "الإشعارات",
+    "calendar": "الروزنامة",
+    "myBookingsShort": "حجوزاتي",
+    "visitors": "الضيوف",
+    "plan": "الخريطة"
+  },
+  "home": {
+    "greeting": "عسلامة",
+    "greetingName": "عسلامة {name}",
+    "subtitle": "شنوة تحب تعمل اليوم؟",
+    "shortcuts": {
+      "reserve": "لوّج على بيرو، قاعة ولا فضاء كوورکينڨ فاضي.",
+      "calendar": "حجوزاتك وأحداثك، بالنهار، بالسيمانة ولا بالشهر.",
+      "myBookings": "شوف حجوزاتك، بدّلها ولا ألغيها، حتى من غير أنترنات.",
+      "profile": "معلوماتك وإعدادات الإشعارات متاعك.",
+      "admin": "الفضاءات، المستخدمين، المراقبة والإحصائيات.",
+      "team": "حجوزات الناس اللي في فريقك.",
+      "credits": "الرصيد متاعك، العروض والتاريخ.",
+      "support": "بلّغ على مشكلة ولا اطلب معدّات.",
+      "visitors": "ادعي ضيف من برّا وتتبّع الدعوات متاعك.",
+      "plan": "شوف على خريطة الطابق شكون فاضي وشكون موجود."
+    },
+    "upcoming": "الحجوزات الجايين",
+    "noUpcoming": "ما عندك حتى حجز جاي.",
+    "nextBooking": "الحجز الجاي",
+    "noNextBooking": "ما فمّا حتى حاجة",
+    "balance": "رصيد الكريدي",
+    "unread_one": "{count} إشعار ما تقراش",
+    "unread_other": "{count} إشعارات ما تقراوش",
+    "allRead": "الكل تقرا",
+    "seeAll": "شوف الكل"
+  },
+  "reserve": {
+    "title": "احجز فضاء",
+    "description": "لوّج بالموقع، السعة، المعدّات والتاريخ.",
+    "site": "الموقع",
+    "date": "التاريخ",
+    "start": "البداية",
+    "end": "النهاية",
+    "category": "نوع الفضاء",
+    "anyCategory": "كل الأنواع",
+    "minCapacity": "أقلّ سعة",
+    "equipment": "المعدّات",
+    "attendees": "عدد الناس",
+    "search": "شوف شنوة فاضي",
+    "searching": "جاري التلويج…",
+    "resultsCount_one": "{count} فضاء فاضي في الوقت هذا",
+    "resultsCount_other": "{count} فضاءات فاضيين في الوقت هذا",
+    "noResults": "ما فمّا حتى فضاء يناسب بحثك.",
+    "noSites": "باعد ما تحطّش حتى موقع.",
+    "firstSearch": "اختار وقت باش تشوف الفضاءات الفاضيين.",
+    "available": "فاضي",
+    "unavailable": "موش فاضي",
+    "showUnavailable": "ورّي حتى الفضاءات اللي موش فاضيين",
+    "book": "احجز",
+    "floor": "الطابق {floor}",
+    "capacity_one": "{count} بلاصة",
+    "capacity_other": "{count} بلايص",
+    "perHour": "{count} كريدي/سا",
+    "cost": "الكلفة",
+    "confirmTitle": "أكّد الحجز",
+    "balance": "رصيدك: {balance} كريدي",
+    "booked": "الحجز تأكّد.",
+    "offline": "التلويج على الفضاءات يحتاج أنترنات.",
+    "busy": "محجوز من قبل: {slots}"
+  },
+  "myBookings": {
+    "title": "حجوزاتي",
+    "description": "حجوزاتك الجايين والتاريخ متاعك.",
+    "upcoming": "الجايين",
+    "past": "اللي فاتو",
+    "emptyUpcoming": "ما عندك حتى حجز جاي.",
+    "emptyPast": "ما عندك حتى حجز فات.",
+    "checkedInBadge": "موجود",
+    "cancelledBadge": "ملغي",
+    "change": "بدّل",
+    "cancel": "إلغاء",
+    "changeTitle": "بدّل الحجز",
+    "cancelTitle": "ألغي الحجز",
+    "cancelConfirm": "الكريدي متاع الحجز هذا باش يترجعلك.",
+    "cancelled": "الحجز تلغى.",
+    "updated": "الحجز تبدّل.",
+    "absences": "الغيابات",
+    "absencesHint": "وقت الغياب، حجوزاتك تتلغى وما تنجّمش تحجز.",
+    "declareAbsence": "صرّح بغياب",
+    "absenceFrom": "أول نهار",
+    "absenceTo": "آخر نهار",
+    "absenceNote": "ملاحظة",
+    "absenceDeclared_one": "الغياب تسجّل. تلغى {count} حجز.",
+    "absenceDeclared_other": "الغياب تسجّل. تلغاو {count} حجوزات.",
+    "noAbsences": "ما صرّحت بحتى غياب.",
+    "absenceRemoved": "الغياب تمسح."
+  },
+  "profile": {
+    "title": "البروفيل متاعي",
+    "description": "معلوماتك وإعداداتك.",
+    "identity": "الهويّة",
+    "email": "الإيمايل",
+    "role": "الدور",
+    "department": "القسم",
+    "installApp": "ثبّت التطبيق",
+    "preferences": "الإعدادات",
+    "displayName": "الاسم اللي يبان",
+    "visibility": "الخصوصية",
+    "showOnFloorPlan": {
+      "label": "ورّي اسمي على خريطة الطابق",
+      "hint": "زملاءك يشوفو اسمك على الفضاء اللي حجزتو. كان طفّيتها، يشوفو برك إنّو محجوز."
+    },
+    "notifications": "الإشعارات",
+    "prefs": {
+      "email": {
+        "label": "الإيمايلات",
+        "hint": "التأكيدات، الإلغاءات والتذكيرات."
+      },
+      "push": {
+        "label": "إشعارات التليفون",
+        "hint": "تذكير 24 ساعة قبل وتنبيهات على فضاءاتك."
+      },
+      "weeklyDigest": {
+        "label": "ملخّص السيمانة",
+        "hint": "كل اثنين، حجوزاتك متاع السيمانة."
+      }
+    },
+    "saved": "الإعدادات تسجّلو.",
+    "savedOffline": "تسجّل في التليفون، باش يتزامن كي ترجع الأنترنات.",
+    "privacy": "المعطيات الشخصية",
+    "privacyText": "نزّل معطياتك ولا امسح حسابك.",
+    "team": "الفرق",
+    "noTeam": "حتى واحد",
+    "push": {
+      "enable": "فعّلها على الجهاز هذا",
+      "enabled": "إشعارات التليفون تفعّلو على الجهاز هذا.",
+      "denied": "المتصفّح رفض الإذن.",
+      "unavailable": "إشعارات التليفون موش متوفّرة هنا."
+    },
+    "export": "نزّل معطياتي",
+    "exportHint": "تنزّل ملف JSON فيه البروفيل، الحجوزات والكريدي متاعك.",
+    "deleteAccount": "امسح حسابي",
+    "deleteTitle": "تحب تمسح حسابك؟",
+    "deleteConfirm": "الحاجة هاذي ما فيهاش رجوع: حجوزاتك الجايين يتلغاو ومعطياتك الشخصية تتمسح."
+  },
+  "admin": {
+    "title": "الإدارة",
+    "forbidden": "الصفحة هاذي للأدمينز برك.",
+    "sections": {
+      "users": {
+        "title": "المستخدمين",
+        "text": "الأدوار، الفرق، الحسابات الموقّفة، مزامنة الدليل."
+      },
+      "spaces": {
+        "title": "المواقع والفضاءات",
+        "text": "المواقع، الطوابق، الفضاءات، الأسعار، الأوقات والغلق."
+      },
+      "bookings": {
+        "title": "الحجوزات",
+        "text": "كل الحجوزات: تحرير بالقوّة، نقل."
+      },
+      "credits": {
+        "title": "الكريدي والاشتراكات",
+        "text": "العروض، الأسعار وتعديل الأرصدة."
+      },
+      "organization": {
+        "title": "التنظيم",
+        "text": "الأقسام والفرق."
+      },
+      "support": {
+        "title": "التبليغات والمعدّات",
+        "text": "المشاكل وطلبات المعدّات."
+      },
+      "visitors": {
+        "title": "الضيوف",
+        "text": "الاستقبال: شكون مستنّيين، سجّل الدخول ولا الخروج."
+      },
+      "statistics": {
+        "title": "الإحصائيات",
+        "text": "الإشغال، الاستعمال والتصدير."
+      },
+      "plan": {
+        "title": "خرايط الطوابق",
+        "text": "ارسم كل طابق: حطّ الفضاءات في بلايصهم."
+      },
+      "qr": {
+        "title": "QR كود",
+        "text": "اطبع الكودات باش تلصقهم على الفضاءات."
+      },
+      "audit": {
+        "title": "سجلّ التدقيق",
+        "text": "شكون عمل شنوة وإمتى."
+      }
+    },
+    "users": {
+      "title": "المستخدمين",
+      "description": "سيّر أدوار وحسابات الموظّفين.",
+      "filterByRole": "صفّي بالدور",
+      "allRoles": "الكل",
+      "syncDirectory": "زامن الدليل",
+      "tableCaption": "قايمة المستخدمين",
+      "name": "الاسم",
+      "email": "الإيمايل",
+      "status": "الحالة",
+      "role": "الدور",
+      "roleOf": "دور {name}",
+      "empty": "ما فمّا حتى مستخدم.",
+      "loadMore": "حمّل أكثر",
+      "roleChanged": "دور {name} تبدّل: {role}.",
+      "syncDone_one": "المزامنة كملت: {count} حساب تقفّل.",
+      "syncDone_other": "المزامنة كملت: {count} حسابات تقفلو.",
+      "department": "القسم",
+      "teams": "الفرق",
+      "editOrg": "بدّل القسم والفرق",
+      "orgUpdated": "التنظيم تبدّل.",
+      "noDepartment": "حتى قسم",
+      "anonymize": "امسح الحساب",
+      "anonymizeTitle": "تحب تمسح الحساب هذا؟",
+      "anonymizeConfirm": "حجوزات {name} الجايين باش يتلغاو ومعطياتو الشخصية باش تتمسح. الحاجة هاذي ما فيهاش رجوع.",
+      "anonymized": "الحساب تمسح.",
+      "actions": "الإجراءات"
+    },
+    "organization": {
+      "title": "التنظيم",
+      "description": "أقسام وفرق الشركة.",
+      "departments": "الأقسام",
+      "teams": "الفرق",
+      "newDepartment": "قسم جديد",
+      "editDepartment": "بدّل القسم",
+      "newTeam": "فريق جديد",
+      "editTeam": "بدّل الفريق",
+      "departmentName": "اسم القسم",
+      "teamName": "اسم الفريق",
+      "department": "القسم",
+      "managers": "المسؤولين",
+      "managersHint": "المسؤولين يشوفو حجوزات الفريق. تلقى برك المسؤولين والأدمينز في القايمة.",
+      "members_one": "{count} عضو",
+      "members_other": "{count} أعضاء",
+      "noDepartments": "ما فمّا حتى قسم.",
+      "noTeams": "ما فمّا حتى فريق.",
+      "confirmDelete": "تحب تمسح « {name} »؟"
+    },
+    "spaces": {
+      "title": "المواقع والفضاءات",
+      "description": "المواقع، أوقاتهم والفضاءات اللي تنجّم تحجزهم.",
+      "sites": "المواقع",
+      "spaces": "الفضاءات",
+      "newSite": "موقع جديد",
+      "editSite": "بدّل الموقع",
+      "newSpace": "فضاء جديد",
+      "editSpace": "بدّل الفضاء",
+      "siteName": "اسم الموقع",
+      "address": "العنوان",
+      "timeZone": "التوقيت",
+      "floors": "الطوابق (واحد في كل سطر)",
+      "openingHours": "أوقات الفتح",
+      "closedDay": "مسكّر",
+      "site": "الموقع",
+      "floor": "الطابق",
+      "location": "البلاصة",
+      "category": "نوع الفضاء",
+      "capacity": "السعة",
+      "creditsPerHour": "كريدي في الساعة",
+      "equipment": "المعدّات",
+      "tags": "الخصائص",
+      "useSiteHours": "استعمل أوقات الموقع",
+      "closures": "غلق استثنائي",
+      "addClosure": "زيد غلق",
+      "closureReason": "السبب",
+      "noSites": "ما فمّا حتى موقع.",
+      "noSpaces": "ما فمّا حتى فضاء.",
+      "allSites": "كل المواقع",
+      "confirmDelete": "تحب تمسح « {name} »؟ الحجوزات اللي موجودين يتخلّاو.",
+      "siteInUse": "الموقع هذا مازال فيه فضاءات: امسحهم الأول.",
+      "statusActive": "نشيط",
+      "statusClosed": "مسكّر"
+    },
+    "bookings": {
+      "title": "الحجوزات",
+      "description": "كل حجوزات الشركة.",
+      "user": "المستخدم",
+      "space": "الفضاء",
+      "slot": "الوقت",
+      "statusConfirmed": "مأكّد",
+      "statusCancelled": "ملغي",
+      "move": "انقل",
+      "moveTitle": "انقل الحجز",
+      "release": "حرّر",
+      "releaseTitle": "حرّر الفضاء",
+      "reason": "السبب (يتبعث للمستخدم)",
+      "moved": "الحجز تنقل.",
+      "released": "الحجز تلغى.",
+      "empty": "ما فمّا حتى حجز في الفترة هاذي."
+    },
+    "credits": {
+      "title": "الكريدي والاشتراكات",
+      "description": "العروض المتوفّرة وأرصدة المستخدمين.",
+      "plans": "العروض",
+      "newPlan": "عرض جديد",
+      "editPlan": "بدّل العرض",
+      "planName": "الاسم",
+      "generateDescription": "✨ اكتبها بالذكاء الاصطناعي",
+      "generatingDescription": "جاري الكتابة…",
+      "generateDescriptionError": "اكتب اسم العرض الأول.",
+      "planKind": "النوع",
+      "planCredits": "الكريدي",
+      "planPrice": "السعر (€)",
+      "planActive": "يبان للمستخدمين",
+      "hidden": "مخبّي",
+      "noPlans": "ما فمّا حتى عرض.",
+      "adjust": "عدّل رصيد",
+      "adjustUser": "المستخدم",
+      "adjustAmount": "المبلغ (بالناقص باش تنقص)",
+      "adjustLabel": "السبب",
+      "adjusted": "الرصيد تعدّل.",
+      "confirmDelete": "تحب تمسح العرض « {name} »؟"
+    },
+    "support": {
+      "title": "التبليغات والمعدّات",
+      "description": "عالج المشاكل وطلبات المعدّات.",
+      "incidents": "التبليغات",
+      "requests": "طلبات المعدّات",
+      "from": "من {name}",
+      "note": "الرد على المستخدم",
+      "updated": "تبدّل.",
+      "noIncidents": "ما فمّا حتى تبليغ.",
+      "noRequests": "ما فمّا حتى طلب."
+    },
+    "visitors": {
+      "title": "الضيوف",
+      "description": "الضيوف المنتظرين في النهار المختار.",
+      "host": "مدعو من {name}",
+      "checkIn": "سجّل الدخول",
+      "checkOut": "سجّل الخروج",
+      "noVisits": "ما فمّا حتى ضيف منتظر النهار هذاك."
+    },
+    "statistics": {
+      "title": "الإحصائيات",
+      "description": "إشغال الفضاءات واستعمالهم.",
+      "bookings": "الحجوزات",
+      "cancelled": "الملغيين",
+      "hours": "الساعات المحجوزة",
+      "creditsSpent": "الكريدي المصروف",
+      "activeUsers": "المستخدمين النشيطين",
+      "heatmap": {
+        "title": "الإشغال بنهار السيمانة وبالساعة",
+        "description": "المعدّل متاع الفضاءات المحجوزة في كل وقت من السيمانة، في الفترة اللي فوق.",
+        "site": "الموقع",
+        "allSites": "كل المواقع",
+        "noSpaces": "ما فمّا حتى فضاء نشيط باش نقيسو.",
+        "peak": "أكثر وقت مشغول: {day} على {time}، بمعدّل {percent} % من الفضاءات محجوزة.",
+        "cell": "{day} {time}: {count} فضاءات محجوزة من {total} بالمعدّل ({percent} %)",
+        "quiet": "هادي",
+        "full": "عامر"
+      },
+      "byDay": "الحجوزات بالنهار",
+      "byCategory": "الساعات بنوع الفضاء",
+      "topSpaces": "الفضاءات الأكثر حجزًا",
+      "export": "صدّر CSV",
+      "noData": "ما فمّا حتى حجز في الفترة هاذي.",
+      "hoursShort": "{count} سا"
+    },
+    "audit": {
+      "title": "سجلّ التدقيق",
+      "description": "تاريخ الإجراءات المهمّة.",
+      "action": "الإجراء",
+      "allActions": "كل الإجراءات",
+      "when": "التاريخ",
+      "actor": "الفاعل",
+      "target": "الهدف",
+      "system": "النظام",
+      "empty": "ما فمّا حتى سجلّ.",
+      "actions": {
+        "booking": {
+          "created": "حجز تعمل",
+          "updated": "حجز تبدّل",
+          "cancelled": "حجز تلغى"
+        },
+        "absence": {
+          "declared": "غياب تصرّح بيه"
+        },
+        "credits": {
+          "purchased": "شراء كريدي",
+          "adjusted": "كريدي تعدّل"
+        },
+        "subscription": {
+          "cancelled": "اشتراك تلغى"
+        },
+        "user": {
+          "created": "حساب تعمل",
+          "role_changed": "دور تبدّل",
+          "disabled": "حساب تقفّل",
+          "org_changed": "تنظيم تبدّل",
+          "anonymized": "حساب تمسح"
+        }
+      }
+    }
+  },
+  "login": {
+    "title": "ادخل",
+    "withGoogle": "ادخل بقوقل",
+    "signInTab": "ادخل",
+    "signUpTab": "اعمل حساب",
+    "or": "ولا",
+    "name": "الاسم الكامل",
+    "confirmPassword": "أكّد كلمة السر",
+    "passwordHint": "8 حروف على الأقل.",
+    "forgot": "نسيت كلمة السر؟",
+    "backToSignIn": "ارجع للدخول",
+    "resetText": "اكتب الإيمايل متاعك: باش نبعثولك رابط باش تختار كلمة سر جديدة.",
+    "sendReset": "ابعث الرابط",
+    "resetSent": "كان فمّا حساب بالإيمايل هذا، تبعثلو رابط باش يبدّل كلمة السر.",
+    "signUp": "اعمل حسابي",
+    "signUpNote": "باش نبعثولك رابط باش تأكّد العنوان متاعك.",
+    "passwordMismatch": "كلمتين السر موش كيف كيف.",
+    "verifyTitle": "شوف الإيمايل متاعك",
+    "verifyText": "بعثنالك رابط التأكيد على {email}. حلّو وارجع لهنا.",
+    "verifyDone": "أكّدت الإيمايل",
+    "verifyNotYet": "باعد ما تأكّدش. حلّ رابط الإيمايل الأول.",
+    "verifyResend": "عاود ابعث الإيمايل",
+    "verifyResent": "الإيمايل تبعث.",
+    "verifyOther": "استعمل حساب آخر",
+    "verifyDevHint": "محاكي محلّي: الرابط موجود في محاكي Auth (http://127.0.0.1:4000, Authentication)، موش في صندوق الإيمايل.",
+    "email": "الإيمايل",
+    "password": "كلمة السر",
+    "signIn": "ادخل",
+    "demoAccounts": "حسابات تجريبية (محاكيات)",
+    "feature1": "بيروات، قاعات اجتماعات وفضاءات كوورکينڨ",
+    "feature2": "تنجّم تثبّتو، ويخدم حتى من غير أنترنات",
+    "feature3": "تذكيرات وإشعارات في وقتها",
+    "welcome": "مرحبا بيك"
+  },
+  "pwa": {
+    "updateAvailable": "فمّا نسخة جديدة.",
+    "reload": "عاود حمّل",
+    "offlineBanner": "ما عندكش أنترنات. المعطيات اللي تشوف فيها من الذاكرة؛ الحجز موش متوفّر.",
+    "install": {
+      "title": "ثبّت التطبيق",
+      "text": "ادخل لحجوزاتك بضغطة، حتى من غير أنترنات، وتوصلك التذكيرات.",
+      "install": "ثبّت",
+      "howTo": "كيفاش؟",
+      "iosTitle": "التثبيت على آيفون ولا آيباد",
+      "iosStep1": "اضغط على زر <strong>مشاركة</strong> في سفاري (مربّع فيه سهم لفوق).",
+      "iosStep2": "اختار <strong>إضافة إلى الشاشة الرئيسية</strong>.",
+      "iosStep3": "اضغط على <strong>إضافة</strong>.",
+      "iosPushNote": "إشعارات التليفون على iOS تخدم برك بعد ما تثبّت التطبيق (iOS 16.4 ولا أحدث).",
+      "gotIt": "فهمت"
+    }
+  },
+  "offline": {
+    "title": "من غير أنترنات",
+    "heading": "ما عندكش أنترنات",
+    "text": "الصفحة هاذي ما تخدمش من غير أنترنات. الحجوزات اللي شفتهم قبل مازالو موجودين.",
+    "notCached": "المعطيات هاذم ما شفتهمش باعد بأنترنات: باش يوليو متوفّرين من غير أنترنات بعد أول زيارة.",
+    "staleSince": "معطيات من غير أنترنات متاع {date}."
+  },
+  "notFound": {
+    "title": "الصفحة ما لقيناهاش",
+    "text": "الصفحة اللي طلبتها موش موجودة ولا تنقلت.",
+    "back": "ارجع للرئيسية"
+  },
+  "errors": {
+    "generic": "صار مشكل.",
+    "authRequired": "الجلسة متاعك خلصت. ادخل مرة أخرى.",
+    "forbidden": "ما عندكش الصلاحيات المطلوبة.",
+    "invalidInput": "معطيات غالطة.",
+    "rateLimited": "برشا طلبات، عاود جرّب بعد شوية.",
+    "unavailable": "الخدمة موش متوفّرة. شوف الأنترنات متاعك.",
+    "internal": "صار مشكل داخلي.",
+    "popupClosed": "نافذة الدخول تسكّرت.",
+    "network": "ما نجّمش نتّصل بالشبكة.",
+    "invalidCredential": "المعلومات غالطة.",
+    "accountDisabled": "الحساب هذا تقفّل.",
+    "emailNotVerified": "أكّد عنوان الإيمايل الأول: حلّ الرابط اللي بعثناهولك.",
+    "emailInUse": "فمّا حساب بالإيمايل هذا. جرّب ادخل.",
+    "weakPassword": "كلمة السر ضعيفة: استعمل 8 حروف على الأقل.",
+    "invalidEmail": "عنوان الإيمايل هذا موش صحيح.",
+    "tooManyAttempts": "برشا محاولات. استنّى شوية وعاود جرّب.",
+    "noEmail": "ما فمّا حتى إيمايل مربوط بالحساب.",
+    "notInCompany": "الحساب هذا موش متاع الشركة.",
+    "cannotDemoteSelf": "ما تنجّمش تنحّي دور الأدمين متاعك إنت.",
+    "userNotFound": "المستخدم ما لقيناهش.",
+    "invalidSlot": "الوقت هذا موش صحيح (30 دقيقة على الأقل، 8 ساعات على الأكثر، بخطوات 30 دقيقة).",
+    "spaceClosed": "الفضاء هذا مسكّر في النهار هذا.",
+    "outsideHours": "الوقت هذا خارج أوقات الفتح.",
+    "pastSlot": "الوقت هذا فات.",
+    "tooFarAhead": "ما تنجّمش تحجز قبل أكثر من 60 نهار.",
+    "slotTaken": "الفضاء هذا ما عادش فاضي في الوقت هذا.",
+    "tooManyAttendees": "عدد الناس أكثر من سعة الفضاء.",
+    "alreadyBooked": "عندك حجز في الوقت هذا.",
+    "absent": "مصرّح بغيابك في النهار هذا.",
+    "spaceNotFound": "الفضاء ما لقيناهش.",
+    "bookingNotFound": "الحجز ما لقيناهش.",
+    "bookingNotCancellable": "الحجز هذا ما عادش تنجّم تبدّلو ولا تلغيه.",
+    "invalidDates": "التواريخ غالطة.",
+    "notEnoughCredits": "الكريدي ما يكفيش.",
+    "planNotFound": "العرض ما لقيناهوش.",
+    "alreadySubscribed": "عندك اشتراك نشيط.",
+    "subscriptionNotFound": "الاشتراك ما لقيناهوش.",
+    "paymentFailed": "الخلاص ما نجحش.",
+    "paymentUnavailable": "الخلاص موش متوفّر توّا. عاود جرّب موبعد.",
+    "eventNotFound": "الحدث هذا ما عادش موجود.",
+    "noBookingNow": "ما عندكش حجز في الفضاء هذا توّا.",
+    "assistantUnavailable": "المساعد الذكي موش متوفّر توّا.",
+    "visitNotFound": "الزيارة ما لقيناهاش.",
+    "invalidVisitStatus": "الزيارة هاذي ما عادش تنجّم تتبدّل."
+  },
+  "incidentStatus": {
+    "open": "مفتوح",
+    "in_progress": "في الخدمة",
+    "resolved": "تحلّ"
+  },
+  "equipmentStatus": {
+    "pending": "في الانتظار",
+    "approved": "مقبول",
+    "rejected": "مرفوض"
+  },
+  "visitStatus": {
+    "expected": "منتظر",
+    "checkedIn": "وصل",
+    "checkedOut": "مشى",
+    "cancelled": "ملغي"
+  },
+  "items": {
+    "screen": "شاشة",
+    "keyboard": "كلافيي",
+    "mouse": "فأرة",
+    "headset": "كاسك",
+    "webcam": "ويبكام",
+    "adapter": "أدابتور",
+    "chair": "كرسي بيرو"
+  },
+  "notify": {
+    "bookingConfirmed": {
+      "title": "الحجز تأكّد",
+      "body": "{space} · {date} من {from} لين {to}"
+    },
+    "bookingCancelled": {
+      "title": "الحجز تلغى",
+      "body": "{space} · {date} من {from} لين {to}"
+    },
+    "bookingCancelledByAdmin": {
+      "title": "الحجز لغاه أدمين",
+      "body": "{space} · {date} من {from} لين {to}. السبب: {reason}"
+    },
+    "bookingMoved": {
+      "title": "الحجز تبدّل",
+      "body": "{space} · {date} من {from} لين {to}"
+    },
+    "bookingReminder": {
+      "title": "تذكير بالحجز",
+      "body": "{space} · {date} من {from} لين {to}"
+    },
+    "weeklyDigest": {
+      "title": "السيمانة متاعك",
+      "body_one": "عندك {count} حجز السيمانة هاذي.",
+      "body_other": "عندك {count} حجوزات السيمانة هاذي."
+    },
+    "creditsAdded": {
+      "title": "تزادو كريدي",
+      "body_one": "تزاد {count} كريدي للرصيد متاعك ({label}).",
+      "body_other": "تزادو {count} كريدي للرصيد متاعك ({label})."
+    },
+    "subscriptionRenewed": {
+      "title": "الاشتراك تجدّد",
+      "body_one": "تزاد {count} كريدي ({label}).",
+      "body_other": "تزادو {count} كريدي ({label})."
+    },
+    "incidentReceived": {
+      "title": "تبليغ جديد",
+      "body": "{title}، من {name}"
+    },
+    "incidentUpdated": {
+      "title": "التبليغ تبدّل",
+      "body": "« {title} » وليت: {status}"
+    },
+    "equipmentUpdated": {
+      "title": "طلب المعدّات تبدّل",
+      "body": "الطلب متاعك ({item}) وليت: {status}"
+    },
+    "visitorArrived": {
+      "title": "الضيف متاعك وصل",
+      "body": "{guest} وصل للاستقبال."
+    }
+  },
+  "weekdays": {
+    "mon": "الإثنين",
+    "tue": "الثلاثاء",
+    "wed": "الأربعاء",
+    "thu": "الخميس",
+    "fri": "الجمعة",
+    "sat": "السبت",
+    "sun": "الأحد"
+  },
+  "equipment": {
+    "screen": "شاشة",
+    "dock": "دوكينڨ ستيشن",
+    "whiteboard": "سبّورة بيضاء",
+    "videoconference": "فيديو كونفيرنس",
+    "projector": "بروجيكتور"
+  },
+  "tags": {
+    "quiet_zone": "بلاصة هادية",
+    "window": "حذا الشباك",
+    "standing_desk": "بيرو تخدم فيه قاعد ولا واقف",
+    "accessible": "متاح لذوي الاحتياجات"
+  },
+  "team": {
+    "title": "فريقي",
+    "description": "حجوزات الناس اللي في فرقك.",
+    "noTeam": "ما تسيّر حتى فريق توّا.",
+    "member": "العضو",
+    "bookings": "الحجوزات",
+    "noBooking": "ما فمّا حتى حجز النهار هذاك",
+    "team": "الفريق"
+  },
+  "calendar": {
+    "title": "الروزنامة",
+    "description": "حجوزاتك اللي فاتو واللي جايين، وأحداثك.",
+    "today": "اليوم",
+    "previous": "اللي قبل",
+    "next": "اللي بعد",
+    "views": {
+      "day": "نهار",
+      "week": "سيمانة",
+      "month": "شهر"
+    },
+    "addEvent": "زيد حدث",
+    "bookSpace": "احجز فضاء",
+    "openDay": "حلّ النهار",
+    "allDay": "النهار كلّو",
+    "more": "+{count} زيادة",
+    "legend": "الشرح",
+    "legendBooking": "حجز",
+    "legendEvent": "حدث",
+    "sync": {
+      "button": "زامن",
+      "title": "زامن مع الروزنامة متاعك",
+      "intro": "اربط قوقل كاليندر، آبل كاليندر ولا آوتلوك بحجوزاتك وأحداثك. الحجوزات الجداد تبان فيهم وحدها.",
+      "privateHost": "العنوان هذا موجود برك في شبكتك: قوقل والروزنامات اللي على الأنترنات ما تنجّمش تقراه. باش يخدم كي يتنشر التطبيق على الأنترنات.",
+      "linkLabel": "رابط الروزنامة الخاص بيك",
+      "copy": "انسخ",
+      "copied": "الرابط تنسخ.",
+      "privacy": "أي واحد عندو الرابط هذا يشوف حجوزاتك وأحداثك. ما تشاركوش.",
+      "addGoogle": "زيد لقوقل كاليندر",
+      "openApp": "حلّ في تطبيق الروزنامة متاعي",
+      "stepsTitle": "ولا بيدك في قوقل كاليندر",
+      "step1": "من كمبيوتر، حلّ قوقل كاليندر.",
+      "step2": "حذا « روزنامات أخرى »، اضغط على + وبعد على « من رابط ».",
+      "step3": "الصق الرابط اللي فوق واضغط على « زيد الروزنامة ».",
+      "delay": "قوقل يحدّث الروزنامات اللي مشترك فيهم كل شوية ساعات: الحجز الجديد ممكن ياخو وقت باش يبان.",
+      "reset": "اعمل رابط جديد",
+      "resetConfirm": "الرابط القديم يوقّف يخدم في الحين. الروزنامات اللي تستعملو لازمهم الرابط الجديد.",
+      "resetDone": "الرابط الجديد تعمل.",
+      "addBooking": "زيد لقوقل كاليندر"
+    },
+    "loadFailed": "ما نجّمناش نحمّلو الروزنامة. شوف الأنترنات متاعك.",
+    "event": {
+      "newTitle": "حدث جديد",
+      "editTitle": "بدّل الحدث",
+      "title": "العنوان",
+      "date": "التاريخ",
+      "from": "من",
+      "to": "لين",
+      "note": "ملاحظة",
+      "delete": "امسح",
+      "deleteText": "« {title} » باش يتشال من الروزنامة متاعك.",
+      "saved": "الحدث تسجّل.",
+      "deleted": "الحدث تمسح.",
+      "endBeforeStart": "النهاية لازم تكون بعد البداية."
+    },
+    "booking": {
+      "details": "الحجز",
+      "attendees_one": "{count} واحد",
+      "attendees_other": "{count} ناس",
+      "manage": "سيّر حجوزاتي"
+    }
+  },
+  "checkin": {
+    "title": "تسجيل الحضور",
+    "checking": "جاري تسجيل الحضور…",
+    "done": "تسجّل حضورك",
+    "already": "حضورك كان مسجّل من قبل",
+    "noBookingHelp": "تسجيل الحضور يتحلّ 30 دقيقة قبل بداية الحجز متاعك ويتسكّر كي يكمّل.",
+    "bookNow": "احجز فضاء",
+    "myBookings": "حجوزاتي",
+    "invalid": "الـ QR كود هذا موش صحيح."
+  },
+  "plan": {
+    "title": "خريطة الطابق",
+    "description": "اضغط على فضاء باش تشوف شكون فيه وتحجزو. الخريطة تتحدّث في وقتها.",
+    "site": "الموقع",
+    "floor": "الطابق",
+    "now": "توّا",
+    "legend": "الشرح",
+    "live": "مباشر",
+    "stale": "موش محدّث",
+    "state": {
+      "free": "فاضي",
+      "partial": "محجوز شوية",
+      "taken": "محجوز",
+      "mine": "متاعي",
+      "closed": "مسكّر"
+    },
+    "empty": "الطابق هذا باعد ما عندوش خريطة. الأدمين ينجّم يرسمها.",
+    "mapLabel": "خريطة الطابق {floor}",
+    "hint": "أخضر: فاضي، برتقالي: محجوز شوية، أحمر: محجوز، أزرق: متاعك. النقطة قدّام الاسم معناها الشخص وصل (سجّل حضورو).",
+    "details": "التفاصيل",
+    "selectHint": "اختار فضاء من الخريطة.",
+    "capacity": "{count} بلايص",
+    "inside": "الموجودين في الوقت هذا",
+    "nobody": "حتى واحد.",
+    "someone": "واحد",
+    "you": "إنت",
+    "checkedIn": "وصل",
+    "book": "احجز الفضاء هذا",
+    "seeMyBookings": "شوف حجوزاتي",
+    "unavailable": "الفضاء هذا ما تنجّمش تحجزو في الوقت هذا.",
+    "whoIsHere": "الموجودين ({count})",
+    "noOne": "ما فمّا حتى واحد حاجز في الطابق هذا في الوقت هذا."
+  },
+  "adminPlan": {
+    "title": "خرايط الطوابق",
+    "description": "جرّ كل فضاء لبلاصتو في الطابق. الموظّفين يشوفو الخريطة هاذي في وقتها.",
+    "mapLabel": "الطابق اللي تبدّل فيه",
+    "hint": "جرّ فضاء باش تنقلو، ولا اختارو واستعمل الأسهم (Shift باش تتحرّك أكثر).",
+    "selection": "الاختيار",
+    "selectHint": "اختار فضاء من الخريطة باش تبدّل حجمو ولا تشيلو.",
+    "width": "العرض",
+    "height": "الطول",
+    "remove": "شيلو من الخريطة",
+    "unplaced": "موش على الخريطة ({count})",
+    "allPlaced": "كل فضاءات الطابق هذا على الخريطة.",
+    "place": "حطّو",
+    "placeAll": "حطّ الكل",
+    "save": "سجّل ({count})",
+    "saved": "الخريطة تسجّلت.",
+    "overlap": "{count} فضاءات فوق بعضهم. يبانو بالأحمر."
+  },
+  "qr": {
+    "title": "QR كودات الفضاءات",
+    "description": "اطبع الكودات هاذم والصق واحد على كل فضاء. كي تعمل سكان بالتليفون، يتسجّل حضورك في الحجز متاعك.",
+    "site": "الموقع",
+    "print": "اطبع",
+    "scanHint": "اعمل سكان باش تسجّل حضورك"
+  },
+  "credits": {
+    "title": "الكريدي",
+    "description": "الرصيد متاعك، العروض وتاريخ العمليات.",
+    "balance": "الرصيد توّا",
+    "plans": "العروض",
+    "noPlans": "ما فمّا حتى عرض متوفّر توّا.",
+    "buy": "اشري",
+    "subscribe": "اشترك",
+    "kindPack": "باك كريدي",
+    "kindSubscription": "اشتراك شهري",
+    "perMonth": "في الشهر",
+    "subscription": "الاشتراك متاعك",
+    "renewsOn": "التجديد الجاي: {date}",
+    "cancelSubscription": "ألغي الاشتراك",
+    "subscriptionCancelled": "الاشتراك تلغى.",
+    "purchased_one": "الشراء تمّ: تزاد {count} كريدي.",
+    "purchased_other": "الشراء تمّ: تزادو {count} كريدي.",
+    "payTitle": "اخلص {name}",
+    "pay": "اخلص {price}",
+    "paymentReceived": "الخلاص متاعك نجح، أما الكريدي باعد ما تزادوش.",
+    "checkPayment": "تثبّت من الخلاص متاعي",
+    "paymentsOff": "الخلاص بالكارت باعد ما تحطّش.",
+    "history": "التاريخ",
+    "noHistory": "ما فمّا حتى عملية توّا.",
+    "types": {
+      "purchase": "شراء",
+      "subscription": "اشتراك",
+      "booking": "حجز",
+      "refund": "استرجاع",
+      "adjustment": "تعديل"
+    }
+  },
+  "support": {
+    "title": "المساعدة",
+    "description": "بلّغ على مشكلة ولا اطلب معدّات.",
+    "tabIncidents": "التبليغات",
+    "tabEquipment": "المعدّات",
+    "newIncident": "بلّغ على مشكلة",
+    "incidentTitle": "العنوان",
+    "incidentDescription": "الوصف",
+    "incidentSpace": "الفضاء المعني",
+    "noSpace": "حتى فضاء معيّن",
+    "photos": "تصاور (3 على الأكثر)",
+    "send": "ابعث",
+    "sending": "جاري البعث…",
+    "incidentSent": "التبليغ تبعث.",
+    "myIncidents": "تبليغاتي",
+    "noIncidents": "ما فمّا حتى تبليغ.",
+    "answer": "الرد",
+    "newRequest": "اطلب معدّات",
+    "item": "المعدّات",
+    "quantity": "الكمية",
+    "neededOn": "نحتاجها في",
+    "comment": "تعليق",
+    "requestSent": "الطلب تبعث.",
+    "myRequests": "طلباتي",
+    "noRequests": "ما فمّا حتى طلب."
+  },
+  "visitors": {
+    "title": "الضيوف",
+    "description": "ادعي ضيف من برّا وتتبّع الدعوات متاعك.",
+    "newVisit": "ادعي ضيف",
+    "site": "الموقع",
+    "guestName": "اسم الضيف",
+    "guestEmail": "إيمايل الضيف",
+    "guestCompany": "الشركة",
+    "send": "ابعث الدعوة",
+    "sending": "جاري البعث…",
+    "sent": "الدعوة تبعثت.",
+    "myVisits": "دعواتي",
+    "noVisits": "ما فمّا حتى دعوة.",
+    "cancelled": "الدعوة تلغات."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "ما فمّا حتى إشعار.",
+    "markAllRead": "علّم الكل كمقروء"
+  },
+  "assistant": {
+    "openLabel": "حلّ المساعد",
+    "closeLabel": "سكّر المساعد",
+    "title": "مساعد الحجز",
+    "greeting": "👋 عسلامة! اسألني على أي حاجة في حجز الفضاءات.",
+    "placeholder": "اسأل سؤال…",
+    "send": "ابعث",
+    "typing": "المساعد يكتب…",
+    "error": "سامحنا، صار مشكل. عاود جرّب بعد شوية."
+  }
+}

@@ -44,7 +44,8 @@
   "language": {
     "label": "Langue",
     "fr": "Français",
-    "en": "English"
+    "en": "English",
+    "aeb": "تونسي"
   },
   "theme": {
     "label": "Thème",
@@ -182,7 +183,7 @@
     "installApp": "Installer l'application",
     "preferences": "Préférences",
     "displayName": "Nom affiché",
-    "privacy": "Confidentialité",
+    "visibility": "Confidentialité",
     "showOnFloorPlan": {
       "label": "Afficher mon nom sur le plan de l'étage",
       "hint": "Vos collègues voient votre nom sur l'espace que vous avez réservé. Désactivé, ils voient seulement qu'il est occupé."

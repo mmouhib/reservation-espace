@@ -144,7 +144,7 @@ function PreferencesForm({ profile }: { profile: Profile }) {
         </fieldset>
 
         <fieldset className="mt-6">
-          <legend className="text-sm font-medium">{t("profile.privacy")}</legend>
+          <legend className="text-sm font-medium">{t("profile.visibility")}</legend>
           <div className="mt-2 flex items-start gap-3">
             <input
               id="pref-floorplan"

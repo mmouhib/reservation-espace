@@ -25,7 +25,7 @@ function Bars({ items }: { items: { label: string; value: number; display: strin
           <span className="h-3 overflow-hidden rounded-full bg-slate-100">
             <span className="block h-full rounded-full bg-brand-600" style={{ width: `${(item.value / max) * 100}%` }} />
           </span>
-          <span className="text-right font-medium">{item.display}</span>
+          <span className="text-end font-medium">{item.display}</span>
         </li>
       ))}
     </ul>

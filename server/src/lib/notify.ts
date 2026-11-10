@@ -8,7 +8,9 @@ import {
   DEFAULT_LOCALE,
   deviceSchema,
   isDateString,
+  INTL_LOCALE,
   isLocale,
+  type Locale,
   type MessageValues,
   type NotificationType,
   userProfileSchema,
@@ -30,7 +32,7 @@ export interface NotifyOptions {
 }
 
 function localizeDate(date: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale as Locale] ?? locale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
     new Date(`${date}T00:00:00Z`),
   );
 }

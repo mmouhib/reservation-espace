@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ERROR_REASONS } from "../errors";
-import { createTranslator, DEFAULT_LOCALE, isMessageKey, LOCALES, MESSAGES, type MessageKey } from "./index";
+import { createTranslator, DEFAULT_LOCALE, INTL_LOCALE, isMessageKey, LOCALE_DIRECTION, LOCALES, localeOfBrowserTag, MESSAGES, type MessageKey } from "./index";
 
 function flatten(node: unknown, prefix = ""): Record<string, string> {
   const out: Record<string, string> = {};
@@ -76,5 +76,29 @@ describe("createTranslator", () => {
     expect(en.t("does.not.exist" as MessageKey)).toBe("does.not.exist");
     expect(isMessageKey("does.not.exist")).toBe(false);
     expect(isMessageKey("admin.users.syncDone")).toBe(true);
+  });
+});
+
+describe("Tunisian Arabic (aeb)", () => {
+  it("is a registered locale, written right to left, with a tag that Intl knows", () => {
+    expect(LOCALES).toContain("aeb");
+    expect(LOCALE_DIRECTION.aeb).toBe("rtl");
+    expect(LOCALE_DIRECTION.fr).toBe("ltr");
+    for (const locale of LOCALES) expect(Intl.DateTimeFormat.supportedLocalesOf(INTL_LOCALE[locale])).not.toEqual([]);
+  });
+
+  it("is chosen for a browser set to Arabic from Tunisia, not for other Arabic", () => {
+    expect(localeOfBrowserTag("ar-TN")).toBe("aeb");
+    expect(localeOfBrowserTag("aeb")).toBe("aeb");
+    expect(localeOfBrowserTag("ar-EG")).toBeNull();
+    expect(localeOfBrowserTag("fr-CA")).toBe("fr");
+    expect(localeOfBrowserTag("en-GB")).toBe("en");
+  });
+
+  it("is written in Arabic script and picks the singular for one", () => {
+    const { t } = createTranslator("aeb");
+    expect(t("nav.home")).toMatch(/[؀-ۿ]/);
+    expect(t("home.unread", { count: 1 })).toBe("1 إشعار ما تقراش");
+    expect(t("home.unread", { count: 5 })).toBe("5 إشعارات ما تقراوش");
   });
 });

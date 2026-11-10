@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatMinutes, hasRole } from "@reservation/shared";
+import { formatMinutes, hasRole, INTL_LOCALE } from "@reservation/shared";
 import { DocumentTitle } from "@/components/i18n/DocumentTitle";
 import { Badge } from "@/components/ui/Badge";
 import { Card, EmptyState } from "@/components/ui/Card";
@@ -43,7 +43,7 @@ export default function TeamPage() {
           {result && team.fromCache && team.savedAt && (
             <p className="text-sm text-amber-800">
               {t("offline.staleSince", {
-                date: new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(team.savedAt),
+                date: new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "medium", timeStyle: "short" }).format(team.savedAt),
               })}
             </p>
           )}
@@ -57,7 +57,7 @@ export default function TeamPage() {
             <EmptyState icon="users">{t("team.noTeam")}</EmptyState>
           ) : (
             <Card className="overflow-x-auto p-0">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead className="border-b border-slate-200 bg-slate-50 text-slate-700">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-medium">{t("team.member")}</th>

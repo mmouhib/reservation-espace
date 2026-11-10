@@ -37,7 +37,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <a
         href="#contenu"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow"
+        className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow"
       >
         {t("common.skipToContent")}
       </a>
@@ -51,7 +51,7 @@ function Shell({ children }: { children: ReactNode }) {
             <span className="sm:hidden">{t("app.shortName")}</span>
             <span className="hidden sm:inline">{t("app.name")}</span>
           </Link>
-          <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <div className="ms-auto flex items-center gap-1 sm:gap-2">
             <NotificationBell />
             <ThemeToggle />
             <LanguageSwitcher compact />
@@ -65,7 +65,7 @@ function Shell({ children }: { children: ReactNode }) {
       </header>
 
       <div className="mx-auto flex w-full max-w-7xl flex-1">
-        <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-slate-200 p-4 md:flex">
+        <aside className="hidden w-64 shrink-0 flex-col justify-between border-e border-slate-200 p-4 md:flex">
           <nav aria-label={t("nav.label")}>
             <ul className="space-y-1">
               {items.map((item) => {

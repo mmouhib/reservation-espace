@@ -5,7 +5,11 @@ import { appError } from "../lib/errors";
 import { logger } from "../lib/logger";
 import { geminiModel } from "./gemini";
 
-const LANGUAGE_NAMES: Record<Locale, string> = { fr: "French", en: "English" };
+const LANGUAGE_NAMES: Record<Locale, string> = {
+  fr: "French",
+  en: "English",
+  aeb: "Tunisian Arabic (the Tunisian dialect, Derja, not Modern Standard Arabic), written in Arabic script",
+};
 
 /** Admin-only: drafts a short marketing description for a credit plan from its name. */
 export const generatePlanDescription = secureCall(

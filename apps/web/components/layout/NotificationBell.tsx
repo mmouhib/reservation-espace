@@ -103,7 +103,7 @@ export function NotificationBell() {
       >
         <Icon name="bell" />
         {unreadCount > 0 && (
-          <span className="absolute right-1 top-1 flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold leading-5 text-white">
+          <span className="absolute end-1 top-1 flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[11px] font-bold leading-5 text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -114,7 +114,7 @@ export function NotificationBell() {
         <div
           role="dialog"
           aria-label={t("notifications.title")}
-          className="fixed inset-x-3 top-[3.75rem] z-40 flex max-h-[min(34rem,calc(100dvh-5rem))] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-96"
+          className="fixed inset-x-3 top-[3.75rem] z-40 flex max-h-[min(34rem,calc(100dvh-5rem))] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:absolute sm:inset-x-auto sm:end-0 sm:top-12 sm:w-96"
         >
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-slate-900">{t("notifications.title")}</h2>
@@ -138,7 +138,7 @@ export function NotificationBell() {
                     <button
                       type="button"
                       onClick={() => void openNotification(n)}
-                      className={cn("flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50", n.readAt === null && "bg-brand-50/40")}
+                      className={cn("flex w-full items-start gap-3 px-4 py-3 text-start hover:bg-slate-50", n.readAt === null && "bg-brand-50/40")}
                     >
                       <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", n.readAt === null ? "bg-brand-600" : "bg-transparent")} aria-hidden="true" />
                       <span className="min-w-0 flex-1">

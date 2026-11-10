@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { isLocale, LOCALES, type Locale } from "@reservation/shared";
+import { isLocale, LOCALE_SHORT_NAME, LOCALES, type Locale } from "@reservation/shared";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/lib/i18n/I18nProvider";
@@ -10,7 +10,7 @@ import { rememberSignedOutChoice, saveProfileLocale } from "@/lib/i18n/profileLo
 /**
  * Language picker. Applies the choice on this device immediately and saves it
  * on the profile (see lib/i18n/profileLocale.ts).
- * `compact` shows "FR" / "EN" for the app header.
+ * `compact` shows "FR" / "EN" / "تونسي" for the app header.
  */
 export function LanguageSwitcher({ compact = false, className }: { compact?: boolean; className?: string }) {
   const { locale, setLocale, t } = useI18n();
@@ -37,7 +37,7 @@ export function LanguageSwitcher({ compact = false, className }: { compact?: boo
         {LOCALES.map((l) => (
           // Each language is named in itself, so it can be found whatever the current language.
           <option key={l} value={l} lang={l}>
-            {compact ? l.toUpperCase() : t(`language.${l}`)}
+            {compact ? LOCALE_SHORT_NAME[l] : t(`language.${l}`)}
           </option>
         ))}
       </select>

@@ -101,7 +101,7 @@ function SyncContent() {
 
       <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
         <p className="font-medium">{t("calendar.sync.stepsTitle")}</p>
-        <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+        <ol className="mt-1 list-decimal space-y-0.5 ps-5">
           <li>{t("calendar.sync.step1")}</li>
           <li>{t("calendar.sync.step2")}</li>
           <li>{t("calendar.sync.step3")}</li>

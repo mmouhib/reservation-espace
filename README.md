@@ -44,7 +44,7 @@ Owns `users`, `departments`, `teams`. Screens: sign-in, profile, `/admin/utilisa
 - ✅ Administrators are never made by signing up: they are created with `npm run create-admin` (email and password). An admin can make a user a `manager` from the Users screen, but not an admin.
 - ✅ Roles: `user` < `manager` < `admin`. Admin user list with role filter and pagination.
 - ✅ Directory sync (every night, and on demand for administrators) that disables departed employees and cancels their upcoming bookings.
-- ✅ Profile: display name, notification preferences, privacy (show my name on the floor plan), language (FR/EN), department and teams. Sign in with Google or with an email and a password.
+- ✅ Profile: display name, notification preferences, privacy (show my name on the floor plan), language (French, English or Tunisian Arabic, the spoken dialect, written right to left), department and teams. Sign in with Google or with an email and a password.
 - ✅ Departments and teams administration; users are placed in a department and in teams by an administrator.
 - ✅ Manager view of their teams' bookings (`/equipe`).
 - ✅ GDPR: export of personal data, deletion of the account (by the user or an administrator).

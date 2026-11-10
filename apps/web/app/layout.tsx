@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import type { ReactNode } from "react";
 import { DEFAULT_LOCALE } from "@reservation/shared";
 import { APP } from "@/lib/app";
@@ -8,6 +8,8 @@ import "./globals.css";
 
 // next/font self-hosts the font files, so they are served from our origin and cached by the SW.
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+// Inter has no Arabic letters: the Tunisian Arabic language uses this font (see globals.css).
+const arabic = Noto_Sans_Arabic({ subsets: ["arabic"], variable: "--font-arabic", display: "swap" });
 
 export const metadata: Metadata = {
   applicationName: APP.name,
@@ -34,7 +36,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // `lang` is updated at runtime by I18nProvider.
-    <html lang={DEFAULT_LOCALE} dir="ltr" className={inter.variable} suppressHydrationWarning>
+    <html lang={DEFAULT_LOCALE} dir="ltr" className={`${inter.variable} ${arabic.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

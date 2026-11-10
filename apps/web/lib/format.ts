@@ -1,14 +1,14 @@
-import { addDays, type Locale } from "@reservation/shared";
+import { addDays, INTL_LOCALE, type Locale } from "@reservation/shared";
 
 /** "Tue 12 May" for "2026-05-12". Dates are calendar days, so no time zone is involved. */
 export function formatDate(date: string, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
 }
 
 /** Date and time of an ISO string (callable results serialize dates this way). */
 export function formatDateTime(value: string | null | undefined, locale: Locale): string {
   if (!value) return "";
-  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 /** Same as formatDateTime. Kept for existing callers. */
@@ -17,7 +17,7 @@ export function formatIsoDateTime(value: string | null | undefined, locale: Loca
 }
 
 export function formatPrice(cents: number, locale: Locale): string {
-  return new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(cents / 100);
+  return new Intl.NumberFormat(INTL_LOCALE[locale], { style: "currency", currency: "EUR" }).format(cents / 100);
 }
 
 /** Today's date in the browser's time zone, as YYYY-MM-DD. */

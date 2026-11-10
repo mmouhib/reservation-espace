@@ -8,6 +8,7 @@
   --color-brand-800: #1e40af;
   --color-brand-900: #1e3a8a;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans-arabic: var(--font-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -126,4 +127,10 @@
   .no-print {
     display: none !important;
   }
+}
+
+/* Tunisian Arabic: its own font (Inter has no Arabic letters). Numbers, times and e-mail addresses stay left to right
+   inside the right-to-left text through the browser's bidirectional algorithm. */
+html[lang="aeb"] body {
+  font-family: var(--font-sans-arabic);
 }

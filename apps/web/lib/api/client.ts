@@ -66,6 +66,7 @@ import {
   type HoursPerCategory,
   type TopSpace,
   type Role,
+  type Locale,
   type NotificationPrefs,
   type IncidentSummary,
   type EquipmentRequestSummary,
@@ -126,7 +127,7 @@ export const api = {
   // Profile and devices
   getMyProfile: callable<Empty, UserSummary | null>("getMyProfile"),
   updateMyProfile: callable<
-    { displayName?: string; notificationPrefs?: NotificationPrefs; locale?: "fr" | "en"; showOnFloorPlan?: boolean },
+    { displayName?: string; notificationPrefs?: NotificationPrefs; locale?: Locale; showOnFloorPlan?: boolean },
     { updated: boolean }
   >("updateMyProfile"),
   registerDevice: callable<

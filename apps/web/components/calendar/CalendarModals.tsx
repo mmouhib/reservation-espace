@@ -52,7 +52,7 @@ export function SlotModal({
                   <button
                     type="button"
                     onClick={() => onItem(item)}
-                    className={cn("flex w-full items-center justify-between gap-3 rounded-lg border-l-4 px-3 py-2 text-left text-sm", itemTone(item.kind))}
+                    className={cn("flex w-full items-center justify-between gap-3 rounded-lg border-s-4 px-3 py-2 text-start text-sm", itemTone(item.kind))}
                   >
                     <span className="min-w-0 truncate font-medium">{item.title}</span>
                     <span className="shrink-0 text-xs">{item.allDay ? t("calendar.allDay") : `${formatMinutes(item.from)} – ${formatMinutes(item.to)}`}</span>

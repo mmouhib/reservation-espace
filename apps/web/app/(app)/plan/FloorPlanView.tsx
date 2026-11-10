@@ -216,7 +216,7 @@ export function FloorPlanView() {
               </li>
             ))}
           </ul>
-          <span className="ml-auto flex items-center gap-1.5 text-sm text-slate-600" role="status">
+          <span className="ms-auto flex items-center gap-1.5 text-sm text-slate-600" role="status">
             <span aria-hidden="true" className={cn("size-2 rounded-full", plan.failed || !online ? "bg-amber-500" : "animate-pulse bg-green-600")} />
             {plan.failed || !online ? t("plan.stale") : t("plan.live")}
           </span>
@@ -321,7 +321,7 @@ export function FloorPlanView() {
                       <button
                         type="button"
                         onClick={() => setSelectedId(space.id)}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-slate-100"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-start hover:bg-slate-100"
                       >
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-900">{initialsOf(person.name)}</span>
                         <span className="min-w-0 flex-1 truncate">{person.name ?? t("plan.someone")}</span>

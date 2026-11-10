@@ -73,13 +73,13 @@ export function TimeGrid({
 
         {allDay && (
           <div className="grid border-b border-slate-200" style={columns}>
-            <div className="p-1 text-right text-[11px] text-slate-500">{t("calendar.allDay")}</div>
+            <div className="p-1 text-end text-[11px] text-slate-500">{t("calendar.allDay")}</div>
             {days.map((date) => (
-              <div key={date} className="space-y-0.5 border-l border-slate-100 p-1">
+              <div key={date} className="space-y-0.5 border-s border-slate-100 p-1">
                 {(byDay.get(date) ?? [])
                   .filter((item) => item.allDay)
                   .map((item) => (
-                    <button key={item.key} type="button" onClick={() => onItem(item)} className={cn("block w-full truncate rounded border-l-2 px-1.5 py-0.5 text-left text-xs", itemTone(item.kind))}>
+                    <button key={item.key} type="button" onClick={() => onItem(item)} className={cn("block w-full truncate rounded border-s-2 px-1.5 py-0.5 text-start text-xs", itemTone(item.kind))}>
                       {item.title}
                     </button>
                   ))}
@@ -91,7 +91,7 @@ export function TimeGrid({
         <div className="grid" style={columns}>
           <div className="relative" style={{ height }}>
             {hours.map((minute, index) => (
-              <span key={minute} className="absolute right-2 -translate-y-1/2 text-[11px] text-slate-500" style={{ top: index * HOUR_PX, display: index === 0 ? "none" : undefined }}>
+              <span key={minute} className="absolute end-2 -translate-y-1/2 text-[11px] text-slate-500" style={{ top: index * HOUR_PX, display: index === 0 ? "none" : undefined }}>
                 {formatMinutes(minute)}
               </span>
             ))}
@@ -101,7 +101,7 @@ export function TimeGrid({
             return (
               <div
                 key={date}
-                className="relative cursor-pointer border-l border-slate-100"
+                className="relative cursor-pointer border-s border-slate-100"
                 style={{
                   height,
                   backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${HOUR_PX - 1}px, var(--color-slate-100) ${HOUR_PX - 1}px, var(--color-slate-100) ${HOUR_PX}px)`,
@@ -120,7 +120,7 @@ export function TimeGrid({
                       e.stopPropagation();
                       onItem(item);
                     }}
-                    className={cn("absolute overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-left text-xs", itemTone(item.kind))}
+                    className={cn("absolute overflow-hidden rounded border-s-4 px-1.5 py-0.5 text-start text-xs", itemTone(item.kind))}
                     style={{
                       top: ((item.from - start) / 60) * HOUR_PX,
                       height: Math.max(((item.to - item.from) / 60) * HOUR_PX - 2, 22),
@@ -136,7 +136,7 @@ export function TimeGrid({
                 ))}
                 {date === today && nowMinute >= start && nowMinute <= end && (
                   <div className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-red-600" style={{ top: ((nowMinute - start) / 60) * HOUR_PX }}>
-                    <span className="absolute -left-1 -top-1.5 size-2.5 rounded-full bg-red-600" />
+                    <span className="absolute -start-1 -top-1.5 size-2.5 rounded-full bg-red-600" />
                   </div>
                 )}
               </div>

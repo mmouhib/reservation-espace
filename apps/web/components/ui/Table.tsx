@@ -6,7 +6,7 @@ export function Table({ caption, headers, children }: { caption: string; headers
   return (
     // `relative` keeps absolutely positioned content (e.g. sr-only labels) inside the scroll box instead of widening the page.
     <div className="relative overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-start text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-slate-200 bg-slate-50 text-slate-700">
           <tr>

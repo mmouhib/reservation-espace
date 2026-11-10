@@ -125,7 +125,7 @@ export default function CreditsPage() {
                       {formatIsoDateTime(entry.createdAt, locale)}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className={entry.amount > 0 ? "font-semibold text-green-700" : "font-semibold text-slate-900"}>
                       {entry.amount > 0 ? "+" : ""}
                       {entry.amount}

@@ -48,7 +48,7 @@ export function MonthGrid({
               onClick={() => onDay(date)}
               className={cn(
                 "min-h-20 cursor-pointer border-b border-slate-100 p-1 hover:bg-slate-50 sm:min-h-28",
-                index % 7 !== 6 && "border-r",
+                index % 7 !== 6 && "border-e",
                 !inMonth && "bg-slate-50/60",
               )}
             >
@@ -82,7 +82,7 @@ export function MonthGrid({
                         e.stopPropagation();
                         onItem(item);
                       }}
-                      className={cn("block w-full truncate rounded border-l-2 px-1.5 py-0.5 text-left text-xs", itemTone(item.kind))}
+                      className={cn("block w-full truncate rounded border-s-2 px-1.5 py-0.5 text-start text-xs", itemTone(item.kind))}
                     >
                       {!item.allDay && <span className="font-medium">{formatMinutes(item.from)} </span>}
                       {item.title}

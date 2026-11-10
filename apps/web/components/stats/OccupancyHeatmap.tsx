@@ -94,7 +94,7 @@ function HeatmapRow({ hour, row, total, days, percent }: { hour: number; row: nu
   const { t } = useI18n();
   return (
     <>
-      <div className="pr-2 text-right text-xs leading-7 text-slate-500">{formatMinutes(hour * 60)}</div>
+      <div className="pe-2 text-end text-xs leading-7 text-slate-500">{formatMinutes(hour * 60)}</div>
       {row.map((value, weekday) => (
         <div
           key={weekday}

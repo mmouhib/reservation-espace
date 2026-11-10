@@ -17,6 +17,7 @@ export function PlanSurface({ children, label, surfaceRef }: { children: ReactNo
     <div
       ref={surfaceRef}
       role="group"
+      dir="ltr"
       aria-label={label}
       className="relative w-full select-none overflow-hidden rounded-2xl border-2 border-slate-400 bg-slate-50 text-slate-900 shadow-inner"
       style={{ aspectRatio: `${PLAN_WIDTH} / ${PLAN_HEIGHT}` }}

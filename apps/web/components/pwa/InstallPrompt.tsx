@@ -48,7 +48,7 @@ export function InstallPrompt() {
         <h2 id="ios-install-title" className="text-lg font-semibold">
           {t("pwa.install.iosTitle")}
         </h2>
-        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-700">
+        <ol className="mt-4 list-decimal space-y-2 ps-5 text-sm text-slate-700">
           <li>{rich("pwa.install.iosStep1", strong)}</li>
           <li>{rich("pwa.install.iosStep2", strong)}</li>
           <li>{rich("pwa.install.iosStep3", strong)}</li>

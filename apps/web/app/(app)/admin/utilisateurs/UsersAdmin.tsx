@@ -120,7 +120,7 @@ export function UsersAdmin() {
             ))}
           </Select>
         </Field>
-        <Button variant="secondary" className="ml-auto" onClick={() => void syncDirectory()}>
+        <Button variant="secondary" className="ms-auto" onClick={() => void syncDirectory()}>
           {t("admin.users.syncDirectory")}
         </Button>
       </div>

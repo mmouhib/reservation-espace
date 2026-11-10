@@ -5,6 +5,8 @@ import {
   createTranslator,
   DEFAULT_LOCALE,
   isLocale,
+  LOCALE_DIRECTION,
+  localeOfBrowserTag,
   type Locale,
   type MessageKey,
   type MessageValues,
@@ -31,8 +33,8 @@ function readStored(): Locale | null {
 
 function detectBrowserLocale(): Locale {
   for (const tag of navigator.languages ?? [navigator.language]) {
-    const base = tag.toLowerCase().split("-")[0];
-    if (isLocale(base)) return base;
+    const found = localeOfBrowserTag(tag);
+    if (found) return found;
   }
   return DEFAULT_LOCALE;
 }
@@ -88,6 +90,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale;
+    document.documentElement.dir = LOCALE_DIRECTION[locale];
   }, [locale]);
 
   const value = useMemo<I18nContextValue>(() => {

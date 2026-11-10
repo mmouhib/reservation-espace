@@ -402,3 +402,16 @@ To create the accounts and get the keys used below, follow [docs/accounts-and-ke
 
 Run a single instance, or several: each scheduled job claims its run in MongoDB, so two instances never send the
 same reminders twice.
+
+### Deploy on Render (free)
+
+`render.yaml` describes one Docker web service. In Render choose **New > Blueprint**, pick this repository, and fill in
+the variables it asks for (the table above; the `NEXT_PUBLIC_*` ones are the web keys, built into the image). Then:
+
+- add the `onrender.com` address under Firebase > Authentication > Settings > Authorized domains;
+- in Stripe, send the webhook to `https://<your address>/api/stripe/webhook` and put its signing secret in `STRIPE_WEBHOOK_SECRET`;
+- in Atlas > Network Access, allow Render to connect (Render's addresses change, so `0.0.0.0/0` is the simple choice for a demo);
+- open the address on a phone to install the app (Android: Install app; iPhone: Share > Add to Home Screen).
+
+The free plan sleeps after about 15 minutes without traffic, and the scheduled jobs do not run while it sleeps. A free
+uptime pinger on `/api/health` keeps it awake.

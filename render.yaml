@@ -1,0 +1,52 @@
+# Deploys the app on Render from the Dockerfile: one web service that serves the API, the scheduled jobs and the
+# built web app. Render > New > Blueprint, pick this repository, then fill in the values marked "sync: false".
+# None of the secrets are in this file: they are typed in Render's dashboard.
+services:
+  - type: web
+    name: reservation-espace
+    runtime: docker
+    plan: free # sleeps after ~15 minutes without traffic; the scheduled jobs do not run while it sleeps
+    healthCheckPath: /api/health
+    envVars:
+      # Public web keys, built into the JavaScript (the Dockerfile reads them as build arguments).
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        sync: false
+      - key: NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      # Server settings (do not set FIREBASE_AUTH_EMULATOR_HOST here).
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: ALLOWED_EMAIL_DOMAINS
+        sync: false
+      - key: WELCOME_CREDITS
+        value: "0"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
